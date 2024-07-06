@@ -3,6 +3,8 @@
 #include "cuAlgo.hpp"
 
 __global__ void reduce1dKernel(int *g_idata, int *g_odata) {
+
+	// use dynamic shared memory
 	extern __shared__ int sdata[];
 	// each thread loads one element from global to shared mem
 	unsigned int tid = threadIdx.x;
@@ -22,16 +24,20 @@ __global__ void reduce1dKernel(int *g_idata, int *g_odata) {
 
 void reduce1d(int *g_idata, int *g_odata, int size) {
 
-	int threadsPerBlock = 1024;
+	int threadsPerBlock = size > 1024 ? 1024 : size;
 	int blocksPerGrid = size / threadsPerBlock + (size % threadsPerBlock > 0);
 	std::cout << "threadsPerBlock = " << threadsPerBlock << std::endl;
 	std::cout << "blocksPerGrid   = " << blocksPerGrid   << std::endl;
-	dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
-	dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
-	reduce1dKernel<<<blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int)>>>(g_idata, g_odata);
-	cudaError_t err = cudaDeviceSynchronize();
-	if ( err != cudaSuccess ) {
-		std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
-		exit(EXIT_FAILURE);
+
+	if (blocksPerGrid == 1) {
+
+		dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
+		dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
+		reduce1dKernel<<<blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int)>>>(g_idata, g_odata);
+		cudaError_t err = cudaDeviceSynchronize();
+		if ( err != cudaSuccess ) {
+			std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+			exit(EXIT_FAILURE);
+		}
 	}
 }
