@@ -15,10 +15,9 @@ __global__ void reduce1dKernel(int *g_idata, int *g_odata) {
 	sdata[tid] = g_idata[i];
 	__syncthreads();
 	// do reduction in shared mem
-	for (unsigned int s=1; s < blockDim.x; s *= 2) {
-		int index = 2 * s * tid;
-		if (index < blockDim.x) {
-			sdata[index] += sdata[index + s];
+	for (unsigned int s=blockDim.x/2; s>0; s>>=1) {
+		if (tid < s) {
+			sdata[tid] += sdata[tid + s];
 		}
 		__syncthreads();
 	}
