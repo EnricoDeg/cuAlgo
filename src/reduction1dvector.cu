@@ -11,8 +11,8 @@ __global__ void reduce1dKernel(int *g_idata, int *g_odata) {
 	extern __shared__ int sdata[];
 	// each thread loads one element from global to shared mem
 	unsigned int tid = threadIdx.x;
-	unsigned int i = blockIdx.x*blockDim.x + threadIdx.x;
-	sdata[tid] = g_idata[i];
+	unsigned int i = blockIdx.x*(blockDim.x*2) + threadIdx.x;
+	sdata[tid] = g_idata[i] + g_idata[i+blockDim.x];
 	__syncthreads();
 	// do reduction in shared mem
 	for (unsigned int s=blockDim.x/2; s>0; s>>=1) {
@@ -25,11 +25,9 @@ __global__ void reduce1dKernel(int *g_idata, int *g_odata) {
 	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 }
 
-
-
 void reduce1d(int *g_idata, int *g_odata, int size) {
 
-	int threadsPerBlock = size > 1024 ? 1024 : size;
+	int threadsPerBlock = size > 1024 ? 512 : size;
 	int blocksPerGrid = size / threadsPerBlock + (size % threadsPerBlock > 0);
 	std::cout << "threadsPerBlock = " << threadsPerBlock << std::endl;
 	std::cout << "blocksPerGrid   = " << blocksPerGrid   << std::endl;
