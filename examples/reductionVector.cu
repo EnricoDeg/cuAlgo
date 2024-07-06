@@ -5,12 +5,13 @@
 int main() {
 
 	cudaError_t err;
-	int nblocks = 16;
+	int nblocks = 4096;
 	int size = 1024*nblocks;
 	int * input = (int *)malloc(size * sizeof(int));
 	int * output = (int *)malloc(sizeof(int));
-	for(int i = 0; i < size; ++i)
-		input[i] = i;
+	for(int i = 0; i < nblocks; ++i)
+		for (int j = 0; j < 1024 ; ++j)
+		input[j + i*1024] = j;
 
 	int *d_input;
 	err = cudaMalloc(&d_input, size*sizeof(int));
