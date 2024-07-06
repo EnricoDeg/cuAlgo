@@ -60,8 +60,8 @@ __global__ void reduce1dKernelFlexible(int *g_idata, int *g_odata) {
 
 void reduce1d(int *g_idata, int *g_odata, int size) {
 
-	int threadsPerBlock = size > 1024 ? 512 : size;
-	int blocksPerGrid = size / threadsPerBlock + (size % threadsPerBlock > 0);
+	int threadsPerBlock = size > 1024 ? 1024 : size/2;
+	int blocksPerGrid = size / (2*threadsPerBlock) + (size % (2*threadsPerBlock) > 0);
 	std::cout << "threadsPerBlock = " << threadsPerBlock << std::endl;
 	std::cout << "blocksPerGrid   = " << blocksPerGrid   << std::endl;
 	dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
