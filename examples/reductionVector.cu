@@ -5,7 +5,8 @@
 int main() {
 
 	cudaError_t err;
-	int size = 2048;
+	int nblocks = 16;
+	int size = 1024*nblocks;
 	int * input = (int *)malloc(size * sizeof(int));
 	int * output = (int *)malloc(sizeof(int));
 	for(int i = 0; i < size; ++i)
