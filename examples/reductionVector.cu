@@ -14,16 +14,16 @@ int main() {
 	int *d_input;
 	err = cudaMalloc(&d_input, size*sizeof(int));
 	if (err != cudaSuccess) {
-                std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
+		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
 	int *d_output;
 	err = cudaMalloc(&d_output, sizeof(int));
-        if (err != cudaSuccess) {
-                std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
-                exit(EXIT_FAILURE);
-        }
+	if (err != cudaSuccess) {
+		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
+		exit(EXIT_FAILURE);
+	}
 
 	err = cudaMemcpy ( d_input, input, (size_t)size*sizeof(int), cudaMemcpyHostToDevice );
 	if ( err != cudaSuccess ) {
@@ -37,13 +37,13 @@ int main() {
 	for(int i = 0; i < size; ++i)
 		output[0] += input[i];
 
-        std::cout << "CPU solution = " << output[0] << std::endl;
+	std::cout << "CPU solution = " << output[0] << std::endl;
 
 	err = cudaMemcpy ( output, d_output, sizeof(int), cudaMemcpyDeviceToHost );
-        if ( err != cudaSuccess ) {
-                std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
-                exit(EXIT_FAILURE);
-        }
+	if ( err != cudaSuccess ) {
+		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
+		exit(EXIT_FAILURE);
+	}
 
 	std::cout << "GPU solution = " << output[0] << std::endl;
 
