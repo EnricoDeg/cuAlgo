@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cuda.h>
 #include "cuAlgo.hpp"
+#include <chrono>
+
+using namespace std::chrono;
 
 __global__ void reduce1dKernel(int *g_idata, int *g_odata) {
 
@@ -12,15 +15,18 @@ __global__ void reduce1dKernel(int *g_idata, int *g_odata) {
 	sdata[tid] = g_idata[i];
 	__syncthreads();
 	// do reduction in shared mem
-	for(unsigned int s=1; s < blockDim.x; s *= 2) {
-		if (tid % (2*s) == 0) {
-			sdata[tid] += sdata[tid + s];
+	for (unsigned int s=1; s < blockDim.x; s *= 2) {
+		int index = 2 * s * tid;
+		if (index < blockDim.x) {
+			sdata[index] += sdata[index + s];
 		}
 		__syncthreads();
 	}
 	// write result for this block to global mem
 	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 }
+
+
 
 void reduce1d(int *g_idata, int *g_odata, int size) {
 
@@ -33,12 +39,16 @@ void reduce1d(int *g_idata, int *g_odata, int size) {
 
 	if (blocksPerGrid == 1) {
 
+		auto start = high_resolution_clock::now();
 		reduce1dKernel<<<blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int)>>>(g_idata, g_odata);
 		cudaError_t err = cudaDeviceSynchronize();
 		if ( err != cudaSuccess ) {
 			std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
 			exit(EXIT_FAILURE);
 		}
+		auto stop = high_resolution_clock::now();
+		auto duration = duration_cast<microseconds>(stop - start);
+		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
 	} else {
 
 		int * d_buffer;
@@ -47,12 +57,17 @@ void reduce1d(int *g_idata, int *g_odata, int size) {
 			std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
 			exit(EXIT_FAILURE);
 		}
+		auto start = high_resolution_clock::now();
 		reduce1dKernel<<<blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int)>>>(g_idata, d_buffer);
 		err = cudaDeviceSynchronize();
 		if ( err != cudaSuccess ) {
 			std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
 			exit(EXIT_FAILURE);
 		}
+		auto stop = high_resolution_clock::now();
+		auto duration = duration_cast<microseconds>(stop - start);
+		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
+
 		reduce1d(d_buffer, g_odata, blocksPerGrid);
 		err = cudaFree ( d_buffer );
 		if ( err != cudaSuccess ) {
