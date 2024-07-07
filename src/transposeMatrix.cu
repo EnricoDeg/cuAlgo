@@ -35,6 +35,9 @@ void transposeMatrix(float *idata, float *odata, unsigned int size_x, unsigned i
 	dim3 blocksPerGrid3(size_x / TILE_DIM, size_y / TILE_DIM, 1);
 	dim3 threadsPerBlock3(TILE_DIM, BLOCK_ROWS, 1);
 
+	std::cout << "threadsPerBlock = " << TILE_DIM << ", " << BLOCK_ROWS << std::endl;
+	std::cout << "blocksPerGrid   = " << size_x / TILE_DIM << ", " << size_y / TILE_DIM << std::endl;
+
 	auto start = high_resolution_clock::now();
 	transposeMatrixKernel<<< blocksPerGrid3, threadsPerBlock3 >>>(idata, odata);
 	check_cuda( cudaDeviceSynchronize() );
