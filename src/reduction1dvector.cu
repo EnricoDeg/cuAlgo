@@ -16,15 +16,22 @@ if (blockSize >= 2) sdata[tid] += sdata[tid + 1];
 }
 
 template <unsigned int blockSize>
-__global__ void reduce1dKernel(int *g_idata, int *g_odata) {
+__global__ void reduce1dKernel(int *g_idata, int *g_odata, unsigned int n) {
 
 	// use dynamic shared memory
 	extern __shared__ int sdata[];
 	// each thread loads one element from global to shared mem
 	unsigned int tid = threadIdx.x;
-	unsigned int i = blockIdx.x*(blockDim.x*2) + threadIdx.x;
-	sdata[tid] = g_idata[i] + g_idata[i+blockDim.x];
+
+	unsigned int i = blockIdx.x*(blockSize*2) + threadIdx.x;
+	unsigned int gridSize = blockSize*2*gridDim.x;
+	sdata[tid] = 0;
+	while (i < n) {
+		sdata[tid] += g_idata[i] + g_idata[i+blockSize];
+		i += gridSize;
+	}
 	__syncthreads();
+
 	// do reduction in shared mem
 	if (blockSize >= 1024) {
 		if (tid < 512) {
@@ -84,11 +91,11 @@ void reduce1d(int *g_idata, int *g_odata, int size) {
 	int blocksPerGrid = size / (2*threadsPerBlock) + (size % (2*threadsPerBlock) > 0);
 	std::cout << "threadsPerBlock = " << threadsPerBlock << std::endl;
 	std::cout << "blocksPerGrid   = " << blocksPerGrid   << std::endl;
-	dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
-	dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
 
 	if (blocksPerGrid == 1) {
 
+		dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
+		dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
 		auto start = high_resolution_clock::now();
 		reduce1dKernelFlexible<<<blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int)>>>(g_idata, g_odata);
 		cudaError_t err = cudaDeviceSynchronize();
@@ -101,6 +108,9 @@ void reduce1d(int *g_idata, int *g_odata, int size) {
 		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
 	} else {
 
+		dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
+		dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
+
 		int * d_buffer;
 		cudaError_t err = cudaMalloc(&d_buffer, blocksPerGrid*sizeof(int));
 		if (err != cudaSuccess) {
@@ -110,37 +120,37 @@ void reduce1d(int *g_idata, int *g_odata, int size) {
 		auto start = high_resolution_clock::now();
 		switch (threadsPerBlock) {
 			case 1024:
-			reduce1dKernel<1024><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer);
+			reduce1dKernel<1024><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
 			break;
 			case 512:
-			reduce1dKernel<512><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer);
+			reduce1dKernel<512><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
 			break;
 			case 256:
-			reduce1dKernel<256><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer);
+			reduce1dKernel<256><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
 			break;
 			case 128:
-			reduce1dKernel<128><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer);
+			reduce1dKernel<128><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
 			break;
 			case 64:
-			reduce1dKernel< 64><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer);
+			reduce1dKernel< 64><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
 			break;
 			case 32:
-			reduce1dKernel< 32><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer);
+			reduce1dKernel< 32><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
 			break;
 			case 16:
-			reduce1dKernel< 16><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer);
+			reduce1dKernel< 16><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
 			break;
 			case 8:
-			reduce1dKernel< 8><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer);
+			reduce1dKernel< 8><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
 			break;
 			case 4:
-			reduce1dKernel< 4><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer);
+			reduce1dKernel< 4><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
 			break;
 			case 2:
-			reduce1dKernel< 2><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer);
+			reduce1dKernel< 2><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
 			break;
 			case 1:
-			reduce1dKernel< 1><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer);
+			reduce1dKernel< 1><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
 			break;
 		}
 
