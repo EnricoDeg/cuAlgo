@@ -11,7 +11,7 @@ using namespace std::chrono;
 
 __global__ void transposeMatrixKernel(float *idata, float *odata)
 {
-	__shared__ float tile[TILE_DIM][TILE_DIM];
+	__shared__ float tile[TILE_DIM][TILE_DIM+1];
 
 	int x = blockIdx.x * TILE_DIM + threadIdx.x;
 	int y = blockIdx.y * TILE_DIM + threadIdx.y;
