@@ -7,12 +7,12 @@ using namespace std::chrono;
 
 template <unsigned int blockSize>
 __device__ void warpReduce(volatile int* sdata, int tid) {
-if (blockSize >= 64) sdata[tid] += sdata[tid + 32];
-if (blockSize >= 32) sdata[tid] += sdata[tid + 16];
-if (blockSize >= 16) sdata[tid] += sdata[tid + 8];
-if (blockSize >= 8) sdata[tid] += sdata[tid + 4];
-if (blockSize >= 4) sdata[tid] += sdata[tid + 2];
-if (blockSize >= 2) sdata[tid] += sdata[tid + 1];
+	if (blockSize >= 64) sdata[tid] += sdata[tid + 32];
+	if (blockSize >= 32) sdata[tid] += sdata[tid + 16];
+	if (blockSize >= 16) sdata[tid] += sdata[tid +  8];
+	if (blockSize >= 8)  sdata[tid] += sdata[tid +  4];
+	if (blockSize >= 4)  sdata[tid] += sdata[tid +  2];
+	if (blockSize >= 2)  sdata[tid] += sdata[tid +  1];
 }
 
 template <unsigned int blockSize>
@@ -20,11 +20,11 @@ __global__ void reduce1dKernel(int *g_idata, int *g_odata, unsigned int n) {
 
 	// use dynamic shared memory
 	extern __shared__ int sdata[];
-	// each thread loads one element from global to shared mem
 	unsigned int tid = threadIdx.x;
-
 	unsigned int i = blockIdx.x*(blockSize*2) + threadIdx.x;
 	unsigned int gridSize = blockSize*2*gridDim.x;
+
+	// load to shared memory
 	sdata[tid] = 0;
 	while (i < n) {
 		sdata[tid] += g_idata[i] + g_idata[i+blockSize];
@@ -98,11 +98,7 @@ void reduce1d(int *g_idata, int *g_odata, int size) {
 		dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
 		auto start = high_resolution_clock::now();
 		reduce1dKernelFlexible<<<blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int)>>>(g_idata, g_odata);
-		cudaError_t err = cudaDeviceSynchronize();
-		if ( err != cudaSuccess ) {
-			std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
-			exit(EXIT_FAILURE);
-		}
+		check_cuda( cudaDeviceSynchronize() );
 		auto stop = high_resolution_clock::now();
 		auto duration = duration_cast<microseconds>(stop - start);
 		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
@@ -112,11 +108,7 @@ void reduce1d(int *g_idata, int *g_odata, int size) {
 		dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
 
 		int * d_buffer;
-		cudaError_t err = cudaMalloc(&d_buffer, blocksPerGrid*sizeof(int));
-		if (err != cudaSuccess) {
-			std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
-			exit(EXIT_FAILURE);
-		}
+		check_cuda( cudaMalloc(&d_buffer, blocksPerGrid*sizeof(int)) );
 		auto start = high_resolution_clock::now();
 		switch (threadsPerBlock) {
 			case 1024:
@@ -154,21 +146,12 @@ void reduce1d(int *g_idata, int *g_odata, int size) {
 			break;
 		}
 
-		// reduce1dKernel<<<blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int)>>>(g_idata, d_buffer);
-		err = cudaDeviceSynchronize();
-		if ( err != cudaSuccess ) {
-			std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
-			exit(EXIT_FAILURE);
-		}
+		check_cuda( cudaDeviceSynchronize() );
 		auto stop = high_resolution_clock::now();
 		auto duration = duration_cast<microseconds>(stop - start);
 		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
 
 		reduce1d(d_buffer, g_odata, blocksPerGrid);
-		err = cudaFree ( d_buffer );
-		if ( err != cudaSuccess ) {
-			fprintf(stderr, "CUDA error (cudaFree): %s\n", cudaGetErrorString(err));
-			exit(EXIT_FAILURE);
-		}
+		check_cuda( cudaFree ( d_buffer ) );
 	}
 }
