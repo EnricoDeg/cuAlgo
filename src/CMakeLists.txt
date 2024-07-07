@@ -1,6 +1,7 @@
 set(CMAKE_CUDA_ARCHITECTURES 80)
 SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 -Xptxas -lineinfo -DCUDA ")
-set(SOURCE_EXE  reduction1dvector.cu)
+set(SOURCE_EXE  reduction1dvector.cu
+                transposeMatrix.cu)
 
 add_library(cuAlgo SHARED ${SOURCE_EXE})
 target_include_directories(cuAlgo PRIVATE ${PROJECT_SOURCE_DIR})
