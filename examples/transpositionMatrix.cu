@@ -33,7 +33,8 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 	
-	transposeMatrix(d_input, d_output, size_x, size_y);
+	for (int i = 0; i < 5; ++i)
+		transposeMatrix(d_input, d_output, size_x, size_y);
 
 	err = cudaMemcpy ( output, d_output, size_x * size_y * sizeof(float), cudaMemcpyDeviceToHost );
 	if ( err != cudaSuccess ) {

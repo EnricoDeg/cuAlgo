@@ -33,7 +33,8 @@ int main() {
 		exit(EXIT_FAILURE);
 	}
 	
-	reduce1d(d_input, d_output, size);
+	for (int i = 0; i < 5; ++i)
+		reduce1d(d_input, d_output, size);
 
 	output[0] = 0;
 	for(int i = 0; i < size; ++i)
