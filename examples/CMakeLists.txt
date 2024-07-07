@@ -7,3 +7,12 @@ install (TARGETS
   reductionVector # executables
   RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
+add_executable(transpositionMatrix transpositionMatrix.cu)
+target_link_libraries (transpositionMatrix cuAlgo)
+target_include_directories(transpositionMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET transpositionMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+  
+install (TARGETS
+  transpositionMatrix # executables
+  RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
