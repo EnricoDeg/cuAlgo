@@ -85,7 +85,7 @@ __global__ void reduce1dKernelFlexible(int *g_idata, int *g_odata) {
 	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 }
 
-void reduce1d(int *g_idata, int *g_odata, int size) {
+void reduce1dVector(int *g_idata, int *g_odata, int size) {
 
 	int threadsPerBlock = size > 1024 ? 1024 : size/2;
 	int blocksPerGrid = size / (2*threadsPerBlock) + (size % (2*threadsPerBlock) > 0);
@@ -151,7 +151,7 @@ void reduce1d(int *g_idata, int *g_odata, int size) {
 		auto duration = duration_cast<microseconds>(stop - start);
 		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
 
-		reduce1d(d_buffer, g_odata, blocksPerGrid);
+		reduce1dVector(d_buffer, g_odata, blocksPerGrid);
 		check_cuda( cudaFree ( d_buffer ) );
 	}
 }
