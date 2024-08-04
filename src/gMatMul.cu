@@ -2,6 +2,7 @@
 #include <cuda.h>
 #include "cuAlgo.hpp"
 #include <chrono>
+#include "utils.h"
 
 using namespace std::chrono;
 
@@ -20,12 +21,6 @@ __global__ void gMatMulKernel(int M, int N, int K, float alpha, const float *A,
 		// C = α*(A@B)+β*C
 		C[x * N + y] = alpha * tmp + beta * C[x * N + y];
 	}
-}
-
-int div_ceil(int numerator, int denominator)
-{
-		std::div_t res = std::div(numerator, denominator);
-		return res.rem ? (res.quot + 1) : res.quot;
 }
 
 void gMatMul(int M, int N, int K, float alpha, const float *A,
