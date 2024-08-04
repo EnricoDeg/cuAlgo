@@ -5,3 +5,4 @@ lib
 examples/reductionVector
 examples/transpositionMatrix
 examples/generalMatrixMultiplication
+examples/reductionMatrix
