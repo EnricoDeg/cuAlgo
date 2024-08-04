@@ -44,8 +44,10 @@ int main() {
 
 	for(int j = 0; j < size_y; ++j)
 		for (int i = 0; i < size_x ; ++i)
-			if (input[i + j * size_x] != output[j + i * size_y])
+			if (input[i + j * size_x] != output[j + i * size_y]) {
+				std::cout << "Values different" << std::endl;
 				return 1;
+			}
 
 	return 0;
 }
