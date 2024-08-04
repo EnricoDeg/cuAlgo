@@ -1,7 +1,9 @@
 set(CMAKE_CUDA_ARCHITECTURES 80)
 SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 -Xptxas -lineinfo -DCUDA ")
-set(SOURCE_EXE  checkError.cu
+set(SOURCE_EXE  utils.cu
+                checkError.cu
                 reduction1dvector.cu
+                reduction1dmatrix.cu
                 transposeMatrix.cu
                 gMatMul.cu)
 

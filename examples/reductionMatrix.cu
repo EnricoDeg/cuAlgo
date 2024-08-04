@@ -1,0 +1,64 @@
+#include <iostream>
+#include <stdlib.h>
+#include <cuAlgo.hpp>
+
+int main() {
+
+	cudaError_t err;
+	size_t K = 8192;
+	size_t N = 4096;
+
+	int * B = (int *)malloc(K * N * sizeof(int));
+	for (size_t i = 0 ; i < K ; ++i)
+		for (size_t j = 0 ; j < N ; ++j)
+			B [j + i * N] = j*i;
+
+	int * C = (int *)malloc(N * sizeof(int));
+	int * solution = (int *)malloc(N * sizeof(int));
+
+	int *d_B;
+	err = cudaMalloc(&d_B, K * N * sizeof(int));
+	if (err != cudaSuccess) {
+		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	int *d_C;
+	err = cudaMalloc(&d_C, N * sizeof(int));
+	if (err != cudaSuccess) {
+		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	err = cudaMemcpy ( d_B, B, K * N *sizeof(int), cudaMemcpyHostToDevice );
+	if ( err != cudaSuccess ) {
+		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	std::cout << "launching kernels ..." << std::endl;
+	for (size_t i = 0; i < 5; ++i)
+		reduce1dMatrix(d_B, d_C, N, K);
+	std::cout << "launching kernels done ..." << std::endl;
+
+	for (size_t i = 0 ; i < N ; ++i)
+		solution[i] = 0;
+
+	for (int i = 0 ; i < K ; ++i)
+		for (int j = 0 ; j < N ; ++j)
+			solution[j] += B [j + i * N];
+
+	err = cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost );
+	if ( err != cudaSuccess ) {
+		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	for (size_t i = 0 ; i < N ; ++i)
+		if (solution[i] != C[i]) {
+			std::cout << "Values different" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+
+	return 0;
+}

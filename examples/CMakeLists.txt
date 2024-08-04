@@ -1,3 +1,6 @@
+set(CMAKE_CUDA_ARCHITECTURES 80)
+SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 -Xptxas -lineinfo -DCUDA ")
+
 add_executable(reductionVector reductionVector.cu)
 target_link_libraries (reductionVector cuAlgo)
 target_include_directories(reductionVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
@@ -25,3 +28,12 @@ install (TARGETS
     generalMatrixMultiplication # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
+
+add_executable(reductionMatrix reductionMatrix.cu)
+target_link_libraries (reductionMatrix cuAlgo)
+target_include_directories(reductionMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET reductionMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install (TARGETS
+    reductionMatrix # executables
+    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
