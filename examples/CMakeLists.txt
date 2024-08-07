@@ -37,3 +37,12 @@ set_property(TARGET reductionMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 install (TARGETS
     reductionMatrix # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
+add_executable(convolutionMatrix convolutionMatrix.cu)
+target_link_libraries (convolutionMatrix cuAlgo)
+target_include_directories(convolutionMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET convolutionMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install (TARGETS
+    convolutionMatrix # executables
+    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
