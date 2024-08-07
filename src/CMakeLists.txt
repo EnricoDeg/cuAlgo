@@ -4,6 +4,7 @@ set(SOURCE_EXE  utils.cu
                 checkError.cu
                 reduction1dvector.cu
                 reduction1dmatrix.cu
+                convolution1dmatrix.cu
                 transposeMatrix.cu
                 gMatMul.cu)
 
