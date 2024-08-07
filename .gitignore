@@ -6,3 +6,4 @@ examples/reductionVector
 examples/transpositionMatrix
 examples/generalMatrixMultiplication
 examples/reductionMatrix
+examples/convolutionMatrix
