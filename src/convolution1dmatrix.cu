@@ -7,8 +7,6 @@
 using namespace std::chrono;
 
 #define THREADS_PER_BLOCK 1024
-#define THREADS_PER_BLOCK_X 32
-#define THREADS_PER_BLOCK_Y 32
 #define COMPUTE_PER_THREAD  32
 
 __global__ void convolution1dMatrixKernel(const int *__restrict__ R,
