@@ -7,3 +7,4 @@ examples/transpositionMatrix
 examples/generalMatrixMultiplication
 examples/reductionMatrix
 examples/convolutionMatrix
+examples/convolutionReductionMatrix
