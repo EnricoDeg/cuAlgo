@@ -9,7 +9,7 @@ int main() {
 
 	cudaError_t err;
 	size_t K = 8192;
-	size_t N = 1024;
+	size_t N = 4096;
 
 	int * R = (int *)malloc(K * N * sizeof(int));
 	for (size_t i = 0 ; i < K ; ++i)

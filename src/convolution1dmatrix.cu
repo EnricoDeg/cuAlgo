@@ -49,24 +49,24 @@ __global__ void convolution1dMatrixKernel1(const int *__restrict__ R,
 
 	const size_t tid = blockIdx.x * THREADS_PER_BLOCK + threadIdx.x;
 
-	if (tid > N * chunks)
+	if (tid > N / 2 * chunks)
 		return;
 
 #pragma unroll
 	for (size_t i = 0; i < K / chunks; ++i) {
 
-		const size_t col = ( i * N * chunks + tid ) % N;
-		const size_t row = ( i * N * chunks + tid ) / N;
+		size_t col = ( i * N / 2 * chunks + tid ) % ( N / 2 );
+		const size_t row = ( i * N / 2 * chunks + tid ) / ( N / 2 );
 
-		if (col == 0 || col == N/2) {
+		if (col == 0) {
 
 			C[col + N * row] = R[col + N * row] * V[col + N * row];
+			C[col + N / 2 + N * row] = R[col + N / 2 + N * row] * V[col + N / 2 + N * row];
 		} else if (col > 0 && col < N /2) {
 
 			C[col + N * row] = R[col + N * row] * V[col + N * row] -
 			                   R[N - col + N * row] * V[N - col + N * row] ;
-		} else {
-
+			col += N / 2;
 			size_t j = col - ( N / 2 + 1 );
 			C[col + N * row] = R[N / 2 - 1 - j + N * row] * V[col + N * row] +
 			                   R[col + N * row] * V[N / 2 - 1 - j + N * row] ;
@@ -85,7 +85,7 @@ void convolution1dMatrix(int *  R,
 	std::cout << "K = " << K << std::endl;
 
 	dim3 block(THREADS_PER_BLOCK);
-	dim3 grid(div_ceil(N * chunks, THREADS_PER_BLOCK));
+	dim3 grid(div_ceil(N / 2 * chunks, THREADS_PER_BLOCK));
 
 	std::cout << "threadsPerBlock = " << THREADS_PER_BLOCK << std::endl;
 	std::cout << "blocksPerGrid   = " << div_ceil(N * chunks, THREADS_PER_BLOCK) << std::endl;
