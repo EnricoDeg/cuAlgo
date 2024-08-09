@@ -16,4 +16,10 @@ void reduce1dMatrix(int * B, int * C, size_t N, size_t K);
 
 void convolution1dMatrix(int * R, int * V, int * C, size_t N, size_t K);
 
+void convolutionReduction1dMatrix(int *  R,
+                                  int *  V,
+                                  int *  C,
+                                  size_t N,
+                                  size_t K) ;
+
 #endif
