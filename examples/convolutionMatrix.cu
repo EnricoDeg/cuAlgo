@@ -68,7 +68,7 @@ int main() {
 
 		for (int i = 1; i < N / 2; ++i)
 			solution[i + j * N] = R[i + j * N] * V[i + j * N] -
-			                      R[N - 1 - i + j * N] * V[N - 1 - i + j * N];
+			                      R[N - i + j * N] * V[N - i + j * N];
 
 		solution[N / 2 + j * N] = R[N / 2 + j * N] * V[N / 2 + j * N];
 

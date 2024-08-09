@@ -27,7 +27,7 @@ __global__ void convolution1dMatrixKernel(const int *__restrict__ R,
 	} else if (col > 0 && col < N /2) {
 
 		C[col + N * row] = R[col + N * row] * V[col + N * row] -
-		                   R[N - 1 - col + N * row] * V[N - 1 - col + N * row] ;
+		                   R[N - col + N * row] * V[N - col + N * row] ;
 	} else {
 
 		size_t j = col - ( N / 2 + 1 );
