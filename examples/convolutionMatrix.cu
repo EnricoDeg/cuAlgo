@@ -1,11 +1,14 @@
 #include <iostream>
 #include <stdlib.h>
 #include <cuAlgo.hpp>
+#include <chrono>
+
+using namespace std::chrono;
 
 int main() {
 
 	cudaError_t err;
-	size_t K = 1024;
+	size_t K = 8192;
 	size_t N = 1024;
 
 	int * R = (int *)malloc(K * N * sizeof(int));
@@ -62,6 +65,7 @@ int main() {
 	for (size_t i = 0 ; i < N ; ++i)
 		solution[i] = 0;
 
+	auto start = high_resolution_clock::now();
 	for (int j = 0 ; j < K ; ++j) {
 
 		solution[j * N] = R[j * N] * V[j * N];
@@ -76,6 +80,9 @@ int main() {
 			solution[i + j * N] = R[N / 2 - 1 - k + j * N] * V[i + j * N] +
 			                      R[i + j * N] * V[N / 2 - 1 - k + j * N];
 	}
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+	std::cout << "Time taken by function (CPU): " << duration.count() << " microseconds" << std::endl;
 
 	err = cudaMemcpy ( C, d_C, N * K * sizeof(int), cudaMemcpyDeviceToHost );
 	if ( err != cudaSuccess ) {
