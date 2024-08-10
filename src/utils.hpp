@@ -1,5 +1,5 @@
 /*
- * @file checkError.cu
+ * @file utils.hpp
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -14,13 +14,12 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#ifndef UTILS_HPP
+#define UTILS_HPP
+
+#include <cstdlib>
 #include <iostream>
-#include "cuAlgo.hpp"
 
-void check_cuda(cudaError_t error) {
+int div_ceil(int numerator, int denominator);
 
-	if ( error != cudaSuccess ) {
-		std::cout << "CUDA error: " << cudaGetErrorString(error) << std::endl;
-		exit(EXIT_FAILURE);
-	}
-}
+#endif

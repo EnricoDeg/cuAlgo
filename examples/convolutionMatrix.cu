@@ -1,3 +1,19 @@
+/*
+ * @file convolutionMatrix.cu
+ *
+ * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
+ *
+ * @author Enrico Degregori <enrico.degregori@gmail.com>
+ * 
+ * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 #include <iostream>
 #include <stdlib.h>
 #include <cuAlgo.hpp>
@@ -25,14 +41,10 @@ int main() {
 	int * solution = (int *)malloc(N*K * sizeof(int));
 
 	int *d_R;
-	err = cudaMalloc(&d_R, K * N * sizeof(int));
-	if (err != cudaSuccess) {
-		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
-		exit(EXIT_FAILURE);
-	}
+	check_cuda( cudaMalloc(&d_R, K * N * sizeof(int)) );
 
 	int *d_V;
-	err = cudaMalloc(&d_V, K * N * sizeof(int));
+	check_cuda( cudaMalloc(&d_V, K * N * sizeof(int)) );
 	if (err != cudaSuccess) {
 		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
 		exit(EXIT_FAILURE);
