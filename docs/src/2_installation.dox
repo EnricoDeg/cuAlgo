@@ -1,0 +1,22 @@
+/**
+ * \page installation Installation
+
+\tableofcontents
+
+Dependencies:
+
+ - CMake
+ - Doxygen
+ - CUDA
+
+Minimal installation:
+
+\code
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+make install
+\endcode
+
+*/

@@ -1,0 +1,22 @@
+/** @mainpage
+
+<h2>Autors</h2>
+
+Enrico Degregori
+
+<h2>Table of Contents</h2>
+
+- @ref license
+- @ref installation
+- @ref start
+
+@defgroup algo
+          API functions
+
+@defgroup examples
+          Standalone examples of applications using cuAlgo library
+
+@defgroup algo_tests
+          Tests of the API functions
+
+*/

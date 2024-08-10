@@ -1,0 +1,20 @@
+INPUT                  = "@DOXYGEN_INPUT_DIR@/src" \
+                         "@DOXYGEN_INPUT_DIR@/docs/src" \
+                         "@DOXYGEN_INPUT_DIR@/examples"
+
+HAVE_DOT = no
+
+EXTRACT_ALL = yes
+
+FILE_PATTERNS = *.hpp \
+                *.dox \
+                */examples/*.cu \
+                */tests/*.cu
+
+OPTIMIZE_OUTPUT_FOR_C = yes
+
+EXTRACT_STATIC = yes
+
+PROJECT_NAME = "cuAlgo"
+
+IMAGE_PATH             = "@DOXYGEN_INPUT_DIR@/docs/figures"
