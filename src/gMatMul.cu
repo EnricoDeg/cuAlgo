@@ -6,15 +6,17 @@
 
 using namespace std::chrono;
 
-__global__ void gMatMulKernel(int M, int N, int K, float alpha, const float *A,
-                              const float *B, float beta, float *C) {
+template <const uint BLOCKSIZE>
+__global__ void gMatMulKernel(int M, int N, int K, int alpha, const int *A,
+                              const int *B, int beta, int *C) {
 	// compute position in C that this thread is responsible for
-	const uint x = blockIdx.x * blockDim.x + threadIdx.x;
-	const uint y = blockIdx.y * blockDim.y + threadIdx.y;
+	const int x = blockIdx.x * BLOCKSIZE + (threadIdx.x / BLOCKSIZE);
+	const int y = blockIdx.y * BLOCKSIZE + (threadIdx.x % BLOCKSIZE);
+
 
 	// `if` condition is necessary for when M or N aren't multiples of 32.
 	if (x < M && y < N) {
-		float tmp = 0.0;
+		int tmp = 0.0;
 		for (int i = 0; i < K; ++i) {
 			tmp += A[x * K + i] * B[i * N + y];
 		}
@@ -23,19 +25,19 @@ __global__ void gMatMulKernel(int M, int N, int K, float alpha, const float *A,
 	}
 }
 
-void gMatMul(int M, int N, int K, float alpha, const float *A,
-             const float *B, float beta, float *C) {
+void gMatMul(int M, int N, int K, int alpha, const int *A,
+             const int *B, int beta, int *C) {
 
 	// create as many blocks as necessary to map all of C
-	dim3 blocksPerGrid3(div_ceil(M, 32), div_ceil(N, 32), 1);
+	dim3 blocksPerGrid3(div_ceil(M, 32), div_ceil(N, 32));
 	// 32 * 32 = 1024 thread per block
-	dim3 threadsPerBlock3(32, 32, 1);
+	dim3 threadsPerBlock3(32 * 32);
 
 	std::cout << "threadsPerBlock = " << 32 << ", " << 32 << std::endl;
 	std::cout << "blocksPerGrid   = " << div_ceil(M, 32) << ", " << div_ceil(N, 32) << std::endl;
 
 	auto start = high_resolution_clock::now();
-	gMatMulKernel<<< blocksPerGrid3, threadsPerBlock3 >>>(M, N, K, alpha, A, B, beta, C);
+	gMatMulKernel<32><<< blocksPerGrid3, threadsPerBlock3 >>>(M, N, K, alpha, A, B, beta, C);
 	check_cuda( cudaDeviceSynchronize() );
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);

@@ -9,29 +9,29 @@ int main() {
 	int M = N;
 	int K = N;
 	int T = 32;
-	float alpha = 1.0f;
-	float beta = 0.0f;
+	int alpha = 1;
+	int beta = 0;
 
-	float * A = (float *)malloc(N * N * sizeof(float));
-	float * B = (float *)malloc(N * N * sizeof(float));
-	float * C = (float *)malloc(N * N * sizeof(float));
-	float * solution = (float *)malloc(N * N * sizeof(float));
-
-	for(int i = 0; i < N; ++i)
-		for (int j = 0; j < N ; ++j)
-			A[j + i * N] = j * 1.0f;
+	int * A = (int *)malloc(N * N * sizeof(int));
+	int * B = (int *)malloc(N * N * sizeof(int));
+	int * C = (int *)malloc(N * N * sizeof(int));
+	int * solution = (int *)malloc(N * N * sizeof(int));
 
 	for(int i = 0; i < N; ++i)
 		for (int j = 0; j < N ; ++j)
-			B[j + i * N] = i * 1.0f;
+			A[j + i * N] = j * 1;
 
 	for(int i = 0; i < N; ++i)
 		for (int j = 0; j < N ; ++j)
-			C[j + i * N] = 1.0f;
+			B[j + i * N] = i * 1;
 
 	for(int i = 0; i < N; ++i)
 		for (int j = 0; j < N ; ++j)
-			solution[j + i * N] = 0.0f;
+			C[j + i * N] = 1;
+
+	for(int i = 0; i < N; ++i)
+		for (int j = 0; j < N ; ++j)
+			solution[j + i * N] = 0;
 
 	for (int m = 0; m < M; m += T) {
 		for (int n = 0; n < N; n += T) {
@@ -56,40 +56,40 @@ int main() {
 		for (int j = 0; j < N ; ++j)
 			solution[j + i * N] = alpha * solution[j + i * N] + beta * C[j + i * N];
 
-	float *d_A;
-	err = cudaMalloc(&d_A, N*N*sizeof(float));
+	int *d_A;
+	err = cudaMalloc(&d_A, N*N*sizeof(int));
 	if (err != cudaSuccess) {
 		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
-	float *d_B;
-	err = cudaMalloc(&d_B, N*N*sizeof(float));
+	int *d_B;
+	err = cudaMalloc(&d_B, N*N*sizeof(int));
 	if (err != cudaSuccess) {
 		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
-	float *d_C;
-	err = cudaMalloc(&d_C, N*N*sizeof(float));
+	int *d_C;
+	err = cudaMalloc(&d_C, N*N*sizeof(int));
 	if (err != cudaSuccess) {
 		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
-	err = cudaMemcpy ( d_A, A, (size_t)N*N*sizeof(float), cudaMemcpyHostToDevice );
+	err = cudaMemcpy ( d_A, A, (size_t)N*N*sizeof(int), cudaMemcpyHostToDevice );
 	if ( err != cudaSuccess ) {
 		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
-	err = cudaMemcpy ( d_B, B, (size_t)N*N*sizeof(float), cudaMemcpyHostToDevice );
+	err = cudaMemcpy ( d_B, B, (size_t)N*N*sizeof(int), cudaMemcpyHostToDevice );
 	if ( err != cudaSuccess ) {
 		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
-	err = cudaMemcpy ( d_C, C, (size_t)N*N*sizeof(float), cudaMemcpyHostToDevice );
+	err = cudaMemcpy ( d_C, C, (size_t)N*N*sizeof(int), cudaMemcpyHostToDevice );
 	if ( err != cudaSuccess ) {
 		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
 		exit(EXIT_FAILURE);
@@ -98,7 +98,7 @@ int main() {
 	for (int i = 0; i < 5; ++i)
 		gMatMul(N, N, N, alpha, d_A, d_B, beta, d_C);
 
-	err = cudaMemcpy ( C, d_C, N*N*sizeof(float), cudaMemcpyDeviceToHost );
+	err = cudaMemcpy ( C, d_C, N*N*sizeof(int), cudaMemcpyDeviceToHost );
 	if ( err != cudaSuccess ) {
 		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
 		exit(EXIT_FAILURE);
@@ -106,8 +106,8 @@ int main() {
 
 	for(int i = 0; i < N; ++i)
 		for (int j = 0; j < N ; ++j) {
-			if ( fabsf( solution[j + i * N] - C[j + i * N] ) > 1.0e-6 ) {
-				printf( "%d, %d, %f\n", i, j, fabsf( solution[j + i * N] - C[j + i * N] ) ) ;
+			if (  solution[j + i * N] != C[j + i * N] ) {
+				printf( "%d, %d, %d, %d\n", i, j, solution[j + i * N] , C[j + i * N] ) ;
 			}
 		}
 
