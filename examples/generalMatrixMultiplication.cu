@@ -79,7 +79,7 @@ int main() {
 	check_cuda( cudaMalloc(&d_B, N*N*sizeof(int)) );
 
 	int *d_C;
-	check( cudaMalloc(&d_C, N*N*sizeof(int)) );
+	check_cuda( cudaMalloc(&d_C, N*N*sizeof(int)) );
 
 	check_cuda( cudaMemcpy ( d_A, A, (size_t)N*N*sizeof(int), cudaMemcpyHostToDevice ) );
 

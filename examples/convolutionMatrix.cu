@@ -45,10 +45,6 @@ int main() {
 
 	int *d_V;
 	check_cuda( cudaMalloc(&d_V, K * N * sizeof(int)) );
-	if (err != cudaSuccess) {
-		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
-		exit(EXIT_FAILURE);
-	}
 
 	int *d_C;
 	err = cudaMalloc(&d_C, N * K * sizeof(int));
