@@ -32,7 +32,6 @@
 
 int main() {
 
-	cudaError_t err;
 	size_t K = 8192;
 	size_t N = 4096;
 
@@ -45,24 +44,12 @@ int main() {
 	int * solution = (int *)malloc(N * sizeof(int));
 
 	int *d_B;
-	err = cudaMalloc(&d_B, K * N * sizeof(int));
-	if (err != cudaSuccess) {
-		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
-		exit(EXIT_FAILURE);
-	}
+	check_cuda( cudaMalloc(&d_B, K * N * sizeof(int)) );
 
 	int *d_C;
-	err = cudaMalloc(&d_C, N * sizeof(int));
-	if (err != cudaSuccess) {
-		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
-		exit(EXIT_FAILURE);
-	}
+	check_cuda( cudaMalloc(&d_C, N * sizeof(int)) );
 
-	err = cudaMemcpy ( d_B, B, K * N *sizeof(int), cudaMemcpyHostToDevice );
-	if ( err != cudaSuccess ) {
-		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
-		exit(EXIT_FAILURE);
-	}
+	check_cuda( cudaMemcpy ( d_B, B, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
 
 	std::cout << "launching kernels ..." << std::endl;
 	for (size_t i = 0; i < 5; ++i)
@@ -76,15 +63,11 @@ int main() {
 		for (int j = 0 ; j < N ; ++j)
 			solution[j] += B [j + i * N];
 
-	err = cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost );
-	if ( err != cudaSuccess ) {
-		std::cout << "CUDA error (cudaMalloc): " <<  cudaGetErrorString(err) << std::endl;
-		exit(EXIT_FAILURE);
-	}
+	check_cuda( cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost ) );
 
 	for (size_t i = 0 ; i < N ; ++i)
 		if (solution[i] != C[i]) {
-			std::cout << "Values different" << std::endl;
+			std::cout << "Values are different" << std::endl;
 			exit(EXIT_FAILURE);
 		}
 
