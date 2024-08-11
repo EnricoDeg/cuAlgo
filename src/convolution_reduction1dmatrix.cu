@@ -35,7 +35,9 @@
 using namespace std::chrono;
 
 #define THREADS_PER_BLOCK 1024
-#define COMPUTE_PER_THREAD 128
+#define THREADS_PER_BLOCK_X 32
+#define THREADS_PER_BLOCK_Y 32
+#define COMPUTE_PER_THREAD   8
 
 __global__ void convolutionReduction1dMatrixKernel(const int *__restrict__ R,
                                                    const int *__restrict__ V,
@@ -76,6 +78,59 @@ __global__ void convolutionReduction1dMatrixKernel(const int *__restrict__ R,
 	C[tidx + N / 2 + N * tidy] = tmp2;
 }
 
+__global__ void convolutionReduction1dMatrixKernel1(const int *__restrict__ R,
+                                                    const int *__restrict__ V,
+                                                          int *__restrict__ C,
+                                                    size_t                  N,
+                                                    size_t                  K,
+                                                    size_t             chunks) {
+
+	__shared__ int sdata1[THREADS_PER_BLOCK_Y][THREADS_PER_BLOCK_X];
+	__shared__ int sdata2[THREADS_PER_BLOCK_Y][THREADS_PER_BLOCK_X];
+
+	const size_t col = blockIdx.x * THREADS_PER_BLOCK_X + threadIdx.x;
+	      size_t row = blockIdx.y * THREADS_PER_BLOCK_Y + threadIdx.y;
+
+	if (col < N / 2 && row < chunks) {
+
+		sdata1[threadIdx.y][threadIdx.x] = 0;
+		sdata2[threadIdx.y][threadIdx.x] = 0;
+
+		if (col == 0) {
+
+#pragma unroll
+			for (size_t i = 0; i < K / chunks; ++i, row+=chunks) {
+				sdata1[threadIdx.y][threadIdx.x] += R[col         + N * row] * V[col         + N * row];
+				sdata2[threadIdx.y][threadIdx.x] += R[col + N / 2 + N * row] * V[col + N / 2 + N * row];
+			}
+		} else if (col > 0 && col < N / 2) {
+
+#pragma unroll
+			for (size_t i = 0; i < K / chunks; ++i, row+=chunks) {
+				sdata1[threadIdx.y][threadIdx.x] += R[col + N * row]         * V[col + N * row] -
+				                                    R[N - col + N * row]     * V[N - col + N * row] ;
+				sdata2[threadIdx.y][threadIdx.x] += R[N / 2 - col + N * row] * V[col + N / 2 + N * row] +
+				                                    R[col + N / 2 + N * row] * V[N / 2 - col + N * row] ;
+			}
+		}
+	}
+
+	__syncthreads();
+
+	for (unsigned int s=blockDim.y/2; s>0; s>>=1) {
+		if (threadIdx.y < s) {
+			sdata1[threadIdx.y][threadIdx.x] += sdata1[threadIdx.y + s][threadIdx.x];
+			sdata2[threadIdx.y][threadIdx.x] += sdata2[threadIdx.y + s][threadIdx.x];
+		}
+		__syncthreads();
+	}
+
+	if (threadIdx.y == 0) {
+		C[col         + N * blockIdx.y] = sdata1[0][threadIdx.x];
+		C[col + N / 2 + N * blockIdx.y] = sdata2[0][threadIdx.x];
+	}
+}
+
 void convolutionReduction1dMatrix(int *  R,
                                   int *  V,
                                   int *  C,
@@ -86,7 +141,30 @@ void convolutionReduction1dMatrix(int *  R,
 	std::cout << "chunks = " << chunks << std::endl;
 	std::cout << "K = " << K << std::endl;
 
-	if (chunks > 1) {
+	if (chunks > THREADS_PER_BLOCK_Y) {
+
+		int * d_buffer;
+		check_cuda( cudaMalloc(&d_buffer, N * chunks / 32 *sizeof(int)) );
+
+		dim3 block(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+		dim3 grid(div_ceil(N / 2, THREADS_PER_BLOCK_X), div_ceil(chunks, THREADS_PER_BLOCK_Y));
+
+		std::cout << "threadsPerBlock = " << THREADS_PER_BLOCK_X << ", "
+		          << THREADS_PER_BLOCK_Y << std::endl;
+		std::cout << "blocksPerGrid   = " << div_ceil(N / 2, THREADS_PER_BLOCK_X) << ", "
+		          << div_ceil(chunks, THREADS_PER_BLOCK_Y) << std::endl;
+
+		auto start = high_resolution_clock::now();
+		convolutionReduction1dMatrixKernel1<<<grid, block>>>(R, V, d_buffer, N, K, chunks);
+		check_cuda( cudaDeviceSynchronize() );
+		auto stop = high_resolution_clock::now();
+		auto duration = duration_cast<microseconds>(stop - start);
+		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
+
+		reduce1dMatrix(d_buffer, C, N, chunks/32);
+
+		check_cuda( cudaFree ( d_buffer ) );
+	} else if (chunks < THREADS_PER_BLOCK_Y && chunks > 1) {
 
 		int * d_buffer;
 		check_cuda( cudaMalloc(&d_buffer, N * chunks *sizeof(int)) );
