@@ -48,6 +48,17 @@ __global__ void gMatVecMulKernel(const int *__restrict__ A,
                                        size_t            N,
                                        size_t            K) {
 
+	extern __shared__ int A_smem[];
+	size_t A_smem_iters = div_ceil(K, THREADS_PER_BLOCK);
+
+#pragma unroll
+	for (size_t i = 0; i < A_smem_iters; ++i) {
+		size_t idx = i * THREADS_PER_BLOCK + threadIdx.x;
+		A_smem[idx] = A[idx];
+	}
+
+	__syncthreads();
+
 	const size_t warp_id = threadIdx.x / WARP_SIZE;
 	const size_t warp_col = blockIdx.x * WARPS_PER_BLOCK + warp_id;
 	if (warp_col >= N)
@@ -61,7 +72,7 @@ __global__ void gMatVecMulKernel(const int *__restrict__ A,
 	for (size_t i = 0; i < K_iters; ++i) {
 		const size_t A_idx = i * WARP_SIZE + lane_id;
 		const size_t B_idx = i * WARP_SIZE + lane_id + warp_col * K;
-		tmp += A[A_idx] * B[B_idx];
+		tmp += A_smem[A_idx] * B[B_idx];
 	}
 
 	const unsigned int mask = 0xffffffff;
@@ -108,12 +119,13 @@ void gMatVecMul(int *A, int *B, int *C, size_t N, size_t K) {
 
 	dim3 block(THREADS_PER_BLOCK);
 	dim3 grid(div_ceil(N, WARPS_PER_BLOCK));
+	size_t smem = getSmem<int>(K);
 
 	std::cout << "threadsPerBlock = " << THREADS_PER_BLOCK << std::endl;
 	std::cout << "blocksPerGrid   = " << div_ceil(N, THREADS_PER_BLOCK) << std::endl;
 
 	auto start = high_resolution_clock::now();
-	gMatVecMulKernel1<<<grid, block>>>(A, B, C, N, K);
+	gMatVecMulKernel<<<grid, block, smem>>>(A, B, C, N, K);
 	check_cuda( cudaDeviceSynchronize() );
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
