@@ -28,9 +28,10 @@
  */
 #include "utils.hpp"
 
-int div_ceil(int numerator, int denominator)
+__device__ __host__ int div_ceil(int numerator, int denominator)
 {
 
-	std::div_t res = std::div(numerator, denominator);
-	return res.rem ? (res.quot + 1) : res.quot;
+	return (numerator % denominator != 0) ?
+	       (numerator / denominator+ 1  ) :
+	       (numerator / denominator     ) ;
 }

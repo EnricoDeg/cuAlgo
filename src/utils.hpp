@@ -32,6 +32,6 @@
 #include <cstdlib>
 #include <iostream>
 
-int div_ceil(int numerator, int denominator);
+__device__ __host__ int div_ceil(int numerator, int denominator);
 
 #endif
