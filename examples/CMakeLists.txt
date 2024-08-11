@@ -28,6 +28,15 @@ install (TARGETS
     generalMatrixMultiplication # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
+add_executable(generalMatrixVectorMultiplication generalMatrixVectorMultiplication.cu)
+target_link_libraries (generalMatrixVectorMultiplication cuAlgo)
+target_include_directories(generalMatrixVectorMultiplication PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET generalMatrixVectorMultiplication PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install (TARGETS
+    generalMatrixVectorMultiplication # executables
+    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
 
 add_executable(reductionMatrix reductionMatrix.cu)
 target_link_libraries (reductionMatrix cuAlgo)
