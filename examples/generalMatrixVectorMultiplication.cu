@@ -33,7 +33,7 @@
 
 int main() {
 
-	int N     = 1024;
+	int N     = 8192;
 	int K     = N;
 
 	int * B        = (int *)malloc(N * K * sizeof(int));
