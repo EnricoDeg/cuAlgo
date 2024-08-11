@@ -110,7 +110,7 @@ void gMatMul(int M, int N, int K, int alpha, const int *A,
  * @param[in]  A pointer to the input vector.
  *               The vector has dimensions {K}.
  * @param[in]  B pointer to the input matrix.
- *               The matrix has dimensions {N,K}.
+ *               The matrix has dimensions {K,N}.
  * @param[out] C pointer to the output vector.
  *               The vector has dimensions {N}.
  * @param[in]  N contiguous dimension of the input matrix
