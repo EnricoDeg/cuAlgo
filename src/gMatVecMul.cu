@@ -38,6 +38,10 @@ using namespace std::chrono;
 #define WARPS_PER_BLOCK 4
 #define THREADS_PER_BLOCK 128  // WARP_SIZE * WARPS_PER_BLOCK
 
+#define COLS_PER_WARP 2
+#define COLS_PER_BLOCK 8  // COLS_PER_WARP * WARPS_PER_BLOCK
+#define GROUP_SIZE 16     // WARP_SIZE / COLS_PER_WARP
+
 __global__ void gMatVecMulKernel(const int *__restrict__ A,
                                  const int *__restrict__ B,
                                        int *__restrict__ C,
@@ -69,6 +73,37 @@ __global__ void gMatVecMulKernel(const int *__restrict__ A,
 		C[warp_col] = tmp;
 }
 
+__global__ void gMatVecMulKernel1(const int *__restrict__ A,
+                                 const int *__restrict__ B,
+                                       int *__restrict__ C,
+                                       size_t            N,
+                                       size_t            K) {
+
+	const size_t group_id  = threadIdx.x / GROUP_SIZE;
+	const size_t group_col = blockIdx.x * COLS_PER_BLOCK + group_id;
+	if (group_col >= N)
+		return;
+
+	const size_t K_iters = div_ceil(K, GROUP_SIZE);
+	const size_t group_lane_id = threadIdx.x % GROUP_SIZE;
+
+	int tmp = 0.0;
+#pragma unroll
+	for (size_t i = 0; i < K_iters; ++i) {
+		const size_t A_idx = i * GROUP_SIZE + group_lane_id;
+		const size_t B_idx = i * GROUP_SIZE + group_lane_id + group_col * K;
+		tmp += A[A_idx] * B[B_idx];
+	}
+
+	constexpr unsigned int mask = 0xffffffff;
+#pragma unroll
+	for (size_t i = GROUP_SIZE / 2; i >= 1; i /= 2)
+		tmp += __shfl_xor_sync(mask, tmp, i);
+
+	if (group_lane_id == 0)
+		C[group_col] = tmp;
+}
+
 void gMatVecMul(int *A, int *B, int *C, size_t N, size_t K) {
 
 	dim3 block(THREADS_PER_BLOCK);
@@ -78,7 +113,7 @@ void gMatVecMul(int *A, int *B, int *C, size_t N, size_t K) {
 	std::cout << "blocksPerGrid   = " << div_ceil(N, THREADS_PER_BLOCK) << std::endl;
 
 	auto start = high_resolution_clock::now();
-	gMatVecMulKernel<<<grid, block>>>(A, B, C, N, K);
+	gMatVecMulKernel1<<<grid, block>>>(A, B, C, N, K);
 	check_cuda( cudaDeviceSynchronize() );
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
