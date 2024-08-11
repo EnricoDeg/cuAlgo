@@ -31,17 +31,7 @@
 
 #include <cuda.h>
 
-/**
- * @brief   Check CUDA error
- * 
- * @details Check error returned by CUDA function and print error string
- *          if it is not cudaSuccess
- * 
- * @param[in] error cuda error
- * 
- * @ingroup algo
- */
-void check_cuda(cudaError_t error);
+#include "checkError.hpp"
 
 void reduce1dVector(int *g_idata, int *g_odata, int size);
 

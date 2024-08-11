@@ -1,5 +1,5 @@
 /*
- * @file checkError.cu
+ * @file checkError.h
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -26,13 +26,22 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <iostream>
-#include "checkError.hpp"
 
-void check_cuda(cudaError_t error) {
+#ifndef CHECK_ERROR_HPP
+#define CHECK_ERROR_HPP
 
-	if ( error != cudaSuccess ) {
-		std::cout << "CUDA error: " << cudaGetErrorString(error) << std::endl;
-		exit(EXIT_FAILURE);
-	}
-}
+#include <cuda.h>
+
+/**
+ * @brief   Check CUDA error
+ * 
+ * @details Check error returned by CUDA function and print error string
+ *          if it is not cudaSuccess
+ * 
+ * @param[in] error cuda error
+ * 
+ * @ingroup algo
+ */
+void check_cuda(cudaError_t error);
+
+#endif
