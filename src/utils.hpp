@@ -31,7 +31,29 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <cuda.h>
+#include "checkError.hpp"
 
 __device__ __host__ int div_ceil(int numerator, int denominator);
+
+template <typename T>
+size_t getSmem(size_t K) {
+
+	int dev_id = 0;
+	check_cuda( cudaGetDevice(&dev_id) );
+
+	cudaDeviceProp dev_prop;
+	check_cuda( cudaGetDeviceProperties(&dev_prop, dev_id) );
+
+	size_t smem_max_size = K * sizeof(T);
+
+	if ( dev_prop.sharedMemPerMultiprocessor < smem_max_size) {
+
+		std::cout << "shared memory request too large" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	return smem_max_size;
+}
 
 #endif
