@@ -90,6 +90,17 @@ __global__ void gMatVecMulKernel1(const int *__restrict__ A,
                                        size_t            N,
                                        size_t            K) {
 
+	extern __shared__ int A_smem[];
+	size_t A_smem_iters = div_ceil(K, THREADS_PER_BLOCK);
+
+#pragma unroll
+	for (size_t i = 0; i < A_smem_iters; ++i) {
+		size_t idx = i * THREADS_PER_BLOCK + threadIdx.x;
+		A_smem[idx] = A[idx];
+	}
+
+	__syncthreads();
+
 	const size_t group_id  = threadIdx.x / GROUP_SIZE;
 	const size_t group_col = blockIdx.x * COLS_PER_BLOCK + group_id;
 	if (group_col >= N)
@@ -103,7 +114,7 @@ __global__ void gMatVecMulKernel1(const int *__restrict__ A,
 	for (size_t i = 0; i < K_iters; ++i) {
 		const size_t A_idx = i * GROUP_SIZE + group_lane_id;
 		const size_t B_idx = i * GROUP_SIZE + group_lane_id + group_col * K;
-		tmp += A[A_idx] * B[B_idx];
+		tmp += A_smem[A_idx] * B[B_idx];
 	}
 
 	constexpr unsigned int mask = 0xffffffff;
@@ -125,7 +136,7 @@ void gMatVecMul(int *A, int *B, int *C, size_t N, size_t K) {
 	std::cout << "blocksPerGrid   = " << div_ceil(N, THREADS_PER_BLOCK) << std::endl;
 
 	auto start = high_resolution_clock::now();
-	gMatVecMulKernel<<<grid, block, smem>>>(A, B, C, N, K);
+	gMatVecMulKernel1<<<grid, block, smem>>>(A, B, C, N, K);
 	check_cuda( cudaDeviceSynchronize() );
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
