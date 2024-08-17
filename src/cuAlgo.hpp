@@ -121,6 +121,30 @@ void gMatMul(int M, int N, int K, int alpha, const int *A,
 void gMatVecMul(int *A, int *B, int *C, size_t N, size_t K);
 
 /**
+ * @brief   Perform sparse matrix-vector multiplication.
+ * 
+ * @details The sparse matrix vector multiplication assumes that
+ *          the matrix is provided in CSR format
+ * 
+ * @param[in]  columns An integer array of column positions
+ *                     where the matrix value is non zero.
+ * @param[in]  row_ptr Array of locations in the columns array
+ *                     where a new row starts.
+ * @param[in] values   An array of non zeros values of the matrix.
+ * @param[in]  x       The vector array that multiplies the matrix.
+ * @param[out] y       The vector array result of the multiplication.
+ * @param[in]  nrows   Number of rows in the matrix.
+ * 
+ * @ingroup algo
+ */
+void gSpMatVecMulCSRVector( int * columns,
+                            int * row_ptr,
+                            int * values ,
+                            int * x      ,
+                            int * y      ,
+                            int   nrows  ) ;
+
+/**
  * @brief   Perform 1D convolution on the input matrices.
  * 
  * @details The convolution is done on the fast dimension of the input

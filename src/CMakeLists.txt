@@ -9,7 +9,8 @@ set(SOURCE_EXE  utils.cu
                 convolution_taper_reduction1dmatrix.cu
                 transposeMatrix.cu
                 gMatMul.cu
-                gMatVecMul.cu)
+                gMatVecMul.cu
+                gSpMatVecMulCSRVector.cu)
 
 add_library(cuAlgo SHARED ${SOURCE_EXE})
 target_include_directories(cuAlgo PRIVATE ${PROJECT_SOURCE_DIR})
