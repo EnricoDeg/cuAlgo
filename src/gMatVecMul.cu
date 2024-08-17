@@ -133,7 +133,7 @@ void gMatVecMul(int *A, int *B, int *C, size_t N, size_t K) {
 	size_t smem = getSmem<int>(K);
 
 	std::cout << "threadsPerBlock = " << THREADS_PER_BLOCK << std::endl;
-	std::cout << "blocksPerGrid   = " << div_ceil(N, THREADS_PER_BLOCK) << std::endl;
+	std::cout << "blocksPerGrid   = " << div_ceil(N, WARPS_PER_BLOCK) << std::endl;
 
 	auto start = high_resolution_clock::now();
 	gMatVecMulKernel1<<<grid, block, smem>>>(A, B, C, N, K);
