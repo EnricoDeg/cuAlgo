@@ -46,6 +46,14 @@ install (TARGETS
     generalSparseMatrixVectorMultiplicationCSRVector # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
+add_executable(generalSparseMatrixVectorMultiplicationCSRAdaptive generalSparseMatrixVectorMultiplicationCSRAdaptive.cu)
+target_link_libraries (generalSparseMatrixVectorMultiplicationCSRAdaptive cuAlgo)
+target_include_directories(generalSparseMatrixVectorMultiplicationCSRAdaptive PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET generalSparseMatrixVectorMultiplicationCSRAdaptive PROPERTY CUDA_SEPARABLE_COMPRAdaptive ON)
+
+install (TARGETS
+    generalSparseMatrixVectorMultiplicationCSRAdaptive # executables
+    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
 add_executable(reductionMatrix reductionMatrix.cu)
 target_link_libraries (reductionMatrix cuAlgo)
