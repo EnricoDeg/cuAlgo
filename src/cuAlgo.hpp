@@ -121,10 +121,13 @@ void gMatMul(int M, int N, int K, int alpha, const int *A,
 void gMatVecMul(int *A, int *B, int *C, size_t N, size_t K);
 
 /**
- * @brief   Perform sparse matrix-vector multiplication.
+ * @brief   Perform sparse matrix-vector multiplication with CSR 
+ *          format.
  * 
  * @details The sparse matrix vector multiplication assumes that
- *          the matrix is provided in CSR format
+ *          the matrix is provided in CSR format.
+ *          The vector algorithm provides good performance when the
+ *          number of non zero elements is high (more than 64).
  * 
  * @param[in]  columns An integer array of column positions
  *                     where the matrix value is non zero.
@@ -202,6 +205,40 @@ void gSpMatVecMulCSRAdaptive(int * columns     ,
                              int * y           ,
                              int   nrows       ,
                              int   blocks_count) ;
+
+/**
+ * @brief   Perform sparse matrix-vector multiplication with
+ *          ELL format.
+ * 
+ * @details The sparse matrix vector multiplication assumes that
+ *          the matrix is provided in ELL format.
+ *          The ELL format is similar to the CSR but padding is
+ *          used and the matrix is transposed. This means that 
+ *          the first non zero elements of all the rows are 
+ *          contiguous in memory in the first block.
+ *          This format works well when the number of non 
+ *          zero elements on each row is similar among all rows.
+ *          If only a single row has a much higher number of 
+ *          non zero elements, this format will significantly 
+ *          increase the memory usage and the performance of
+ *          the matrix vector multiplication will drop.
+ * 
+ * @param[in]  columns          An integer array of column positions
+ *                              where the matrix value is non zero.
+ * @param[in]  values           An array of non zeros values of the matrix.
+ * @param[in]  x                The vector array that multiplies the matrix.
+ * @param[out] y                The vector array result of the multiplication.
+ * @param[in]  nrows            Number of rows in the matrix.
+ * @param[in]  elements_in_rows max number of non zero elements.
+ * 
+ * @ingroup algo
+ */
+void gSpMatVecMulELL(int * columns         ,
+                     int * values          ,
+                     int * x               ,
+                     int * y               ,
+                     int   nrows           ,
+                     int   elements_in_rows) ;
 
 /**
  * @brief   Perform 1D convolution on the input matrices.
