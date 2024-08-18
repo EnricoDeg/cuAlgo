@@ -145,6 +145,65 @@ void gSpMatVecMulCSRVector( int * columns,
                             int   nrows  ) ;
 
 /**
+ * @brief   Compute and return the row block array given the 
+ *          row_ptr array of a matrix in CSR format.
+ * 
+ * @details The returned array is allocated on the device and 
+ *          it can be used to call gSpMatVecMulCSRAdaptive
+ * 
+ * @param[in]  row_ptr      Array of locations in the columns array
+ *                          where a new row starts.
+ * @param[in]  nrows        Number of rows in the matrix.
+ * @param[out] blocks_count Return the size of the returned array - 1
+ * 
+ * @return  Pointer to the device array with the number of rows
+ *          for each block.
+ * 
+ * @ingroup algo
+ */
+int * getRowBlocks( const int * row_ptr     ,
+                          int   nrows       ,
+                          int * blocks_count);
+
+/**
+ * @brief   Perform sparse matrix-vector multiplication with an 
+ *          adaptive method.
+ * 
+ * @details The sparse matrix vector multiplication assumes that
+ *          the matrix is provided in CSR format.
+ *          The adaptive method uses CSR-Vector, CSR-VectorL or
+ *          CSR-Stream depending on the local characteristics of
+ *          the matrix.
+ *          It should be used when the matrix has a low number of 
+ *          non zero elements in some rows. In case of high 
+ *          number of non zero elements on the all matrix (more 
+ *          than 64), the function gSpMatVecMulCSRVector() 
+ *          should be used.
+ * 
+ * @param[in]  columns    An integer array of column positions
+ *                        where the matrix value is non zero.
+ * @param[in]  row_ptr    Array of locations in the columns array
+ *                        where a new row starts.
+ * @param[in]  row_blocks An integer array with the number of rows
+ *                        for each block. The function getRowBlocks()
+ *                        can provide the array.
+ * @param[in]  values     An array of non zeros values of the matrix.
+ * @param[in]  x          The vector array that multiplies the matrix.
+ * @param[out] y          The vector array result of the multiplication.
+ * @param[in]  nrows      Number of rows in the matrix.
+ * 
+ * @ingroup algo
+ */
+void gSpMatVecMulCSRAdaptive(int * columns     ,
+                             int * row_ptr     ,
+                             int * row_blocks  ,
+                             int * values      ,
+                             int * x           ,
+                             int * y           ,
+                             int   nrows       ,
+                             int   blocks_count) ;
+
+/**
  * @brief   Perform 1D convolution on the input matrices.
  * 
  * @details The convolution is done on the fast dimension of the input
