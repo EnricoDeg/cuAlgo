@@ -10,3 +10,4 @@ examples/convolutionMatrix
 examples/convolutionReductionMatrix
 examples/generalMatrixVectorMultiplication
 examples/generalSparseMatrixVectorMultiplicationCSRVector
+examples/generalSparseMatrixVectorMultiplicationCSRAdaptive
