@@ -34,22 +34,8 @@
 
 using namespace std::chrono;
 
-#define FULL_WARP_MASK 0xffffffff
-
-#define WARP_SIZE 32
 #define WARPS_PER_BLOCK 4
 #define THREADS_PER_BLOCK 128  // WARP_SIZE * WARPS_PER_BLOCK
-
-#define COLS_PER_WARP 2
-#define COLS_PER_BLOCK 8  // COLS_PER_WARP * WARPS_PER_BLOCK
-#define GROUP_SIZE 16     // WARP_SIZE / COLS_PER_WARP
-
-__device__ int warp_reduce(int val) {
-
-	for (size_t offset = WARP_SIZE / 2; offset > 0; offset /= 2)
-		val += __shfl_down_sync(FULL_WARP_MASK, val, offset);
-	return val;
-}
 
 __global__ void gSpMatVecMulCSRVectorKernel(const int * __restrict__ columns,
                                             const int * __restrict__ row_ptr,
@@ -76,6 +62,7 @@ __global__ void gSpMatVecMulCSRVectorKernel(const int * __restrict__ columns,
 	if (lane == 0 && row < nrows)
 		y[row] = sum;
 }
+
 void gSpMatVecMulCSRVector(int * columns,
                            int * row_ptr,
                            int * values ,

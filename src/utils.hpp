@@ -34,7 +34,11 @@
 #include <cuda.h>
 #include "checkError.hpp"
 
-__device__ __host__ int div_ceil(int numerator, int denominator);
+#define FULL_WARP_MASK 0xffffffff
+#define WARP_SIZE 32
+#define NNZ_PER_WG 64
+
+__device__ __host__ int div_ceil(int numerator, int denominator) ;
 
 template <typename T>
 size_t getSmem(size_t K) {
@@ -55,5 +59,9 @@ size_t getSmem(size_t K) {
 
 	return smem_max_size;
 }
+
+__device__ int warp_reduce(int val) ;
+
+__device__ unsigned int prev_power_of_2 (unsigned int n) ;
 
 #endif

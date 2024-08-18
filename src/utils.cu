@@ -35,3 +35,19 @@ __device__ __host__ int div_ceil(int numerator, int denominator)
 	       (numerator / denominator+ 1  ) :
 	       (numerator / denominator     ) ;
 }
+
+__device__ int warp_reduce(int val) {
+
+	for (size_t offset = WARP_SIZE / 2; offset > 0; offset /= 2)
+		val += __shfl_down_sync(FULL_WARP_MASK, val, offset);
+	return val;
+}
+
+// Compute closest number to n which is a power of 2.
+// The result is always less or equal to n.
+__device__ unsigned int prev_power_of_2 (unsigned int n) {
+
+	while (n & n - 1)
+		n = n & n - 1;
+	return n;
+}
