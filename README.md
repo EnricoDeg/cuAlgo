@@ -1,5 +1,5 @@
 ## cuAlgo
-A collection of CUDA algorithms for basic linear algebra
+A collection of CUDA algorithms
 
 ##### Quick Start
 Dependencies:
