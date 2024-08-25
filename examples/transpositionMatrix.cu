@@ -49,7 +49,7 @@ int main() {
 	check_cuda( cudaMemcpy ( d_input, input, size_x * size_y * sizeof(float), cudaMemcpyHostToDevice ) );
 
 	for (int i = 0; i < 5; ++i)
-		transposeMatrix(d_input, d_output, size_x, size_y);
+		transposeMatrixFloat(d_input, d_output, size_x, size_y);
 
 	check_cuda( cudaMemcpy ( output, d_output, size_x * size_y * sizeof(float), cudaMemcpyDeviceToHost ) );
 

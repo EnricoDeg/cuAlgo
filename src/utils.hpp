@@ -33,6 +33,9 @@
 #include <iostream>
 #include <cuda.h>
 #include "checkError.hpp"
+#include <chrono>
+
+using namespace std::chrono;
 
 #define FULL_WARP_MASK 0xffffffff
 #define WARP_SIZE 32

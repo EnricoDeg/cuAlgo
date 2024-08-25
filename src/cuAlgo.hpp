@@ -66,7 +66,7 @@ void reduce1dVector(int          *idata        ,
 void reduce1dMatrix(int * B, int * C, size_t N, size_t K);
 
 /**
- * @brief   Perform matrix transposition
+ * @brief   Perform matrix transposition with floats
  * 
  * @details The input matrix has dimensions {size_x, size_y} and 
  *          the output matrix has dimensions {size_y, size_x}
@@ -78,12 +78,33 @@ void reduce1dMatrix(int * B, int * C, size_t N, size_t K);
  * 
  * @ingroup algo
  */
-void transposeMatrix(float        *idata        ,
-                     float        *odata        ,
-                     unsigned int  size_x       ,
-                     unsigned int  size_y       ,
-                     cudaStream_t  stream = 0   ,
-                     bool          async = false);
+void transposeMatrixFloat(float        *idata        ,
+                          float        *odata        ,
+                          unsigned int  size_x       ,
+                          unsigned int  size_y       ,
+                          cudaStream_t  stream = 0   ,
+                          bool          async = false);
+
+/**
+ * @brief   Perform matrix transposition with doubles
+ * 
+ * @details See documentation of transposeMatrixFloat()
+ * 
+ * @ingroup algo
+ */
+void transposeMatrixDouble(double       *idata        ,
+                           double       *odata        ,
+                           unsigned int  size_x       ,
+                           unsigned int  size_y       ,
+                           cudaStream_t  stream = 0   ,
+                           bool          async = false);
+
+void transposeMatrixInt(int          *idata        ,
+                        int          *odata        ,
+                        unsigned int  size_x       ,
+                        unsigned int  size_y       ,
+                        cudaStream_t  stream = 0   ,
+                        bool          async = false);
 
 /**
  * @brief   Perform general matrix-matrix multiplication.
