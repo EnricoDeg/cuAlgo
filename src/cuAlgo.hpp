@@ -51,7 +51,8 @@ void reduce1dVector(int          *idata        ,
                     bool          async = false);
 
 /**
- * @brief   Perform 1D reduction on a 2D array (matrix) of size {N,K}
+ * @brief   Perform 1D reduction with floats on a 2D array (matrix)
+ *          of size {N,K}
  * 
  * @details The reduction is done on the slow dimension, so the output
  *          vector has size {N}.
@@ -63,6 +64,29 @@ void reduce1dVector(int          *idata        ,
  * 
  * @ingroup algo
  */
+void reduce1dMatrixFloat(float        *B            ,
+                         float        *C            ,
+                         unsigned int  N            ,
+                         unsigned int  K            ,
+                         cudaStream_t  stream = 0   ,
+                         bool          async = false);
+
+/**
+ * @brief   Perform 1D reduction with doubles on a 2D array (matrix)
+ *          of size {N,K}
+ * 
+ * @details See documentation of reduce1dMatrixFloat()
+ * 
+ * @ingroup algo
+ */
+
+void reduce1dMatrixDouble(double       *B     ,
+                          double       *C     ,
+                          unsigned int  N     ,
+                          unsigned int  K     ,
+                          cudaStream_t  stream,
+                          bool          async );
+
 void reduce1dMatrixInt(int          *B            ,
                        int          *C            ,
                        unsigned int  N            ,
@@ -302,7 +326,7 @@ void gSpMatVecMulELL(int * columns         ,
 void convolution1dMatrix(int * R, int * V, int * C, size_t N, size_t K);
 
 /**
- * @brief   Perform 1D convolution on the input matrices and then a 
+ * @brief   Perform 1D convolution with floats on the input matrices and then a 
  *          1D reduction in the slow dimension.
  * 
  * @details This function combines convolution1dMatrix() and reduce1dMatrix()
@@ -324,7 +348,38 @@ void convolution1dMatrix(int * R, int * V, int * C, size_t N, size_t K);
  * 
  * @ingroup algo
  */
-void convolutionReduction1dMatrix(int *  R, int *  V, int *  C, size_t N, size_t K) ;
+void convolutionReduction1dMatrixFloat(float        *R            ,
+                                       float        *V            ,
+                                       float        *C            ,
+                                       unsigned int  N            ,
+                                       unsigned int  K            ,
+                                       cudaStream_t  stream = 0   ,
+                                       bool          async = false);
+
+/**
+ * @brief   Perform 1D convolution with doubles on the input matrices and then a 
+ *          1D reduction in the slow dimension.
+ * 
+ * @details See documentation of convolutionReduction1dMatrixFloat()
+ * 
+ * @ingroup algo
+ */
+
+void convolutionReduction1dMatrixDouble(double       *R            ,
+                                        double       *V            ,
+                                        double       *C            ,
+                                        unsigned int  N            ,
+                                        unsigned int  K            ,
+                                        cudaStream_t  stream = 0   ,
+                                        bool          async = false);
+
+void convolutionReduction1dMatrixInt(int          *R            ,
+                                     int          *V            ,
+                                     int          *C            ,
+                                     unsigned int  N            ,
+                                     unsigned int  K            ,
+                                     cudaStream_t  stream = 0   ,
+                                     bool          async = false) ;
 
 /**
  * @brief   Perform 1D convolution on the input matrices, then apply a taper

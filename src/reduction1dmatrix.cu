@@ -181,3 +181,23 @@ void reduce1dMatrixInt(int *         B     ,
 
 	reduce1dMatrix<int>(B, C, N , K, stream, async);
 }
+
+void reduce1dMatrixFloat(float *         B     ,
+                         float *         C     ,
+                         unsigned int  N     ,
+                         unsigned int  K     ,
+                         cudaStream_t  stream,
+                         bool          async ) {
+
+	reduce1dMatrix<float>(B, C, N , K, stream, async);
+}
+
+void reduce1dMatrixDouble(double *         B     ,
+                          double *         C     ,
+                          unsigned int  N     ,
+                          unsigned int  K     ,
+                          cudaStream_t  stream,
+                          bool          async ) {
+
+	reduce1dMatrix<double>(B, C, N , K, stream, async);
+}
