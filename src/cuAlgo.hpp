@@ -50,6 +50,9 @@ void reduce1dVector(int          *idata        ,
                     cudaStream_t  stream = 0   ,
                     bool          async = false);
 
+
+namespace cuAlgo{
+
 /**
  * @brief   Perform 1D reduction with floats on a 2D array (matrix)
  *          of size {N,K}
@@ -94,7 +97,6 @@ void reduce1dMatrixInt(int          *B            ,
                        cudaStream_t  stream = 0   ,
                        bool          async = false);
 
-namespace cuAlgo{
 /**
  * @brief   Perform matrix transposition with floats
  * 

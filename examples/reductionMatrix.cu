@@ -53,7 +53,7 @@ int main() {
 
 	std::cout << "launching kernels ..." << std::endl;
 	for (size_t i = 0; i < 5; ++i)
-		reduce1dMatrixInt(d_B, d_C, N, K);
+		cuAlgo::reduce1dMatrixInt(d_B, d_C, N, K);
 	std::cout << "launching kernels done ..." << std::endl;
 
 	for (size_t i = 0 ; i < N ; ++i)
