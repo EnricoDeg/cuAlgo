@@ -210,32 +210,35 @@ void reduce1dVector(T            *g_idata,
 	}
 }
 
-void reduce1dVectorFloat(float        *g_idata,
-                         float        *g_odata,
-                         unsigned int  size   ,
-                         cudaStream_t  stream ,
-                         bool          async  )
-{
+namespace cuAlgo {
 
-	reduce1dVector<float>(g_idata, g_odata, size, stream, async);
-}
+	void reduce1dVectorFloat(float        *g_idata,
+	                         float        *g_odata,
+	                         unsigned int  size   ,
+	                         cudaStream_t  stream ,
+	                         bool          async  )
+	{
 
-void reduce1dVectorDouble(double       *g_idata,
-                          double       *g_odata,
-                          unsigned int  size   ,
-                          cudaStream_t  stream ,
-                          bool          async  )
-{
+		reduce1dVector<float>(g_idata, g_odata, size, stream, async);
+	}
 
-	reduce1dVector<double>(g_idata, g_odata, size, stream, async);
-}
+	void reduce1dVectorDouble(double       *g_idata,
+	                          double       *g_odata,
+	                          unsigned int  size   ,
+	                          cudaStream_t  stream ,
+	                          bool          async  )
+	{
 
-void reduce1dVectorInt(int          *g_idata,
-                       int          *g_odata,
-                       unsigned int  size   ,
-                       cudaStream_t  stream ,
-                       bool          async  )
-{
+		reduce1dVector<double>(g_idata, g_odata, size, stream, async);
+	}
 
-	reduce1dVector<int>(g_idata, g_odata, size, stream, async);
+	void reduce1dVectorInt(int          *g_idata,
+	                       int          *g_odata,
+	                       unsigned int  size   ,
+	                       cudaStream_t  stream ,
+	                       bool          async  )
+	{
+
+		reduce1dVector<int>(g_idata, g_odata, size, stream, async);
+	}
 }

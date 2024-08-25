@@ -33,6 +33,8 @@
 
 #include "checkError.hpp"
 
+namespace cuAlgo{
+
 /**
  * @brief   Perform reduction on a vector of floats
  * 
@@ -68,8 +70,6 @@ void reduce1dVectorInt(int          *g_idata      ,
                        unsigned int  size         ,
                        cudaStream_t  stream = 0   ,
                        bool          async = false);
-
-namespace cuAlgo{
 
 /**
  * @brief   Perform 1D reduction with floats on a 2D array (matrix)

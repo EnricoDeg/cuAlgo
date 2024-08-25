@@ -49,7 +49,7 @@ int main() {
 	check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
 
 	for (unsigned int i = 0; i < 5; ++i)
-		reduce1dVectorInt(d_input, d_output, size);
+		cuAlgo::reduce1dVectorInt(d_input, d_output, size);
 
 	output[0] = 0;
 	for(unsigned int i = 0; i < size; ++i)
