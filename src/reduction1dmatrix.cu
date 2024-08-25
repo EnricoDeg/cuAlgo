@@ -38,67 +38,70 @@ using namespace std::chrono;
 #define THREADS_PER_BLOCK_Y 32
 #define COMPUTE_PER_THREAD 128
 
-__global__ void reduction1dMatrixKernel(const int *__restrict__ B,
-                                              int *__restrict__ C,
-                                        size_t                  N,
-                                        size_t                  K,
-                                        size_t             chunks) {
+template <typename T>
+__global__ void reduction1dMatrixKernel(const T *__restrict__ B,
+                                              T *__restrict__ C,
+                                        unsigned int          N,
+                                        unsigned int          K,
+                                        unsigned int     chunks) {
 
-	const size_t tid = blockIdx.x * THREADS_PER_BLOCK + threadIdx.x;
+	const unsigned int tid = blockIdx.x * THREADS_PER_BLOCK + threadIdx.x;
 	if (tid > N * chunks)
 		return;
 
-	const size_t col   = tid % N;
-	const size_t chunk = tid / N;
-	const size_t tidm = col + chunk * N;
+	const unsigned int col   = tid % N;
+	const unsigned int chunk = tid / N;
+	const unsigned int tidm = col + chunk * N;
 
-	int tmp = 0;
+	T tmp = 0;
 #pragma unroll
-	for (size_t i = 0; i < K / chunks; ++i) {
+	for (unsigned int i = 0; i < K / chunks; ++i) {
 		tmp += B[i * N*chunks + tidm];
 	}
 	C[col+chunk*N] = tmp;
 }
 
-__global__ void reduction1dMatrixKernel1(const int *__restrict__ B,
-                                               int *__restrict__ C,
-                                         size_t                  N,
-                                         size_t                  K,
-                                         size_t             chunks) {
+template <typename T>
+__global__ void reduction1dMatrixKernel1(const T *__restrict__ B,
+                                               T *__restrict__ C,
+                                         unsigned int          N,
+                                         unsigned int          K,
+                                         unsigned int     chunks) {
 
-	const size_t tidx = blockIdx.x * THREADS_PER_BLOCK_X + threadIdx.x;
-	const size_t tidy = blockIdx.y * THREADS_PER_BLOCK_Y + threadIdx.y;
+	const unsigned int tidx = blockIdx.x * THREADS_PER_BLOCK_X + threadIdx.x;
+	const unsigned int tidy = blockIdx.y * THREADS_PER_BLOCK_Y + threadIdx.y;
 	if (tidx + N * tidy > N * chunks)
 		return;
 
-	const size_t tidm = tidx + tidy * N;
+	const unsigned int tidm = tidx + tidy * N;
 
-	int tmp = 0;
+	T tmp = 0;
 #pragma unroll
-	for (size_t i = 0; i < K / chunks; ++i) {
+	for (unsigned int i = 0; i < K / chunks; ++i) {
 		tmp += B[i * N*chunks + tidm];
 	}
 	C[tidx+tidy*N] = tmp;
 }
 
-__global__ void reduction1dMatrixKernel2(const int *__restrict__ B,
-                                               int *__restrict__ C,
-                                         size_t                  N,
-                                         size_t                  K,
-                                         size_t             chunks) {
+template<typename T>
+__global__ void reduction1dMatrixKernel2(const T *__restrict__ B,
+                                               T *__restrict__ C,
+                                         unsigned int          N,
+                                         unsigned int          K,
+                                         unsigned int     chunks) {
 
-	__shared__ int sdata[THREADS_PER_BLOCK_Y][THREADS_PER_BLOCK_X];
+	__shared__ T sdata[THREADS_PER_BLOCK_Y][THREADS_PER_BLOCK_X];
 
-	const size_t tidx = blockIdx.x * THREADS_PER_BLOCK_X + threadIdx.x;
-	const size_t tidy = blockIdx.y * THREADS_PER_BLOCK_Y + threadIdx.y;
+	const unsigned int tidx = blockIdx.x * THREADS_PER_BLOCK_X + threadIdx.x;
+	const unsigned int tidy = blockIdx.y * THREADS_PER_BLOCK_Y + threadIdx.y;
 	if (tidx + N * tidy > N * chunks)
 		return;
 
-	const size_t tidm = tidx + tidy * N;
+	const unsigned int tidm = tidx + tidy * N;
 
 	sdata[threadIdx.y][threadIdx.x] = 0;
 #pragma unroll
-	for (size_t i = 0; i < K / chunks; ++i) {
+	for (unsigned int i = 0; i < K / chunks; ++i) {
 		sdata[threadIdx.y][threadIdx.x] += B[i * N*chunks + tidm];
 	}
 
@@ -115,72 +118,66 @@ __global__ void reduction1dMatrixKernel2(const int *__restrict__ B,
 		C[tidx+blockIdx.y*N] = sdata[0][threadIdx.x];
 }
 
-void reduce1dMatrix(int *  B,
-                    int *  C,
-                    size_t N,
-                    size_t K) {
+template <typename T>
+void reduce1dMatrix(T            *B     ,
+                    T            *C     ,
+                    unsigned int  N     ,
+                    unsigned int  K     ,
+                    cudaStream_t  stream,
+                    bool          async ) {
 
-	size_t chunks = K / COMPUTE_PER_THREAD;
-	std::cout << "chunks = " << chunks << std::endl;
-	std::cout << "K = " << K << std::endl;
+	unsigned int chunks = K / COMPUTE_PER_THREAD;
 
 	if (chunks > THREADS_PER_BLOCK_Y) {
 
-		int * d_buffer;
-		check_cuda( cudaMalloc(&d_buffer, N * chunks / 32 *sizeof(int)) );
+		T * d_buffer;
+		check_cuda( cudaMalloc(&d_buffer, N * chunks / 32 *sizeof(T)) );
 
-		dim3 block(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-		dim3 grid(div_ceil(N, THREADS_PER_BLOCK_X), div_ceil(chunks, THREADS_PER_BLOCK_Y));
+		dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+		dim3 blocksPerGrid(div_ceil(N, THREADS_PER_BLOCK_X), div_ceil(chunks, THREADS_PER_BLOCK_Y));
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-		std::cout << "threadsPerBlock = " << THREADS_PER_BLOCK_X << ", "
-		          << THREADS_PER_BLOCK_Y << std::endl;
-		std::cout << "blocksPerGrid   = " << div_ceil(N, THREADS_PER_BLOCK_X) << ", "
-		          << div_ceil(chunks, THREADS_PER_BLOCK_Y) << std::endl;
+		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+		     reduction1dMatrixKernel2<T>,
+		     B, d_buffer, N, K, chunks);
 
-		auto start = high_resolution_clock::now();
-		reduction1dMatrixKernel2<<<grid, block>>>(B, d_buffer, N, K, chunks);
-		check_cuda( cudaDeviceSynchronize() );
-		auto stop = high_resolution_clock::now();
-		auto duration = duration_cast<microseconds>(stop - start);
-		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
-
-		reduce1dMatrix(d_buffer, C, N, chunks/32);
+		reduce1dMatrix<T>(d_buffer, C, N, chunks/32, stream, async);
 
 		check_cuda( cudaFree ( d_buffer ) );
 	} else if (chunks < THREADS_PER_BLOCK_Y && chunks > 1) {
 
-		int * d_buffer;
-		check_cuda( cudaMalloc(&d_buffer, N * chunks *sizeof(int)) );
+		T * d_buffer;
+		check_cuda( cudaMalloc(&d_buffer, N * chunks *sizeof(T)) );
 
-		dim3 block(THREADS_PER_BLOCK);
-		dim3 grid(div_ceil(N, THREADS_PER_BLOCK)*chunks);
+		dim3 threadsPerBlock(THREADS_PER_BLOCK);
+		dim3 blocksPerGrid(div_ceil(N, THREADS_PER_BLOCK)*chunks);
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-		std::cout << "threadsPerBlock = " << THREADS_PER_BLOCK << std::endl;
-		std::cout << "blocksPerGrid   = " << div_ceil(N, THREADS_PER_BLOCK)*chunks << std::endl;
+		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+		     reduction1dMatrixKernel<T>,
+		     B, d_buffer, N, K, chunks);
 
-		auto start = high_resolution_clock::now();
-		reduction1dMatrixKernel<<<grid, block>>>(B, d_buffer, N, K, chunks);
-		check_cuda( cudaDeviceSynchronize() );
-		auto stop = high_resolution_clock::now();
-		auto duration = duration_cast<microseconds>(stop - start);
-		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
-
-		reduce1dMatrix(d_buffer, C, N, chunks);
+		reduce1dMatrix<T>(d_buffer, C, N, chunks, stream, async);
 
 		check_cuda( cudaFree ( d_buffer ) );
 	} else {
 
-		dim3 block(THREADS_PER_BLOCK);
-		dim3 grid(div_ceil(N, THREADS_PER_BLOCK));
+		dim3 threadsPerBlock(THREADS_PER_BLOCK);
+		dim3 blocksPerGrid(div_ceil(N, THREADS_PER_BLOCK));
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-		std::cout << "threadsPerBlock = " << THREADS_PER_BLOCK << std::endl;
-		std::cout << "blocksPerGrid   = " << div_ceil(N, THREADS_PER_BLOCK) << std::endl;
-
-		auto start = high_resolution_clock::now();
-		reduction1dMatrixKernel<<<grid, block>>>(B, C, N, K, 1);
-		check_cuda( cudaDeviceSynchronize() );
-		auto stop = high_resolution_clock::now();
-		auto duration = duration_cast<microseconds>(stop - start);
-		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
+		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+		     reduction1dMatrixKernel<T>,
+		     B, C, N, K, 1);
 	}
+}
+
+void reduce1dMatrixInt(int *         B     ,
+                       int *         C     ,
+                       unsigned int  N     ,
+                       unsigned int  K     ,
+                       cudaStream_t  stream,
+                       bool          async ) {
+
+	reduce1dMatrix<int>(B, C, N , K, stream, async);
 }

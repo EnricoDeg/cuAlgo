@@ -32,8 +32,8 @@
 
 int main() {
 
-	size_t K = 8192;
-	size_t N = 4096;
+	unsigned int K = 8192;
+	unsigned int N = 4096;
 
 	int * B = (int *)malloc(K * N * sizeof(int));
 	for (size_t i = 0 ; i < K ; ++i)
@@ -53,7 +53,7 @@ int main() {
 
 	std::cout << "launching kernels ..." << std::endl;
 	for (size_t i = 0; i < 5; ++i)
-		reduce1dMatrix(d_B, d_C, N, K);
+		reduce1dMatrixInt(d_B, d_C, N, K);
 	std::cout << "launching kernels done ..." << std::endl;
 
 	for (size_t i = 0 ; i < N ; ++i)

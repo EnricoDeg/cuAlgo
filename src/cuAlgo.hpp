@@ -63,7 +63,12 @@ void reduce1dVector(int          *idata        ,
  * 
  * @ingroup algo
  */
-void reduce1dMatrix(int * B, int * C, size_t N, size_t K);
+void reduce1dMatrixInt(int          *B            ,
+                       int          *C            ,
+                       unsigned int  N            ,
+                       unsigned int  K            ,
+                       cudaStream_t  stream = 0   ,
+                       bool          async = false);
 
 namespace cuAlgo{
 /**

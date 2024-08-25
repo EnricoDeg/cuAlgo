@@ -105,7 +105,7 @@ void convolutionTaperReduction1dMatrix(int *  R,
 		auto duration = duration_cast<microseconds>(stop - start);
 		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
 
-		reduce1dMatrix(d_buffer, C, N, chunks);
+		reduce1dMatrixInt(d_buffer, C, N, chunks, 0, false);
 
 		check_cuda( cudaFree ( d_buffer ) );
 	} else {
