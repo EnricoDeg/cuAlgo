@@ -44,7 +44,11 @@
  * 
  * @ingroup algo
  */
-void reduce1dVector(int *idata, int *odata, int size);
+void reduce1dVector(int          *idata        ,
+                    int          *odata        ,
+                    int           size         ,
+                    cudaStream_t  stream = 0   ,
+                    bool          async = false);
 
 /**
  * @brief   Perform 1D reduction on a 2D array (matrix) of size {N,K}

@@ -28,6 +28,7 @@
  */
 #include <iostream>
 #include "cuAlgo.hpp"
+#include "utils.hpp"
 #include <chrono>
 
 using namespace std::chrono;
@@ -112,73 +113,93 @@ __global__ void reduce1dKernelFlexible(int *g_idata, int *g_odata) {
 	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 }
 
-void reduce1dVector(int *g_idata, int *g_odata, int size) {
+void reduce1dVector(int          *g_idata,
+                    int          *g_odata,
+                    int           size   ,
+                    cudaStream_t  stream ,
+                    bool          async  ) {
 
 	int threadsPerBlock = size > 1024 ? 1024 : size/2;
 	int blocksPerGrid = size / (2*threadsPerBlock) + (size % (2*threadsPerBlock) > 0);
-	std::cout << "threadsPerBlock = " << threadsPerBlock << std::endl;
-	std::cout << "blocksPerGrid   = " << blocksPerGrid   << std::endl;
+	unsigned int shmem = threadsPerBlock*sizeof(int);
 
 	if (blocksPerGrid == 1) {
 
 		dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
 		dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
-		auto start = high_resolution_clock::now();
-		reduce1dKernelFlexible<<<blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int)>>>(g_idata, g_odata);
-		check_cuda( cudaDeviceSynchronize() );
-		auto stop = high_resolution_clock::now();
-		auto duration = duration_cast<microseconds>(stop - start);
-		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+		     reduce1dKernelFlexible,
+		     g_idata, g_odata);
+
 	} else {
 
 		dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
 		dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
 
 		int * d_buffer;
 		check_cuda( cudaMalloc(&d_buffer, blocksPerGrid*sizeof(int)) );
-		auto start = high_resolution_clock::now();
 		switch (threadsPerBlock) {
 			case 1024:
-			reduce1dKernel<1024><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
+			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+			     reduce1dKernel<1024>,
+			     g_idata, d_buffer, size);
 			break;
 			case 512:
-			reduce1dKernel<512><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
+			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+			     reduce1dKernel< 512>,
+			     g_idata, d_buffer, size);
 			break;
 			case 256:
-			reduce1dKernel<256><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
+			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+			     reduce1dKernel< 256>,
+			     g_idata, d_buffer, size);
 			break;
 			case 128:
-			reduce1dKernel<128><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
+			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+			     reduce1dKernel< 128>,
+			     g_idata, d_buffer, size);
 			break;
 			case 64:
-			reduce1dKernel< 64><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
+			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+			     reduce1dKernel<  64>,
+			     g_idata, d_buffer, size);
 			break;
 			case 32:
-			reduce1dKernel< 32><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
+			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+			     reduce1dKernel< 128>,
+			     g_idata, d_buffer, size);
 			break;
 			case 16:
-			reduce1dKernel< 16><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
+			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+			     reduce1dKernel<  16>,
+			     g_idata, d_buffer, size);
 			break;
 			case 8:
-			reduce1dKernel< 8><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
+			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+			     reduce1dKernel<   8>,
+			     g_idata, d_buffer, size);
 			break;
 			case 4:
-			reduce1dKernel< 4><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
+			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+			     reduce1dKernel<   4>,
+			     g_idata, d_buffer, size);
 			break;
 			case 2:
-			reduce1dKernel< 2><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
+			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+			     reduce1dKernel<   2>,
+			     g_idata, d_buffer, size);
 			break;
 			case 1:
-			reduce1dKernel< 1><<< blocksPerGrid3, threadsPerBlock3, (size_t)threadsPerBlock*sizeof(int) >>>(g_idata, d_buffer, size);
+			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+			     reduce1dKernel<   1>,
+			     g_idata, d_buffer, size);
 			break;
 		}
 
-		check_cuda( cudaDeviceSynchronize() );
-		auto stop = high_resolution_clock::now();
-		auto duration = duration_cast<microseconds>(stop - start);
-		std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
-
-		reduce1dVector(d_buffer, g_odata, blocksPerGrid);
+		reduce1dVector(d_buffer, g_odata, blocksPerGrid, stream, async);
 		check_cuda( cudaFree ( d_buffer ) );
 	}
 }
