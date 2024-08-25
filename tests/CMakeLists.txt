@@ -22,5 +22,15 @@ target_include_directories(test_gMatMul PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries (test_gMatMul cuAlgo)
 target_link_libraries(test_gMatMul GTest::gtest_main)
 
+# transposeMatrix
+add_executable(
+  test_transposeMatrix
+  test_transposeMatrix.cu
+)
+target_include_directories(test_transposeMatrix PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_transposeMatrix cuAlgo)
+target_link_libraries(test_transposeMatrix GTest::gtest_main)
+
 include(GoogleTest)
 gtest_discover_tests(test_gMatMul)
+gtest_discover_tests(test_transposeMatrix)
