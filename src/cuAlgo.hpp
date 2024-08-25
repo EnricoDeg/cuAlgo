@@ -360,7 +360,7 @@ void convolutionReduction1dMatrixFloat(float        *R            ,
  * @brief   Perform 1D convolution with doubles on the input matrices and then a 
  *          1D reduction in the slow dimension.
  * 
- * @details See documentation of convolutionReduction1dMatrixFloat()
+ * @details See documentation of convolutionReduction1dMatrixFloat().
  * 
  * @ingroup algo
  */
@@ -382,7 +382,7 @@ void convolutionReduction1dMatrixInt(int          *R            ,
                                      bool          async = false) ;
 
 /**
- * @brief   Perform 1D convolution on the input matrices, then apply a taper
+ * @brief   Perform 1D convolution with floats on the input matrices, then apply a taper
  *          on the slow dimension and finally perform a 1D reduction in the
  *          slow dimension.
  * 
@@ -408,6 +408,39 @@ void convolutionReduction1dMatrixInt(int          *R            ,
  * 
  * @ingroup algo
  */
-void convolutionTaperReduction1dMatrix(int *  R, int *  V, int *  T, int *  C, size_t N, size_t K);
+void convolutionTaperReduction1dMatrixFloat(float        *R            ,
+                                            float        *V            ,
+                                            float        *T            ,
+                                            float        *C            ,
+                                            unsigned int  N            ,
+                                            unsigned int  K            ,
+                                            cudaStream_t  stream = 0   ,
+                                            bool          async = false);
 
+/**
+ * @brief   Perform 1D convolution with doubles on the input matrices, then apply a taper
+ *          on the slow dimension and finally perform a 1D reduction in the
+ *          slow dimension.
+ * 
+ * @details See documentation of convolutionTaperReduction1dMatrixFloat().
+ * 
+ * @ingroup algo
+ */
+void convolutionTaperReduction1dMatrixDouble(double       *R            ,
+                                             double       *V            ,
+                                             double       *T            ,
+                                             double       *C            ,
+                                             unsigned int  N            ,
+                                             unsigned int  K            ,
+                                             cudaStream_t  stream = 0   ,
+                                             bool          async = false);
+
+void convolutionTaperReduction1dMatrixInt(int          *R            ,
+                                          int          *V            ,
+                                          int          *T            ,
+                                          int          *C            ,
+                                          unsigned int  N            ,
+                                          unsigned int  K            ,
+                                          cudaStream_t  stream = 0   ,
+                                          bool          async = false);
 #endif
