@@ -34,7 +34,7 @@
 #include "checkError.hpp"
 
 /**
- * @brief   Perform reduction on a vector
+ * @brief   Perform reduction on a vector of floats
  * 
  * @details Sum elements of the input vector and return a pointer to a scalar
  * 
@@ -44,12 +44,30 @@
  * 
  * @ingroup algo
  */
-void reduce1dVector(int          *idata        ,
-                    int          *odata        ,
-                    int           size         ,
-                    cudaStream_t  stream = 0   ,
-                    bool          async = false);
+void reduce1dVectorFloat(float        *g_idata      ,
+                         float        *g_odata      ,
+                         unsigned int  size         ,
+                         cudaStream_t  stream = 0   ,
+                         bool          async = false);
 
+/**
+ * @brief   Perform reduction on a vector of doubles
+ * 
+ * @details See documentation of reduce1dVectorFloat().
+ * 
+ * @ingroup algo
+ */
+void reduce1dVectorDouble(double       *g_idata      ,
+                          double       *g_odata      ,
+                          unsigned int  size         ,
+                          cudaStream_t  stream = 0   ,
+                          bool          async = false);
+
+void reduce1dVectorInt(int          *g_idata      ,
+                       int          *g_odata      ,
+                       unsigned int  size         ,
+                       cudaStream_t  stream = 0   ,
+                       bool          async = false);
 
 namespace cuAlgo{
 

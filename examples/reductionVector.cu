@@ -32,12 +32,12 @@
 
 int main() {
 
-	int nblocks = 4096;
-	int size = 1024*nblocks;
+	unsigned int nblocks = 4096;
+	unsigned int size = 1024*nblocks;
 	int * input = (int *)malloc(size * sizeof(int));
 	int * output = (int *)malloc(sizeof(int));
-	for(int i = 0; i < nblocks; ++i)
-		for (int j = 0; j < 1024 ; ++j)
+	for(unsigned int i = 0; i < nblocks; ++i)
+		for (unsigned int j = 0; j < 1024 ; ++j)
 		input[j + i*1024] = j;
 
 	int *d_input;
@@ -46,13 +46,13 @@ int main() {
 	int *d_output;
 	check_cuda( cudaMalloc(&d_output, sizeof(int)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, (size_t)size*sizeof(int), cudaMemcpyHostToDevice ) );
-	
-	for (int i = 0; i < 5; ++i)
-		reduce1dVector(d_input, d_output, size);
+	check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
+
+	for (unsigned int i = 0; i < 5; ++i)
+		reduce1dVectorInt(d_input, d_output, size);
 
 	output[0] = 0;
-	for(int i = 0; i < size; ++i)
+	for(unsigned int i = 0; i < size; ++i)
 		output[0] += input[i];
 
 	std::cout << "CPU solution = " << output[0] << std::endl;

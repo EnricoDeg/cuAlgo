@@ -29,12 +29,10 @@
 #include <iostream>
 #include "cuAlgo.hpp"
 #include "utils.hpp"
-#include <chrono>
+#include "templateShMem.hpp"
 
-using namespace std::chrono;
-
-template <unsigned int blockSize>
-__device__ void warpReduce(volatile int* sdata, int tid) {
+template <unsigned int blockSize, typename T>
+__device__ void warpReduce(volatile T* sdata, unsigned int tid) {
 	if (blockSize >= 64) sdata[tid] += sdata[tid + 32];
 	if (blockSize >= 32) sdata[tid] += sdata[tid + 16];
 	if (blockSize >= 16) sdata[tid] += sdata[tid +  8];
@@ -43,11 +41,14 @@ __device__ void warpReduce(volatile int* sdata, int tid) {
 	if (blockSize >= 2)  sdata[tid] += sdata[tid +  1];
 }
 
-template <unsigned int blockSize>
-__global__ void reduce1dKernel(int *g_idata, int *g_odata, unsigned int n) {
+template <unsigned int blockSize, typename T>
+__global__ void reduce1dKernel(T *g_idata, T *g_odata, unsigned int n) {
 
 	// use dynamic shared memory
-	extern __shared__ int sdata[];
+	// needed for template
+	SharedMemory<T> smem;
+	T * sdata = smem.getPointer();
+
 	unsigned int tid = threadIdx.x;
 	unsigned int i = blockIdx.x*(blockSize*2) + threadIdx.x;
 	unsigned int gridSize = blockSize*2*gridDim.x;
@@ -86,16 +87,20 @@ __global__ void reduce1dKernel(int *g_idata, int *g_odata, unsigned int n) {
 		__syncthreads();
 	}
 	
-	if (tid < 32) warpReduce<blockSize>(sdata, tid);
+	if (tid < 32) warpReduce<blockSize, T>(sdata, tid);
 
 	// write result for this block to global mem
 	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 }
 
-__global__ void reduce1dKernelFlexible(int *g_idata, int *g_odata) {
+template<typename T>
+__global__ void reduce1dKernelFlexible(T *g_idata, T *g_odata) {
 
 	// use dynamic shared memory
-	extern __shared__ int sdata[];
+	// neeeded for template
+	SharedMemory<T> smem;
+	T * sdata = smem.getPointer();
+
 	// each thread loads one element from global to shared mem
 	unsigned int tid = threadIdx.x;
 	unsigned int i = blockIdx.x*(blockDim.x*2) + threadIdx.x;
@@ -113,15 +118,16 @@ __global__ void reduce1dKernelFlexible(int *g_idata, int *g_odata) {
 	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 }
 
-void reduce1dVector(int          *g_idata,
-                    int          *g_odata,
-                    int           size   ,
+template<typename T>
+void reduce1dVector(T            *g_idata,
+                    T            *g_odata,
+                    unsigned int  size   ,
                     cudaStream_t  stream ,
                     bool          async  ) {
 
-	int threadsPerBlock = size > 1024 ? 1024 : size/2;
-	int blocksPerGrid = size / (2*threadsPerBlock) + (size % (2*threadsPerBlock) > 0);
-	unsigned int shmem = threadsPerBlock*sizeof(int);
+	unsigned int threadsPerBlock = size > 1024 ? 1024 : size/2;
+	unsigned int blocksPerGrid = size / (2*threadsPerBlock) + (size % (2*threadsPerBlock) > 0);
+	unsigned int shmem = threadsPerBlock*sizeof(T);
 
 	if (blocksPerGrid == 1) {
 
@@ -130,7 +136,7 @@ void reduce1dVector(int          *g_idata,
 		print_kernel_config(threadsPerBlock, blocksPerGrid);
 
 		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     reduce1dKernelFlexible,
+		     reduce1dKernelFlexible<T>,
 		     g_idata, g_odata);
 
 	} else {
@@ -139,8 +145,8 @@ void reduce1dVector(int          *g_idata,
 		dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
 		print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-		int * d_buffer;
-		check_cuda( cudaMalloc(&d_buffer, blocksPerGrid*sizeof(int)) );
+		T * d_buffer;
+		check_cuda( cudaMalloc(&d_buffer, blocksPerGrid*sizeof(T)) );
 		switch (threadsPerBlock) {
 			case 1024:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
@@ -199,7 +205,37 @@ void reduce1dVector(int          *g_idata,
 			break;
 		}
 
-		reduce1dVector(d_buffer, g_odata, blocksPerGrid, stream, async);
+		reduce1dVector<T>(d_buffer, g_odata, blocksPerGrid, stream, async);
 		check_cuda( cudaFree ( d_buffer ) );
 	}
+}
+
+void reduce1dVectorFloat(float        *g_idata,
+                         float        *g_odata,
+                         unsigned int  size   ,
+                         cudaStream_t  stream ,
+                         bool          async  )
+{
+
+	reduce1dVector<float>(g_idata, g_odata, size, stream, async);
+}
+
+void reduce1dVectorDouble(double       *g_idata,
+                          double       *g_odata,
+                          unsigned int  size   ,
+                          cudaStream_t  stream ,
+                          bool          async  )
+{
+
+	reduce1dVector<double>(g_idata, g_odata, size, stream, async);
+}
+
+void reduce1dVectorInt(int          *g_idata,
+                       int          *g_odata,
+                       unsigned int  size   ,
+                       cudaStream_t  stream ,
+                       bool          async  )
+{
+
+	reduce1dVector<int>(g_idata, g_odata, size, stream, async);
 }
