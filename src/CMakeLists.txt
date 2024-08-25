@@ -1,5 +1,9 @@
 set(CMAKE_CUDA_ARCHITECTURES 80)
 SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 -Xptxas -lineinfo -DCUDA ")
+if (CUALGO_VERBOSE)
+  SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -DCUALGO_VERBOSE ")
+endif()
+
 set(SOURCE_EXE  utils.cu
                 getRowBlocks.cu
                 checkError.cu
