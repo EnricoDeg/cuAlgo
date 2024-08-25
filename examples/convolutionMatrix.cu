@@ -35,17 +35,17 @@ using namespace std::chrono;
 
 int main() {
 
-	size_t K = 8192;
-	size_t N = 4096;
+	unsigned int K = 8192;
+	unsigned int N = 4096;
 
 	int * R = (int *)malloc(K * N * sizeof(int));
-	for (size_t i = 0 ; i < K ; ++i)
-		for (size_t j = 0 ; j < N ; ++j)
+	for (unsigned int i = 0 ; i < K ; ++i)
+		for (unsigned int j = 0 ; j < N ; ++j)
 			R [j + i * N] = j * i;
 
 	int * V = (int *)malloc(K * N * sizeof(int));
-	for (size_t i = 0 ; i < K ; ++i)
-		for (size_t j = 0 ; j < N ; ++j)
+	for (unsigned int i = 0 ; i < K ; ++i)
+		for (unsigned int j = 0 ; j < N ; ++j)
 			V [j + i * N] = N * K - j * i;
 
 	int * C = (int *)malloc(N*K * sizeof(int));
@@ -65,11 +65,11 @@ int main() {
 	check_cuda( cudaMemcpy ( d_V, V, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
 
 	std::cout << "launching kernels ..." << std::endl;
-	for (size_t i = 0; i < 5; ++i)
-		convolution1dMatrix(d_R, d_V, d_C, N, K);
+	for (unsigned int i = 0; i < 5; ++i)
+		convolution1dMatrixInt(d_R, d_V, d_C, N, K);
 	std::cout << "launching kernels done ..." << std::endl;
 
-	for (size_t i = 0 ; i < N ; ++i)
+	for (unsigned int i = 0 ; i < N ; ++i)
 		solution[i] = 0;
 
 	auto start = high_resolution_clock::now();
@@ -93,8 +93,8 @@ int main() {
 
 	check_cuda( cudaMemcpy ( C, d_C, N * K * sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	for (size_t j = 0 ; j < K ; ++j)
-		for (size_t i = 0 ; i < N ; ++i)
+	for (unsigned int j = 0 ; j < K ; ++j)
+		for (unsigned int i = 0 ; i < N ; ++i)
 			if (solution[i + j * N] != C[i + j * N]) {
 				std::cout << "Values are different" << std::endl;
 				exit(EXIT_FAILURE);

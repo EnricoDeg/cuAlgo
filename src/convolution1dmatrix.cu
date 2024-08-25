@@ -37,29 +37,30 @@ using namespace std::chrono;
 #define THREADS_PER_BLOCK_Y 32
 #define COMPUTE_PER_THREAD  4
 
-__global__ void convolution1dMatrixKernel(const int *__restrict__ R,
-                                          const int *__restrict__ V,
-                                                int *__restrict__ C,
-                                          size_t                  N,
-                                          size_t                  K,
-                                          size_t             chunks) {
+template <typename T>
+__global__ void convolution1dMatrixKernel(const T *__restrict__ R,
+                                          const T *__restrict__ V,
+                                                T *__restrict__ C,
+                                          unsigned int          N,
+                                          unsigned int          K,
+                                          unsigned int     chunks) {
 
-	const size_t col = blockIdx.x * THREADS_PER_BLOCK_X + threadIdx.x;
-	      size_t row = blockIdx.y * THREADS_PER_BLOCK_Y + threadIdx.y;
+	const unsigned int col = blockIdx.x * THREADS_PER_BLOCK_X + threadIdx.x;
+	      unsigned int row = blockIdx.y * THREADS_PER_BLOCK_Y + threadIdx.y;
 
 	if (col < N / 2 && row < chunks) {
 
 		if (col == 0) {
 
 #pragma unroll
-			for (size_t i = 0; i < K / chunks; ++i, row+=chunks) {
+			for (unsigned int i = 0; i < K / chunks; ++i, row+=chunks) {
 				C[col         + N * row] = R[col + N * row]         * V[col + N * row];
 				C[col + N / 2 + N * row] = R[col + N / 2 + N * row] * V[col + N / 2 + N * row];
 			}
 		} else if (col > 0 && col < N / 2) {
 
 #pragma unroll
-			for (size_t i = 0; i < K / chunks; ++i, row+=chunks) {
+			for (unsigned int i = 0; i < K / chunks; ++i, row+=chunks) {
 				C[col         + N * row] = R[col + N * row]         * V[col + N * row] -
 				                           R[N - col + N * row]     * V[N - col + N * row] ;
 				C[col + N / 2 + N * row] = R[N / 2 - col + N * row] * V[col + N / 2 + N * row] +
@@ -69,28 +70,58 @@ __global__ void convolution1dMatrixKernel(const int *__restrict__ R,
 	}
 }
 
-void convolution1dMatrix(int *  R,
-                         int *  V,
-                         int *  C,
-                         size_t N,
-                         size_t K) {
+template<typename T>
+void convolution1dMatrix(T            *R     ,
+                         T            *V     ,
+                         T            *C     ,
+                         unsigned int  N     ,
+                         unsigned int  K     ,
+                         cudaStream_t  stream,
+                         bool          async ) {
 
-	size_t chunks = K / COMPUTE_PER_THREAD;
-	std::cout << "chunks = " << chunks << std::endl;
-	std::cout << "K = " << K << std::endl;
+	unsigned int chunks = K / COMPUTE_PER_THREAD;
 
-	dim3 block(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-	dim3 grid(div_ceil(N / 2, THREADS_PER_BLOCK_X), div_ceil(chunks, THREADS_PER_BLOCK_Y));
+	dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+	dim3 blocksPerGrid(div_ceil(N / 2, THREADS_PER_BLOCK_X), div_ceil(chunks, THREADS_PER_BLOCK_Y));
+	print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-	std::cout << "threadsPerBlock = " << THREADS_PER_BLOCK_X << ", " <<
-	                                     THREADS_PER_BLOCK_Y << std::endl;
-	std::cout << "blocksPerGrid   = " << div_ceil(N / 2 , THREADS_PER_BLOCK_X) << ", " <<
-	                                     div_ceil(chunks, THREADS_PER_BLOCK_Y) << std::endl;
+	TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+	     convolution1dMatrixKernel<T>,
+	     R, V, C, N, K, chunks);
+}
 
-	auto start = high_resolution_clock::now();
-	convolution1dMatrixKernel<<<grid, block>>>(R, V, C, N, K, chunks);
-	check_cuda( cudaDeviceSynchronize() );
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
+void convolution1dMatrixFloat(float        *R     ,
+                              float        *V     ,
+                              float        *C     ,
+                              unsigned int  N     ,
+                              unsigned int  K     ,
+                              cudaStream_t  stream,
+                              bool          async )
+{
+
+	convolution1dMatrix<float>(R, V, C, N, K, stream, async);
+}
+
+void convolution1dMatrixDouble(double       *R     ,
+                               double       *V     ,
+                               double       *C     ,
+                               unsigned int  N     ,
+                               unsigned int  K     ,
+                               cudaStream_t  stream,
+                               bool          async )
+{
+
+	convolution1dMatrix<double>(R, V, C, N, K, stream, async);
+}
+
+void convolution1dMatrixInt(int          *R     ,
+                            int          *V     ,
+                            int          *C     ,
+                            unsigned int  N     ,
+                            unsigned int  K     ,
+                            cudaStream_t  stream,
+                            bool          async )
+{
+
+	convolution1dMatrix<int>(R, V, C, N, K, stream, async);
 }

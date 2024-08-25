@@ -301,7 +301,7 @@ void gSpMatVecMulELL(int * columns         ,
                      int   elements_in_rows) ;
 
 /**
- * @brief   Perform 1D convolution on the input matrices.
+ * @brief   Perform 1D convolution with floats on the input matrices.
  * 
  * @details The convolution is done on the fast dimension of the input
  *          matrices R and V. This means that each convolution in the 
@@ -323,7 +323,36 @@ void gSpMatVecMulELL(int * columns         ,
  * 
  * @ingroup algo
  */
-void convolution1dMatrix(int * R, int * V, int * C, size_t N, size_t K);
+void convolution1dMatrixFloat(float        *R            ,
+                              float        *V            ,
+                              float        *C            ,
+                              unsigned int  N            ,
+                              unsigned int  K            ,
+                              cudaStream_t  stream = 0   ,
+                              bool          async = false);
+
+/**
+ * @brief   Perform 1D convolution with doubles on the input matrices.
+ * 
+ * @details See documentation of convolution1dMatrixFloat().
+ * 
+ * @ingroup algo
+ */
+void convolution1dMatrixDouble(double       *R            ,
+                               double       *V            ,
+                               double       *C            ,
+                               unsigned int  N            ,
+                               unsigned int  K            ,
+                               cudaStream_t  stream = 0   ,
+                               bool          async = false);
+
+void convolution1dMatrixInt(int          *R            ,
+                            int          *V            ,
+                            int          *C            ,
+                            unsigned int  N            ,
+                            unsigned int  K            ,
+                            cudaStream_t  stream = 0   ,
+                            bool          async = false);
 
 /**
  * @brief   Perform 1D convolution with floats on the input matrices and then a 
