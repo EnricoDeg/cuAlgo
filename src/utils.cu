@@ -51,3 +51,16 @@ __device__ unsigned int prev_power_of_2 (unsigned int n) {
 		n = n & n - 1;
 	return n;
 }
+
+void print_kernel_config(dim3 threadsPerBlock, dim3 blocksPerGrid) {
+
+#ifdef CUALGO_VERBOSE
+	std::cout << "threadsPerBlock = " << threadsPerBlock.x << ", " <<
+	                                     threadsPerBlock.y << ", " <<
+	                                     threadsPerBlock.z << std::endl;
+	std::cout << "blocksPerGrid   = " << blocksPerGrid.x   << ", " <<
+	                                     blocksPerGrid.y   << ", " <<
+	                                     blocksPerGrid.z   << std::endl;
+#endif
+}
+

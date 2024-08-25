@@ -64,4 +64,30 @@ __device__ int warp_reduce(int val) ;
 
 __device__ unsigned int prev_power_of_2 (unsigned int n) ;
 
+void print_kernel_config(dim3 threadsPerBlock, dim3 blocksPerGrid);
+
+#ifdef CUALGO_VERBOSE
+
+#define TIME(blocksPerGrid, threadsPerBlock, shmem, stream, async, func, args ...)               \
+  do {                                                                                           \
+    auto start = high_resolution_clock::now();                                                   \
+    func<<< blocksPerGrid, threadsPerBlock, shmem, stream >>>(args);                             \
+    if (!async)                                                                                  \
+        check_cuda( cudaStreamSynchronize(stream) );                                             \
+    auto stop = high_resolution_clock::now();                                                    \
+    auto duration = duration_cast<microseconds>(stop - start);                                   \
+    std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl; \
+  } while(0)
+
+#else
+
+#define TIME(blocksPerGrid, threadsPerBlock, shmem, stream, async, func, args ...) \
+  do {                                                                             \
+    func<<< blocksPerGrid, threadsPerBlock, shmem, stream >>>(args);               \
+    if (!async)                                                                    \
+        check_cuda( cudaStreamSynchronize(stream) );                               \
+  } while(0)
+
+#endif
+
 #endif
