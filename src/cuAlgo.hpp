@@ -65,6 +65,7 @@ void reduce1dVector(int          *idata        ,
  */
 void reduce1dMatrix(int * B, int * C, size_t N, size_t K);
 
+namespace cuAlgo{
 /**
  * @brief   Perform matrix transposition with floats
  * 
@@ -105,7 +106,7 @@ void transposeMatrixInt(int          *idata        ,
                         unsigned int  size_y       ,
                         cudaStream_t  stream = 0   ,
                         bool          async = false);
-
+}
 /**
  * @brief   Perform general matrix-matrix multiplication.
  * 

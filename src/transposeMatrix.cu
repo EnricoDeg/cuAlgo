@@ -83,32 +83,35 @@ void transposeMatrix(T            *idata ,
 	     idata, odata, size_x, size_y);
 }
 
-void transposeMatrixFloat(float        *idata ,
-                          float        *odata ,
-                          unsigned int  size_x,
-                          unsigned int  size_y,
-                          cudaStream_t  stream,
-                          bool          async ) {
+namespace cuAlgo {
 
-	transposeMatrix<float>(idata, odata, size_x, size_y, stream, async);
-}
+	void transposeMatrixFloat(float        *idata ,
+	                          float        *odata ,
+	                          unsigned int  size_x,
+	                          unsigned int  size_y,
+	                          cudaStream_t  stream,
+	                          bool          async ) {
 
-void transposeMatrixDouble(double        *idata ,
-                           double        *odata ,
-                           unsigned int  size_x,
-                           unsigned int  size_y,
-                           cudaStream_t  stream,
-                           bool          async ) {
+		transposeMatrix<float>(idata, odata, size_x, size_y, stream, async);
+	}
 
-	transposeMatrix<double>(idata, odata, size_x, size_y, stream, async);
-}
+	void transposeMatrixDouble(double        *idata ,
+	                           double        *odata ,
+	                           unsigned int  size_x,
+	                           unsigned int  size_y,
+	                           cudaStream_t  stream,
+	                           bool          async ) {
 
-void transposeMatrixInt(int          *idata ,
-                        int          *odata ,
-                        unsigned int  size_x,
-                        unsigned int  size_y,
-                        cudaStream_t  stream,
-                        bool          async ) {
+		transposeMatrix<double>(idata, odata, size_x, size_y, stream, async);
+	}
 
-	transposeMatrix<int>(idata, odata, size_x, size_y, stream, async);
+	void transposeMatrixInt(int          *idata ,
+	                        int          *odata ,
+	                        unsigned int  size_x,
+	                        unsigned int  size_y,
+	                        cudaStream_t  stream,
+	                        bool          async ) {
+
+		transposeMatrix<int>(idata, odata, size_x, size_y, stream, async);
+	}
 }

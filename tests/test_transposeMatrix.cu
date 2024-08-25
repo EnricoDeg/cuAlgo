@@ -50,7 +50,7 @@ TEST(transposeMatrix, default_value) {
 
 	check_cuda( cudaMemcpy ( d_input, input, size_x * size_y * sizeof(float), cudaMemcpyHostToDevice ) );
 
-	transposeMatrixFloat(d_input, d_output, size_x, size_y);
+	cuAlgo::transposeMatrixFloat(d_input, d_output, size_x, size_y);
 
 	check_cuda( cudaMemcpy ( output, d_output, size_x * size_y * sizeof(float), cudaMemcpyDeviceToHost ) );
 
@@ -82,7 +82,7 @@ TEST(transposeMatrix, async) {
 
 	check_cuda( cudaMemcpy ( d_input, input, size_x * size_y * sizeof(float), cudaMemcpyHostToDevice ) );
 
-	transposeMatrixFloat(d_input, d_output, size_x, size_y, 0, true);
+	cuAlgo::transposeMatrixFloat(d_input, d_output, size_x, size_y, 0, true);
 
 	check_cuda( cudaStreamSynchronize(0) );
 
@@ -119,7 +119,7 @@ TEST(transposeMatrix, stream1) {
 
 	check_cuda( cudaStreamCreate ( &stream ) ) ;
 
-	transposeMatrixFloat(d_input, d_output, size_x, size_y, stream);
+	cuAlgo::transposeMatrixFloat(d_input, d_output, size_x, size_y, stream);
 
 	check_cuda( cudaStreamSynchronize( stream ) );
 
@@ -158,7 +158,7 @@ TEST(transposeMatrix, stream1async) {
 
 	check_cuda( cudaStreamCreate ( &stream ) ) ;
 
-	transposeMatrixFloat(d_input, d_output, size_x, size_y, stream);
+	cuAlgo::transposeMatrixFloat(d_input, d_output, size_x, size_y, stream);
 
 	check_cuda( cudaStreamDestroy( stream ) );
 
