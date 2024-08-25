@@ -74,7 +74,12 @@ void reduce1dMatrix(int * B, int * C, size_t N, size_t K);
  * 
  * @ingroup algo
  */
-void transposeMatrix(float *idata, float *odata, unsigned int size_x, unsigned int size_y);
+void transposeMatrix(float        *idata        ,
+                     float        *odata        ,
+                     unsigned int  size_x       ,
+                     unsigned int  size_y       ,
+                     cudaStream_t  stream = 0   ,
+                     bool          async = false);
 
 /**
  * @brief   Perform general matrix-matrix multiplication.

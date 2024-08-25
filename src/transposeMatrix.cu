@@ -28,6 +28,7 @@
  */
 #include <iostream>
 #include "cuAlgo.hpp"
+#include "utils.hpp"
 #include <chrono>
 
 using namespace std::chrono;
@@ -66,18 +67,19 @@ __global__ void transposeMatrixKernel(float *idata, float *odata,
 	}
 }
 
-void transposeMatrix(float *idata, float *odata, unsigned int size_x, unsigned int size_y) {
+void transposeMatrix(float        *idata ,
+                     float        *odata ,
+                     unsigned int  size_x,
+                     unsigned int  size_y,
+                     cudaStream_t  stream,
+                     bool          async ) {
 
 	dim3 blocksPerGrid3(size_x / TILE_DIM, size_y / TILE_DIM, 1);
 	dim3 threadsPerBlock3(TILE_DIM, BLOCK_ROWS, 1);
 
-	std::cout << "threadsPerBlock = " << TILE_DIM << ", " << BLOCK_ROWS << std::endl;
-	std::cout << "blocksPerGrid   = " << size_x / TILE_DIM << ", " << size_y / TILE_DIM << std::endl;
+	print_kernel_config(threadsPerBlock3, blocksPerGrid3) ;
 
-	auto start = high_resolution_clock::now();
-	transposeMatrixKernel<<< blocksPerGrid3, threadsPerBlock3 >>>(idata, odata, size_x, size_y);
-	check_cuda( cudaDeviceSynchronize() );
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
+	TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
+	     transposeMatrixKernel,
+	     idata, odata, size_x, size_y);
 }
