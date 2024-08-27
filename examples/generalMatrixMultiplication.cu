@@ -100,7 +100,7 @@ int main() {
 	check_cuda( cudaMemcpy ( d_C, C, (size_t)N*N*sizeof(int), cudaMemcpyHostToDevice ) );
 
 	for (int i = 0; i < 5; ++i)
-		gMatMulInt(alpha, d_A, d_B, beta, d_C, N, N, N);
+		cuAlgo::gMatMulInt(alpha, d_A, d_B, beta, d_C, N, N, N);
 
 	check_cuda( cudaMemcpy ( C, d_C, N*N*sizeof(int), cudaMemcpyDeviceToHost ) );
 

@@ -79,47 +79,50 @@ void gMatMul(T             alpha ,
 	      alpha, A, B, beta, C, M, N, K);
 }
 
-void gMatMulInt(int           alpha ,
-                const int    *A     ,
-                const int    *B     ,
-                int           beta  ,
-                int          *C     ,
-                unsigned int  M     ,
-                unsigned int  N     ,
-                unsigned int  K     ,
-                cudaStream_t  stream,
-                bool          async )
-{
+namespace cuAlgo {
 
-	gMatMul<int>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
-}
+	void gMatMulInt(int           alpha ,
+	                const int    *A     ,
+	                const int    *B     ,
+	                int           beta  ,
+	                int          *C     ,
+	                unsigned int  M     ,
+	                unsigned int  N     ,
+	                unsigned int  K     ,
+	                cudaStream_t  stream,
+	                bool          async )
+	{
 
-void gMatMulFloat(float         alpha ,
-                  const float  *A     ,
-                  const float  *B     ,
-                  float         beta  ,
-                  float        *C     ,
-                  unsigned int  M     ,
-                  unsigned int  N     ,
-                  unsigned int  K     ,
-                  cudaStream_t  stream,
-                  bool          async )
-{
+		gMatMul<int>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
+	}
 
-	gMatMul<float>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
-}
+	void gMatMulFloat(float         alpha ,
+	                  const float  *A     ,
+	                  const float  *B     ,
+	                  float         beta  ,
+	                  float        *C     ,
+	                  unsigned int  M     ,
+	                  unsigned int  N     ,
+	                  unsigned int  K     ,
+	                  cudaStream_t  stream,
+	                  bool          async )
+	{
 
-void gMatMulDouble(double        alpha ,
-                   const double *A     ,
-                   const double *B     ,
-                   double        beta  ,
-                   double       *C     ,
-                   unsigned int  M     ,
-                   unsigned int  N     ,
-                   unsigned int  K     ,
-                   cudaStream_t  stream,
-                   bool          async )
-{
+		gMatMul<float>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
+	}
 
-	gMatMul<double>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
+	void gMatMulDouble(double        alpha ,
+	                   const double *A     ,
+	                   const double *B     ,
+	                   double        beta  ,
+	                   double       *C     ,
+	                   unsigned int  M     ,
+	                   unsigned int  N     ,
+	                   unsigned int  K     ,
+	                   cudaStream_t  stream,
+	                   bool          async )
+	{
+
+		gMatMul<double>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
+	}
 }

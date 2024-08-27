@@ -155,7 +155,7 @@ void transposeMatrixInt(int          *idata        ,
                         unsigned int  size_y       ,
                         cudaStream_t  stream = 0   ,
                         bool          async = false);
-}
+
 /**
  * @brief   Perform general matrix-matrix multiplication with floats.
  * 
@@ -217,7 +217,7 @@ void gMatMulInt(int           alpha        ,
                 cudaStream_t  stream = 0   ,
                 bool          async = false);
 
-
+}
 /**
  * @brief   Perform matrix-vector multiplication.
  * 
