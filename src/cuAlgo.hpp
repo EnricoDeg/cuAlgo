@@ -218,8 +218,9 @@ void gMatMulInt(int           alpha        ,
                 bool          async = false);
 
 }
+
 /**
- * @brief   Perform matrix-vector multiplication.
+ * @brief   Perform matrix-vector multiplication with floats.
  * 
  * @details The vector A is multiplied with matrix B and the result is stored 
  *          in vector C.
@@ -236,7 +237,36 @@ void gMatMulInt(int           alpha        ,
  * 
  * @ingroup algo
  */
-void gMatVecMul(int *A, int *B, int *C, size_t N, size_t K);
+void gMatVecMulFloat(const float        *A            ,
+                     const float        *B            ,
+                           float        *C            ,
+                           unsigned int  N            ,
+                           unsigned int  K            ,
+                           cudaStream_t  stream = 0   ,
+                           bool          async = false);
+
+/**
+ * @brief   Perform matrix-vector multiplication with doubles.
+ * 
+ * @details See documentation of gMatVecMulFloat().
+ * 
+ * @ingroup algo
+ */
+void gMatVecMulDouble(const double       *A            ,
+                      const double       *B            ,
+                            double       *C            ,
+                            unsigned int  N            ,
+                            unsigned int  K            ,
+                            cudaStream_t  stream = 0   ,
+                            bool          async = false);
+
+void gMatVecMulInt(const int          *A            ,
+                   const int          *B            ,
+                         int          *C            ,
+                         unsigned int  N            ,
+                         unsigned int  K            ,
+                         cudaStream_t  stream = 0   ,
+                         bool          async = false);
 
 /**
  * @brief   Perform sparse matrix-vector multiplication with CSR 
