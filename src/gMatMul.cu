@@ -34,40 +34,92 @@
 
 using namespace std::chrono;
 
-template <const uint BLOCKSIZE>
-__global__ void gMatMulKernel(int M, int N, int K, int alpha, const int *A,
-                              const int *B, int beta, int *C) {
+template <const uint BLOCKSIZE, typename T>
+__global__ void gMatMulKernel(T                      alpha,
+                              const T * __restrict__ A    ,
+                              const T * __restrict__ B    ,
+                              T                      beta ,
+                              T       * __restrict__ C    ,
+                              unsigned int           M    ,
+                              unsigned int           N    ,
+                              unsigned int           K    ) {
+
 	// compute position in C that this thread is responsible for
-	const int x = blockIdx.x * BLOCKSIZE + (threadIdx.x / BLOCKSIZE);
-	const int y = blockIdx.y * BLOCKSIZE + (threadIdx.x % BLOCKSIZE);
+	const unsigned int x = blockIdx.x * BLOCKSIZE + (threadIdx.x / BLOCKSIZE);
+	const unsigned int y = blockIdx.y * BLOCKSIZE + (threadIdx.x % BLOCKSIZE);
 
-
-	// `if` condition is necessary for when M or N aren't multiples of 32.
 	if (x < M && y < N) {
 		int tmp = 0.0;
 		for (int i = 0; i < K; ++i) {
 			tmp += A[x * K + i] * B[i * N + y];
 		}
-		// C = α*(A@B)+β*C
 		C[x * N + y] = alpha * tmp + beta * C[x * N + y];
 	}
 }
 
-void gMatMul(int M, int N, int K, int alpha, const int *A,
-             const int *B, int beta, int *C) {
+template <typename T>
+void gMatMul(T             alpha ,
+             const T      *A     ,
+             const T      *B     ,
+             T             beta  ,
+             T            *C     ,
+             unsigned int  M     ,
+             unsigned int  N     ,
+             unsigned int  K     ,
+             cudaStream_t  stream,
+             bool          async ) {
 
 	// create as many blocks as necessary to map all of C
-	dim3 blocksPerGrid3(div_ceil(M, 32), div_ceil(N, 32));
-	// 32 * 32 = 1024 thread per block
-	dim3 threadsPerBlock3(32 * 32);
+	dim3 blocksPerGrid(div_ceil(M, 32), div_ceil(N, 32));
+	dim3 threadsPerBlock(32 * 32);
+	print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-	std::cout << "threadsPerBlock = " << 32 << ", " << 32 << std::endl;
-	std::cout << "blocksPerGrid   = " << div_ceil(M, 32) << ", " << div_ceil(N, 32) << std::endl;
+	TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
+	      gMatMulKernel<32 COMMA T>,
+	      alpha, A, B, beta, C, M, N, K);
+}
 
-	auto start = high_resolution_clock::now();
-	gMatMulKernel<32><<< blocksPerGrid3, threadsPerBlock3 >>>(M, N, K, alpha, A, B, beta, C);
-	check_cuda( cudaDeviceSynchronize() );
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
+void gMatMulInt(int           alpha ,
+                const int    *A     ,
+                const int    *B     ,
+                int           beta  ,
+                int          *C     ,
+                unsigned int  M     ,
+                unsigned int  N     ,
+                unsigned int  K     ,
+                cudaStream_t  stream,
+                bool          async )
+{
+
+	gMatMul<int>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
+}
+
+void gMatMulFloat(float         alpha ,
+                  const float  *A     ,
+                  const float  *B     ,
+                  float         beta  ,
+                  float        *C     ,
+                  unsigned int  M     ,
+                  unsigned int  N     ,
+                  unsigned int  K     ,
+                  cudaStream_t  stream,
+                  bool          async )
+{
+
+	gMatMul<float>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
+}
+
+void gMatMulDouble(double        alpha ,
+                   const double *A     ,
+                   const double *B     ,
+                   double        beta  ,
+                   double       *C     ,
+                   unsigned int  M     ,
+                   unsigned int  N     ,
+                   unsigned int  K     ,
+                   cudaStream_t  stream,
+                   bool          async )
+{
+
+	gMatMul<double>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
 }

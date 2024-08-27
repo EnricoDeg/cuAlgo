@@ -157,7 +157,7 @@ void transposeMatrixInt(int          *idata        ,
                         bool          async = false);
 }
 /**
- * @brief   Perform general matrix-matrix multiplication.
+ * @brief   Perform general matrix-matrix multiplication with floats.
  * 
  * @details The following operation is performed
  *          C = alpha * A * B + beta * C
@@ -177,8 +177,46 @@ void transposeMatrixInt(int          *idata        ,
  * 
  * @ingroup algo
  */
-void gMatMul(int M, int N, int K, int alpha, const int *A,
-             const int *B, int beta, int *C);
+void gMatMulFloat(float         alpha        ,
+                  const float  *A            ,
+                  const float  *B            ,
+                  float         beta         ,
+                  float        *C            ,
+                  unsigned int  M            ,
+                  unsigned int  N            ,
+                  unsigned int  K            ,
+                  cudaStream_t  stream = 0   ,
+                  bool          async = false);
+
+/**
+ * @brief   Perform general matrix-matrix multiplication with doubles.
+ * 
+ * @details See documentation of gMatMulFloat().
+ * 
+ * @ingroup algo
+ */
+void gMatMulDouble(double        alpha        ,
+                   const double *A            ,
+                   const double *B            ,
+                   double        beta         ,
+                   double       *C            ,
+                   unsigned int  M            ,
+                   unsigned int  N            ,
+                   unsigned int  K            ,
+                   cudaStream_t  stream = 0   ,
+                   bool          async = false);
+
+void gMatMulInt(int           alpha        ,
+                const int    *A            ,
+                const int    *B            ,
+                int           beta         ,
+                int          *C            ,
+                unsigned int  M            ,
+                unsigned int  N            ,
+                unsigned int  K            ,
+                cudaStream_t  stream = 0   ,
+                bool          async = false);
+
 
 /**
  * @brief   Perform matrix-vector multiplication.
