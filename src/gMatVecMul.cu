@@ -153,38 +153,41 @@ void gMatVecMul(const T            *A     ,
 	      A, B, C, N, K );
 }
 
-void gMatVecMulInt(const int          *A     ,
-                   const int          *B     ,
-                         int          *C     ,
-                         unsigned int  N     ,
-                         unsigned int  K     ,
-                         cudaStream_t  stream,
-                         bool          async )
-{
+namespace cuAlgo {
 
-	gMatVecMul<int>(A, B, C, N, K, stream, async);
-}
+	void gMatVecMulInt(const int          *A     ,
+	                   const int          *B     ,
+	                         int          *C     ,
+	                         unsigned int  N     ,
+	                         unsigned int  K     ,
+	                         cudaStream_t  stream,
+	                         bool          async )
+	{
 
-void gMatVecMulFloat(const float        *A      ,
-                     const float        *B      ,
-                           float        *C      ,
-                           unsigned int  N      ,
-                           unsigned int  K      ,
-                           cudaStream_t  stream ,
-                           bool          async  )
-{
+		gMatVecMul<int>(A, B, C, N, K, stream, async);
+	}
 
-	gMatVecMul<float>(A, B, C, N, K, stream, async);
-}
+	void gMatVecMulFloat(const float        *A      ,
+	                     const float        *B      ,
+	                           float        *C      ,
+	                           unsigned int  N      ,
+	                           unsigned int  K      ,
+	                           cudaStream_t  stream ,
+	                           bool          async  )
+	{
 
-void gMatVecMulDouble(const double       *A     ,
-                      const double       *B     ,
-                            double       *C     ,
-                            unsigned int  N     ,
-                            unsigned int  K     ,
-                            cudaStream_t  stream,
-                            bool          async )
-{
+		gMatVecMul<float>(A, B, C, N, K, stream, async);
+	}
 
-	gMatVecMul<double>(A, B, C, N, K, stream, async);
+	void gMatVecMulDouble(const double       *A     ,
+	                      const double       *B     ,
+	                            double       *C     ,
+	                            unsigned int  N     ,
+	                            unsigned int  K     ,
+	                            cudaStream_t  stream,
+	                            bool          async )
+	{
+
+		gMatVecMul<double>(A, B, C, N, K, stream, async);
+	}
 }

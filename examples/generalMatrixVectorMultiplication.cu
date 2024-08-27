@@ -62,7 +62,7 @@ int main() {
 	check_cuda( cudaMemcpy ( d_A, A, (size_t)K     * sizeof(int), cudaMemcpyHostToDevice ) );
 
 	for (int i = 0; i < 5; ++i)
-		gMatVecMulInt(d_A, d_B, d_C, N, K);
+		cuAlgo::gMatVecMulInt(d_A, d_B, d_C, N, K);
 
 	check_cuda( cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost ) );
 

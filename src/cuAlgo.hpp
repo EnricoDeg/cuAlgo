@@ -217,8 +217,6 @@ void gMatMulInt(int           alpha        ,
                 cudaStream_t  stream = 0   ,
                 bool          async = false);
 
-}
-
 /**
  * @brief   Perform matrix-vector multiplication with floats.
  * 
@@ -267,6 +265,8 @@ void gMatVecMulInt(const int          *A            ,
                          unsigned int  K            ,
                          cudaStream_t  stream = 0   ,
                          bool          async = false);
+
+}
 
 /**
  * @brief   Perform sparse matrix-vector multiplication with CSR 
