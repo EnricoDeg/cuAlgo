@@ -150,57 +150,57 @@ void reduce1dVector(T            *g_idata,
 		switch (threadsPerBlock) {
 			case 1024:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduce1dKernel<1024>,
+			     reduce1dKernel<1024 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 512:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduce1dKernel< 512>,
+			     reduce1dKernel< 512 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 256:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduce1dKernel< 256>,
+			     reduce1dKernel< 256 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 128:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduce1dKernel< 128>,
+			     reduce1dKernel< 128 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 64:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduce1dKernel<  64>,
+			     reduce1dKernel<  64 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 32:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduce1dKernel< 128>,
+			     reduce1dKernel< 128 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 16:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduce1dKernel<  16>,
+			     reduce1dKernel<  16 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 8:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduce1dKernel<   8>,
+			     reduce1dKernel<   8 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 4:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduce1dKernel<   4>,
+			     reduce1dKernel<   4 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 2:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduce1dKernel<   2>,
+			     reduce1dKernel<   2 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 1:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduce1dKernel<   1>,
+			     reduce1dKernel<   1 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 		}

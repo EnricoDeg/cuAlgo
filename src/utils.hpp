@@ -69,6 +69,8 @@ __device__ unsigned int prev_power_of_2 (unsigned int n) ;
 
 void print_kernel_config(dim3 threadsPerBlock, dim3 blocksPerGrid);
 
+#define COMMA ,
+
 #ifdef CUALGO_VERBOSE
 
 #define TIME(blocksPerGrid, threadsPerBlock, shmem, stream, async, func, args ...)               \
