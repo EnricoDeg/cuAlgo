@@ -26,30 +26,26 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <iostream>
-#include <cuda.h>
 #include "cuAlgo.hpp"
-#include <chrono>
 #include "utils.hpp"
-
-using namespace std::chrono;
 
 #define THREADS_PER_BLOCK 128  // WARP_SIZE * WARPS_PER_BLOCK
 
-__global__ void gSpMatVecMulELLKernel( const int * __restrict__ columns         ,
-                                       const int * __restrict__ values          ,
-                                       const int * __restrict__ x               ,
-                                             int * __restrict__ y               ,
-                                             int                nrows           ,
-                                             int                elements_in_rows)
+template <typename T>
+__global__ void gSpMatVecMulELLKernel( const unsigned int * __restrict__ columns         ,
+                                       const T            * __restrict__ values          ,
+                                       const T            * __restrict__ x               ,
+                                             T            * __restrict__ y               ,
+                                             unsigned int                nrows           ,
+                                             unsigned int                elements_in_rows)
 {
 
 	unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
 
 	if (row < nrows) {
 
-		int sum = 0;
-		for (size_t element = 0; element < elements_in_rows; ++element) {
+		T sum = 0;
+		for (unsigned int element = 0; element < elements_in_rows; ++element) {
 
 			const unsigned int offset = row + element * nrows;
 			sum += values[offset] * x[columns[offset]];
@@ -58,24 +54,61 @@ __global__ void gSpMatVecMulELLKernel( const int * __restrict__ columns         
 	}
 }
 
-void gSpMatVecMulELL(int * columns         ,
-                     int * values          ,
-                     int * x               ,
-                     int * y               ,
-                     int   nrows           ,
-                     int   elements_in_rows) {
+template <typename T>
+void gSpMatVecMulELL(unsigned int *columns         ,
+                     T            *values          ,
+                     T            *x               ,
+                     T            *y               ,
+                     unsigned int  nrows           ,
+                     unsigned int  elements_in_rows,
+                     cudaStream_t  stream          ,
+                     bool          async           ) {
 
-	dim3 block(THREADS_PER_BLOCK);
-	dim3 grid(div_ceil(nrows, THREADS_PER_BLOCK));
+	dim3 threadsPerBlock(THREADS_PER_BLOCK);
+	dim3 blocksPerGrid(div_ceil(nrows, THREADS_PER_BLOCK));
+	print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-	std::cout << "threadsPerBlock = " << THREADS_PER_BLOCK << std::endl;
-	std::cout << "blocksPerGrid   = " << div_ceil(nrows, THREADS_PER_BLOCK) << std::endl;
+	TIME( threadsPerBlock, blocksPerGrid, 0, stream, async,
+	      gSpMatVecMulELLKernel<T>,
+	      columns, values, x, y, nrows, elements_in_rows );
 
-	auto start = high_resolution_clock::now();
-	gSpMatVecMulELLKernel<<<grid, block>>>(columns, values, x, y, nrows, elements_in_rows);
-	check_cuda( cudaDeviceSynchronize() );
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
+}
 
+void gSpMatVecMulELLInt(unsigned int *columns         ,
+                        int          *values          ,
+                        int          *x               ,
+                        int          *y               ,
+                        unsigned int  nrows           ,
+                        unsigned int  elements_in_rows,
+                        cudaStream_t  stream          ,
+                        bool          async           )
+{
+
+	gSpMatVecMulELL<int>(columns, values, x, y, nrows, elements_in_rows, stream, async);
+}
+
+void gSpMatVecMulELLFloat(unsigned int *columns         ,
+                          float        *values          ,
+                          float        *x               ,
+                          float        *y               ,
+                          unsigned int  nrows           ,
+                          unsigned int  elements_in_rows,
+                          cudaStream_t  stream          ,
+                          bool          async           )
+{
+
+	gSpMatVecMulELL<float>(columns, values, x, y, nrows, elements_in_rows, stream, async);
+}
+
+void gSpMatVecMulELLDouble(unsigned int *columns         ,
+                           double       *values          ,
+                           double       *x               ,
+                           double       *y               ,
+                           unsigned int  nrows           ,
+                           unsigned int  elements_in_rows,
+                           cudaStream_t  stream          ,
+                           bool          async           )
+{
+
+	gSpMatVecMulELL<double>(columns, values, x, y, nrows, elements_in_rows, stream, async);
 }

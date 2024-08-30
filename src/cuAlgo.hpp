@@ -416,7 +416,7 @@ void gSpMatVecMulCSRAdaptiveInt(unsigned int *columns      ,
 
 /**
  * @brief   Perform sparse matrix-vector multiplication with
- *          ELL format.
+ *          ELL format using floats.
  * 
  * @details The sparse matrix vector multiplication assumes that
  *          the matrix is provided in ELL format.
@@ -441,12 +441,40 @@ void gSpMatVecMulCSRAdaptiveInt(unsigned int *columns      ,
  * 
  * @ingroup algo
  */
-void gSpMatVecMulELL(int * columns         ,
-                     int * values          ,
-                     int * x               ,
-                     int * y               ,
-                     int   nrows           ,
-                     int   elements_in_rows) ;
+void gSpMatVecMulELLFloat(unsigned int *columns         ,
+                          float        *values          ,
+                          float        *x               ,
+                          float        *y               ,
+                          unsigned int  nrows           ,
+                          unsigned int  elements_in_rows,
+                          cudaStream_t  stream = 0      ,
+                          bool          async = false   );
+
+/**
+ * @brief   Perform sparse matrix-vector multiplication with
+ *          ELL format using doubles.
+ * 
+ * @details See documentation of gSpMatVecMulELLFloat().
+ * 
+ * @ingroup algo
+ */
+void gSpMatVecMulELLDouble(unsigned int *columns         ,
+                           double       *values          ,
+                           double       *x               ,
+                           double       *y               ,
+                           unsigned int  nrows           ,
+                           unsigned int  elements_in_rows,
+                           cudaStream_t  stream = 0      ,
+                           bool          async = false   );
+
+void gSpMatVecMulELLInt(unsigned int *columns         ,
+                        int          *values          ,
+                        int          *x               ,
+                        int          *y               ,
+                        unsigned int  nrows           ,
+                        unsigned int  elements_in_rows,
+                        cudaStream_t  stream = 0      ,
+                        bool          async = false   );
 
 /**
  * @brief   Perform 1D convolution with floats on the input matrices.
