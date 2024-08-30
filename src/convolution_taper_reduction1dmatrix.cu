@@ -115,41 +115,44 @@ void convolutionTaperReduction1dMatrix(T            *R     ,
 	}
 }
 
-void convolutionTaperReduction1dMatrixFloat(float        *R     ,
-                                            float        *V     ,
-                                            float        *T     ,
-                                            float        *C     ,
-                                            unsigned int  N     ,
-                                            unsigned int  K     ,
-                                            cudaStream_t  stream,
-                                            bool          async )
-{
+namespace cuAlgo {
 
-	convolutionTaperReduction1dMatrix<float>(R, V, T, C, N, K, stream, async);
-}
+	void convolutionTaperReduction1dMatrixFloat(float        *R     ,
+	                                            float        *V     ,
+	                                            float        *T     ,
+	                                            float        *C     ,
+	                                            unsigned int  N     ,
+	                                            unsigned int  K     ,
+	                                            cudaStream_t  stream,
+	                                            bool          async )
+	{
 
-void convolutionTaperReduction1dMatrixDouble(double       *R     ,
-                                             double       *V     ,
-                                             double       *T     ,
-                                             double       *C     ,
-                                             unsigned int  N     ,
-                                             unsigned int  K     ,
-                                             cudaStream_t  stream,
-                                             bool          async )
-{
+		convolutionTaperReduction1dMatrix<float>(R, V, T, C, N, K, stream, async);
+	}
 
-	convolutionTaperReduction1dMatrix<double>(R, V, T, C, N, K, stream, async);
-}
+	void convolutionTaperReduction1dMatrixDouble(double       *R     ,
+	                                             double       *V     ,
+	                                             double       *T     ,
+	                                             double       *C     ,
+	                                             unsigned int  N     ,
+	                                             unsigned int  K     ,
+	                                             cudaStream_t  stream,
+	                                             bool          async )
+	{
 
-void convolutionTaperReduction1dMatrixInt(int          *R     ,
-                                          int          *V     ,
-                                          int          *T     ,
-                                          int          *C     ,
-                                          unsigned int  N     ,
-                                          unsigned int  K     ,
-                                          cudaStream_t  stream,
-                                          bool          async )
-{
+		convolutionTaperReduction1dMatrix<double>(R, V, T, C, N, K, stream, async);
+	}
 
-	convolutionTaperReduction1dMatrix<int>(R, V, T, C, N, K, stream, async);
+	void convolutionTaperReduction1dMatrixInt(int          *R     ,
+	                                          int          *V     ,
+	                                          int          *T     ,
+	                                          int          *C     ,
+	                                          unsigned int  N     ,
+	                                          unsigned int  K     ,
+	                                          cudaStream_t  stream,
+	                                          bool          async )
+	{
+
+		convolutionTaperReduction1dMatrix<int>(R, V, T, C, N, K, stream, async);
+	}
 }

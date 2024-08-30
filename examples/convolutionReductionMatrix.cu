@@ -67,7 +67,7 @@ int main() {
 	std::cout << "launching kernels ..." << std::endl;
 	for (size_t i = 0; i < 5; ++i) {
 		auto start = high_resolution_clock::now();
-		convolutionReduction1dMatrixInt(d_R, d_V, d_C, N, K);
+		cuAlgo::convolutionReduction1dMatrixInt(d_R, d_V, d_C, N, K);
 		auto stop = high_resolution_clock::now();
 		auto duration = duration_cast<microseconds>(stop - start);
 		std::cout << "Time taken by function (GPU): " << duration.count() << " microseconds" << std::endl;

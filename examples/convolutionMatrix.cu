@@ -66,7 +66,7 @@ int main() {
 
 	std::cout << "launching kernels ..." << std::endl;
 	for (unsigned int i = 0; i < 5; ++i)
-		convolution1dMatrixInt(d_R, d_V, d_C, N, K);
+		cuAlgo::convolution1dMatrixInt(d_R, d_V, d_C, N, K);
 	std::cout << "launching kernels done ..." << std::endl;
 
 	for (unsigned int i = 0 ; i < N ; ++i)

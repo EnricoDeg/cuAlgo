@@ -90,38 +90,41 @@ void convolution1dMatrix(T            *R     ,
 	     R, V, C, N, K, chunks);
 }
 
-void convolution1dMatrixFloat(float        *R     ,
-                              float        *V     ,
-                              float        *C     ,
-                              unsigned int  N     ,
-                              unsigned int  K     ,
-                              cudaStream_t  stream,
-                              bool          async )
-{
+namespace cuAlgo {
 
-	convolution1dMatrix<float>(R, V, C, N, K, stream, async);
-}
+	void convolution1dMatrixFloat(float        *R     ,
+	                              float        *V     ,
+	                              float        *C     ,
+	                              unsigned int  N     ,
+	                              unsigned int  K     ,
+	                              cudaStream_t  stream,
+	                              bool          async )
+	{
 
-void convolution1dMatrixDouble(double       *R     ,
-                               double       *V     ,
-                               double       *C     ,
-                               unsigned int  N     ,
-                               unsigned int  K     ,
-                               cudaStream_t  stream,
-                               bool          async )
-{
+		convolution1dMatrix<float>(R, V, C, N, K, stream, async);
+	}
 
-	convolution1dMatrix<double>(R, V, C, N, K, stream, async);
-}
+	void convolution1dMatrixDouble(double       *R     ,
+	                               double       *V     ,
+	                               double       *C     ,
+	                               unsigned int  N     ,
+	                               unsigned int  K     ,
+	                               cudaStream_t  stream,
+	                               bool          async )
+	{
 
-void convolution1dMatrixInt(int          *R     ,
-                            int          *V     ,
-                            int          *C     ,
-                            unsigned int  N     ,
-                            unsigned int  K     ,
-                            cudaStream_t  stream,
-                            bool          async )
-{
+		convolution1dMatrix<double>(R, V, C, N, K, stream, async);
+	}
 
-	convolution1dMatrix<int>(R, V, C, N, K, stream, async);
+	void convolution1dMatrixInt(int          *R     ,
+	                            int          *V     ,
+	                            int          *C     ,
+	                            unsigned int  N     ,
+	                            unsigned int  K     ,
+	                            cudaStream_t  stream,
+	                            bool          async )
+	{
+
+		convolution1dMatrix<int>(R, V, C, N, K, stream, async);
+	}
 }

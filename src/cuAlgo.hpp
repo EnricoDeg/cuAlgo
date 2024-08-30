@@ -474,8 +474,6 @@ void gSpMatVecMulELLInt(unsigned int *columns         ,
                         cudaStream_t  stream = 0      ,
                         bool          async = false   );
 
-}
-
 /**
  * @brief   Perform 1D convolution with floats on the input matrices.
  * 
@@ -648,4 +646,6 @@ void convolutionTaperReduction1dMatrixInt(int          *R            ,
                                           unsigned int  K            ,
                                           cudaStream_t  stream = 0   ,
                                           bool          async = false);
+
+}
 #endif
