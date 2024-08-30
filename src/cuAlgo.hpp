@@ -321,8 +321,6 @@ void gSpMatVecMulCSRVectorInt(unsigned int *columns      ,
                               cudaStream_t  stream = 0   ,
                               bool          async = false);
 
-}
-
 /**
  * @brief   Compute and return the row block array given the 
  *          row_ptr array of a matrix in CSR format.
@@ -413,6 +411,8 @@ void gSpMatVecMulCSRAdaptiveInt(unsigned int *columns      ,
                                 unsigned int  blocks_count ,
                                 cudaStream_t  stream = 0   ,
                                 bool          async = false);
+
+}
 
 /**
  * @brief   Perform sparse matrix-vector multiplication with

@@ -203,50 +203,53 @@ void gSpMatVecMulCSRAdaptive(unsigned int *columns     ,
 	      columns, row_ptr, row_blocks, values, x, y, nrows );
 }
 
-void gSpMatVecMulCSRAdaptiveInt(unsigned int *columns     ,
-                                unsigned int *row_ptr     ,
-                                unsigned int *row_blocks  ,
-                                         int *values      ,
-                                         int *x           ,
-                                         int *y           ,
-                                unsigned int  nrows       ,
-                                unsigned int  blocks_count,
-                                cudaStream_t  stream      ,
-                                bool          async       )
-{
+namespace cuAlgo {
 
-	gSpMatVecMulCSRAdaptive<int>(columns, row_ptr, row_blocks , values,
-	                             x, y, nrows, blocks_count, stream, async);
-}
+	void gSpMatVecMulCSRAdaptiveInt(unsigned int *columns     ,
+	                                unsigned int *row_ptr     ,
+	                                unsigned int *row_blocks  ,
+	                                         int *values      ,
+	                                         int *x           ,
+	                                         int *y           ,
+	                                unsigned int  nrows       ,
+	                                unsigned int  blocks_count,
+	                                cudaStream_t  stream      ,
+	                                bool          async       )
+	{
 
-void gSpMatVecMulCSRAdaptiveFloat(unsigned int   *columns     ,
-                                  unsigned int   *row_ptr     ,
-                                  unsigned int   *row_blocks  ,
-                                           float *values      ,
-                                           float *x           ,
-                                           float *y           ,
-                                  unsigned int    nrows       ,
-                                  unsigned int    blocks_count,
-                                  cudaStream_t    stream      ,
-                                  bool            async       )
-{
+		gSpMatVecMulCSRAdaptive<int>(columns, row_ptr, row_blocks , values,
+		                             x, y, nrows, blocks_count, stream, async);
+	}
 
-	gSpMatVecMulCSRAdaptive<float>(columns, row_ptr, row_blocks , values,
-	                               x, y, nrows, blocks_count, stream, async);
-}
+	void gSpMatVecMulCSRAdaptiveFloat(unsigned int   *columns     ,
+	                                  unsigned int   *row_ptr     ,
+	                                  unsigned int   *row_blocks  ,
+	                                           float *values      ,
+	                                           float *x           ,
+	                                           float *y           ,
+	                                  unsigned int    nrows       ,
+	                                  unsigned int    blocks_count,
+	                                  cudaStream_t    stream      ,
+	                                  bool            async       )
+	{
 
-void gSpMatVecMulCSRAdaptiveDouble(unsigned int    *columns     ,
-                                   unsigned int    *row_ptr     ,
-                                   unsigned int    *row_blocks  ,
-                                            double *values      ,
-                                            double *x           ,
-                                            double *y           ,
-                                   unsigned int     nrows       ,
-                                   unsigned int     blocks_count,
-                                   cudaStream_t     stream      ,
-                                   bool             async       )
-{
+		gSpMatVecMulCSRAdaptive<float>(columns, row_ptr, row_blocks , values,
+		                               x, y, nrows, blocks_count, stream, async);
+	}
 
-	gSpMatVecMulCSRAdaptive<double>(columns, row_ptr, row_blocks , values,
-	                                x, y, nrows, blocks_count, stream, async);
+	void gSpMatVecMulCSRAdaptiveDouble(unsigned int    *columns     ,
+	                                   unsigned int    *row_ptr     ,
+	                                   unsigned int    *row_blocks  ,
+	                                            double *values      ,
+	                                            double *x           ,
+	                                            double *y           ,
+	                                   unsigned int     nrows       ,
+	                                   unsigned int     blocks_count,
+	                                   cudaStream_t     stream      ,
+	                                   bool             async       )
+	{
+
+		gSpMatVecMulCSRAdaptive<double>(columns, row_ptr, row_blocks , values,
+		                                x, y, nrows, blocks_count, stream, async);
+	}
 }

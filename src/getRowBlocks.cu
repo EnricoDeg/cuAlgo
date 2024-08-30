@@ -33,100 +33,103 @@
 
 using namespace std::chrono;
 
-unsigned int * getRowBlocks( const unsigned int * row_ptr     ,
-                                   unsigned int   nrows       ,
-                                   unsigned int * blocks_count) {
+namespace cuAlgo {
 
-	auto start = high_resolution_clock::now();
+	unsigned int * getRowBlocks( const unsigned int * row_ptr     ,
+	                                   unsigned int   nrows       ,
+	                                   unsigned int * blocks_count) {
 
-	// Part 1: compute size of row_blocks
-	unsigned int last_i = 0;
-	unsigned int current_wg = 1;
-	unsigned int nnz_sum = 0;
-	for (unsigned int i = 1; i <= nrows; i++) {
+		auto start = high_resolution_clock::now();
 
-		nnz_sum += row_ptr[i] - row_ptr[i - 1];
+		// Part 1: compute size of row_blocks
+		unsigned int last_i = 0;
+		unsigned int current_wg = 1;
+		unsigned int nnz_sum = 0;
+		for (unsigned int i = 1; i <= nrows; i++) {
 
-		if (nnz_sum == NNZ_PER_WG) {
-			last_i = i;
+			nnz_sum += row_ptr[i] - row_ptr[i - 1];
 
-			current_wg++;
-			nnz_sum = 0;
-		} else if (nnz_sum > NNZ_PER_WG) {
-
-			if (i - last_i > 1) {
+			if (nnz_sum == NNZ_PER_WG) {
+				last_i = i;
 
 				current_wg++;
-				i--;
-			} else {
+				nnz_sum = 0;
+			} else if (nnz_sum > NNZ_PER_WG) {
+
+				if (i - last_i > 1) {
+
+					current_wg++;
+					i--;
+				} else {
+					current_wg++;
+				}
+
+				last_i = i;
+				nnz_sum = 0;
+			} else if (i - last_i > NNZ_PER_WG) {
+
+				last_i = i;
 				current_wg++;
+				nnz_sum = 0;
 			}
-
-			last_i = i;
-			nnz_sum = 0;
-		} else if (i - last_i > NNZ_PER_WG) {
-
-			last_i = i;
-			current_wg++;
-			nnz_sum = 0;
 		}
-	}
 
-	// Part 2: Create and fill row_blocks
-	unsigned int * row_blocks = (unsigned int *)malloc((current_wg + 1) * sizeof(unsigned int));
+		// Part 2: Create and fill row_blocks
+		unsigned int * row_blocks = (unsigned int *)malloc((current_wg + 1) * sizeof(unsigned int));
 
-	row_blocks[0] = 0;
+		row_blocks[0] = 0;
 
-	last_i = 0;
-	current_wg = 1;
-	nnz_sum = 0;
-	for (unsigned int i = 1; i <= nrows; i++) {
+		last_i = 0;
+		current_wg = 1;
+		nnz_sum = 0;
+		for (unsigned int i = 1; i <= nrows; i++) {
 
-		nnz_sum += row_ptr[i] - row_ptr[i - 1];
+			nnz_sum += row_ptr[i] - row_ptr[i - 1];
 
-		if (nnz_sum == NNZ_PER_WG) {
+			if (nnz_sum == NNZ_PER_WG) {
 
-			last_i = i;
-
-			row_blocks[current_wg] = i;
-			current_wg++;
-			nnz_sum = 0;
-		} else if (nnz_sum > NNZ_PER_WG) {
-
-			if (i - last_i > 1) {
-
-				row_blocks[current_wg] = i - 1;
-				current_wg++;
-				i--;
-			} else {
+				last_i = i;
 
 				row_blocks[current_wg] = i;
 				current_wg++;
+				nnz_sum = 0;
+			} else if (nnz_sum > NNZ_PER_WG) {
+
+				if (i - last_i > 1) {
+
+					row_blocks[current_wg] = i - 1;
+					current_wg++;
+					i--;
+				} else {
+
+					row_blocks[current_wg] = i;
+					current_wg++;
+				}
+
+				last_i = i;
+				nnz_sum = 0;
+			} else if (i - last_i > NNZ_PER_WG) {
+
+				last_i = i;
+				row_blocks[current_wg] = i;
+				current_wg++;
+				nnz_sum = 0;
 			}
-
-			last_i = i;
-			nnz_sum = 0;
-		} else if (i - last_i > NNZ_PER_WG) {
-
-			last_i = i;
-			row_blocks[current_wg] = i;
-			current_wg++;
-			nnz_sum = 0;
 		}
+
+		row_blocks[current_wg] = nrows;
+
+		*blocks_count = current_wg;
+
+		unsigned int * d_row_blocks;
+		check_cuda( cudaMalloc(&d_row_blocks, (current_wg + 1) * sizeof (unsigned int)) );
+		check_cuda( cudaMemcpy( d_row_blocks, row_blocks, sizeof (unsigned int) * (current_wg + 1), cudaMemcpyHostToDevice) );
+		free(row_blocks);
+
+		auto stop = high_resolution_clock::now();
+		auto duration = duration_cast<microseconds>(stop - start);
+		std::cout << "Time taken by getRowBlocks function: " << duration.count() << " microseconds" << std::endl;
+
+		return d_row_blocks;
 	}
-
-	row_blocks[current_wg] = nrows;
-
-	*blocks_count = current_wg;
-
-	unsigned int * d_row_blocks;
-	check_cuda( cudaMalloc(&d_row_blocks, (current_wg + 1) * sizeof (unsigned int)) );
-	check_cuda( cudaMemcpy( d_row_blocks, row_blocks, sizeof (unsigned int) * (current_wg + 1), cudaMemcpyHostToDevice) );
-	free(row_blocks);
-
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	std::cout << "Time taken by getRowBlocks function: " << duration.count() << " microseconds" << std::endl;
-
-	return d_row_blocks;
 }

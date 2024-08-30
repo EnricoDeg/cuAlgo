@@ -108,10 +108,10 @@ int main(int argc, char *argv[])
 
 	unsigned int blocks_count = 0;
 	std::cout << "Compute row blocks" << std::endl;
-	unsigned int * d_row_blocks = getRowBlocks(row_ptr, nrows, &blocks_count);
+	unsigned int * d_row_blocks = cuAlgo::getRowBlocks(row_ptr, nrows, &blocks_count);
 
 	for (unsigned int i = 0; i < 5; ++i)
-		gSpMatVecMulCSRAdaptiveInt( d_columns, d_row_ptr, d_row_blocks, d_values , d_x , d_y , nrows, blocks_count ) ;
+		cuAlgo::gSpMatVecMulCSRAdaptiveInt( d_columns, d_row_ptr, d_row_blocks, d_values , d_x , d_y , nrows, blocks_count ) ;
 
 	check_cuda( cudaMemcpy ( y        , d_y    ,   nrows       * sizeof(         int), cudaMemcpyDeviceToHost ) );
 
