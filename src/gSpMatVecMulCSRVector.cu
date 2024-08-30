@@ -27,29 +27,26 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <iostream>
-#include <cuda.h>
 #include "cuAlgo.hpp"
-#include <chrono>
 #include "utils.hpp"
-
-using namespace std::chrono;
 
 #define WARPS_PER_BLOCK 4
 #define THREADS_PER_BLOCK 128  // WARP_SIZE * WARPS_PER_BLOCK
 
-__global__ void gSpMatVecMulCSRVectorKernel(const int * __restrict__ columns,
-                                            const int * __restrict__ row_ptr,
-                                            const int * __restrict__ values ,
-                                            const int * __restrict__ x      ,
-                                                  int * __restrict__ y      ,
-                                                  int                nrows  ) {
+template<typename T>
+__global__ void gSpMatVecMulCSRVectorKernel(const unsigned int * __restrict__ columns,
+                                            const unsigned int * __restrict__ row_ptr,
+                                            const T            * __restrict__ values ,
+                                            const T            * __restrict__ x      ,
+                                                  T            * __restrict__ y      ,
+                                                  unsigned int                nrows  ) {
 
 	const unsigned int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
 	const unsigned int warp_id   = thread_id / WARP_SIZE;
 	const unsigned int lane      = thread_id % WARP_SIZE;
 
 	const unsigned int row = warp_id;
-	int sum = 0;
+	T sum = 0;
 	if (row < nrows) {
 
 		const unsigned int row_start = row_ptr[row    ];
@@ -63,23 +60,60 @@ __global__ void gSpMatVecMulCSRVectorKernel(const int * __restrict__ columns,
 		y[row] = sum;
 }
 
-void gSpMatVecMulCSRVector(int * columns,
-                           int * row_ptr,
-                           int * values ,
-                           int * x      ,
-                           int * y      ,
-                           int   nrows  ) {
+template<typename T>
+void gSpMatVecMulCSRVector(unsigned int *columns,
+                           unsigned int *row_ptr,
+                           T            *values ,
+                           T            *x      ,
+                           T            *y      ,
+                           unsigned int  nrows  ,
+                           cudaStream_t  stream ,
+                           bool          async  ) {
 
-	dim3 block(THREADS_PER_BLOCK);
-	dim3 grid(div_ceil(nrows, WARPS_PER_BLOCK));
+	dim3 threadsPerBlock(THREADS_PER_BLOCK);
+	dim3 blocksPerGrid(div_ceil(nrows, WARPS_PER_BLOCK));
+	print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-	std::cout << "threadsPerBlock = " << THREADS_PER_BLOCK << std::endl;
-	std::cout << "blocksPerGrid   = " << div_ceil(nrows, WARPS_PER_BLOCK) << std::endl;
+	TIME( threadsPerBlock, blocksPerGrid, 0, stream, async,
+	      gSpMatVecMulCSRVectorKernel<T>,
+	      columns, row_ptr, values, x, y, nrows );
+}
 
-	auto start = high_resolution_clock::now();
-	gSpMatVecMulCSRVectorKernel<<<grid, block>>>(columns, row_ptr, values, x, y, nrows);
-	check_cuda( cudaDeviceSynchronize() );
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
+void gSpMatVecMulCSRVectorInt(unsigned int *columns,
+                              unsigned int *row_ptr,
+                              int          *values ,
+                              int          *x      ,
+                              int          *y      ,
+                              unsigned int  nrows  ,
+                              cudaStream_t  stream ,
+                              bool          async  )
+{
+
+	gSpMatVecMulCSRVector<int>(columns, row_ptr, values , x, y, nrows, stream , async );
+}
+
+void gSpMatVecMulCSRVectorFloat(unsigned int *columns,
+                                unsigned int *row_ptr,
+                                float        *values ,
+                                float        *x      ,
+                                float        *y      ,
+                                unsigned int  nrows  ,
+                                cudaStream_t  stream ,
+                                bool          async  )
+{
+
+	gSpMatVecMulCSRVector<float>(columns, row_ptr, values , x, y, nrows, stream , async );
+}
+
+void gSpMatVecMulCSRVectorDouble(unsigned int *columns,
+                                 unsigned int *row_ptr,
+                                 double       *values ,
+                                 double       *x      ,
+                                 double       *y      ,
+                                 unsigned int  nrows  ,
+                                 cudaStream_t  stream ,
+                                 bool          async  )
+{
+
+	gSpMatVecMulCSRVector<double>(columns, row_ptr, values , x, y, nrows, stream , async );
 }

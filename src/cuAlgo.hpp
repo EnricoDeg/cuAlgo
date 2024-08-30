@@ -270,7 +270,7 @@ void gMatVecMulInt(const int          *A            ,
 
 /**
  * @brief   Perform sparse matrix-vector multiplication with CSR 
- *          format.
+ *          format using floats.
  * 
  * @details The sparse matrix vector multiplication assumes that
  *          the matrix is provided in CSR format.
@@ -288,12 +288,40 @@ void gMatVecMulInt(const int          *A            ,
  * 
  * @ingroup algo
  */
-void gSpMatVecMulCSRVector( int * columns,
-                            int * row_ptr,
-                            int * values ,
-                            int * x      ,
-                            int * y      ,
-                            int   nrows  ) ;
+void gSpMatVecMulCSRVectorFloat(unsigned int *columns      ,
+                                unsigned int *row_ptr      ,
+                                float        *values       ,
+                                float        *x            ,
+                                float        *y            ,
+                                unsigned int  nrows        ,
+                                cudaStream_t  stream = 0   ,
+                                bool          async = false);
+
+/**
+ * @brief   Perform sparse matrix-vector multiplication with CSR 
+ *          format using doubles.
+ * 
+ * @details See documentation of gSpMatVecMulCSRVectorFloat().
+ * 
+ * @ingroup algo
+ */
+void gSpMatVecMulCSRVectorDouble(unsigned int *columns      ,
+                                 unsigned int *row_ptr      ,
+                                 double       *values       ,
+                                 double       *x            ,
+                                 double       *y            ,
+                                 unsigned int  nrows        ,
+                                 cudaStream_t  stream = 0   ,
+                                 bool          async = false);
+
+void gSpMatVecMulCSRVectorInt(unsigned int *columns      ,
+                              unsigned int *row_ptr      ,
+                              int          *values       ,
+                              int          *x            ,
+                              int          *y            ,
+                              unsigned int  nrows        ,
+                              cudaStream_t  stream = 0   ,
+                              bool          async = false);
 
 /**
  * @brief   Compute and return the row block array given the 
