@@ -412,8 +412,6 @@ void gSpMatVecMulCSRAdaptiveInt(unsigned int *columns      ,
                                 cudaStream_t  stream = 0   ,
                                 bool          async = false);
 
-}
-
 /**
  * @brief   Perform sparse matrix-vector multiplication with
  *          ELL format using floats.
@@ -475,6 +473,8 @@ void gSpMatVecMulELLInt(unsigned int *columns         ,
                         unsigned int  elements_in_rows,
                         cudaStream_t  stream = 0      ,
                         bool          async = false   );
+
+}
 
 /**
  * @brief   Perform 1D convolution with floats on the input matrices.

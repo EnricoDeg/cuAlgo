@@ -74,41 +74,44 @@ void gSpMatVecMulELL(unsigned int *columns         ,
 
 }
 
-void gSpMatVecMulELLInt(unsigned int *columns         ,
-                        int          *values          ,
-                        int          *x               ,
-                        int          *y               ,
-                        unsigned int  nrows           ,
-                        unsigned int  elements_in_rows,
-                        cudaStream_t  stream          ,
-                        bool          async           )
-{
+namespace cuAlgo {
 
-	gSpMatVecMulELL<int>(columns, values, x, y, nrows, elements_in_rows, stream, async);
-}
+	void gSpMatVecMulELLInt(unsigned int *columns         ,
+	                        int          *values          ,
+	                        int          *x               ,
+	                        int          *y               ,
+	                        unsigned int  nrows           ,
+	                        unsigned int  elements_in_rows,
+	                        cudaStream_t  stream          ,
+	                        bool          async           )
+	{
 
-void gSpMatVecMulELLFloat(unsigned int *columns         ,
-                          float        *values          ,
-                          float        *x               ,
-                          float        *y               ,
-                          unsigned int  nrows           ,
-                          unsigned int  elements_in_rows,
-                          cudaStream_t  stream          ,
-                          bool          async           )
-{
+		gSpMatVecMulELL<int>(columns, values, x, y, nrows, elements_in_rows, stream, async);
+	}
 
-	gSpMatVecMulELL<float>(columns, values, x, y, nrows, elements_in_rows, stream, async);
-}
+	void gSpMatVecMulELLFloat(unsigned int *columns         ,
+	                          float        *values          ,
+	                          float        *x               ,
+	                          float        *y               ,
+	                          unsigned int  nrows           ,
+	                          unsigned int  elements_in_rows,
+	                          cudaStream_t  stream          ,
+	                          bool          async           )
+	{
 
-void gSpMatVecMulELLDouble(unsigned int *columns         ,
-                           double       *values          ,
-                           double       *x               ,
-                           double       *y               ,
-                           unsigned int  nrows           ,
-                           unsigned int  elements_in_rows,
-                           cudaStream_t  stream          ,
-                           bool          async           )
-{
+		gSpMatVecMulELL<float>(columns, values, x, y, nrows, elements_in_rows, stream, async);
+	}
 
-	gSpMatVecMulELL<double>(columns, values, x, y, nrows, elements_in_rows, stream, async);
+	void gSpMatVecMulELLDouble(unsigned int *columns         ,
+	                           double       *values          ,
+	                           double       *x               ,
+	                           double       *y               ,
+	                           unsigned int  nrows           ,
+	                           unsigned int  elements_in_rows,
+	                           cudaStream_t  stream          ,
+	                           bool          async           )
+	{
+
+		gSpMatVecMulELL<double>(columns, values, x, y, nrows, elements_in_rows, stream, async);
+	}
 }
