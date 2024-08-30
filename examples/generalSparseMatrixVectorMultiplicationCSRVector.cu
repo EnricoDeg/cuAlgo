@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 	check_cuda( cudaMemcpy ( d_x      , x      ,   nrows       * sizeof(         int), cudaMemcpyHostToDevice ) );
 
 	for (int i = 0; i < 5; ++i)
-		gSpMatVecMulCSRVectorInt( d_columns, d_row_ptr, d_values , d_x , d_y , nrows ) ;
+		cuAlgo::gSpMatVecMulCSRVectorInt( d_columns, d_row_ptr, d_values , d_x , d_y , nrows ) ;
 
 	check_cuda( cudaMemcpy ( y        , d_y    ,   nrows       * sizeof(         int), cudaMemcpyDeviceToHost ) );
 

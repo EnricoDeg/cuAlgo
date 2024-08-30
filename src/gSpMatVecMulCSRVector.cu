@@ -79,41 +79,44 @@ void gSpMatVecMulCSRVector(unsigned int *columns,
 	      columns, row_ptr, values, x, y, nrows );
 }
 
-void gSpMatVecMulCSRVectorInt(unsigned int *columns,
-                              unsigned int *row_ptr,
-                              int          *values ,
-                              int          *x      ,
-                              int          *y      ,
-                              unsigned int  nrows  ,
-                              cudaStream_t  stream ,
-                              bool          async  )
-{
+namespace cuAlgo {
 
-	gSpMatVecMulCSRVector<int>(columns, row_ptr, values , x, y, nrows, stream , async );
-}
+	void gSpMatVecMulCSRVectorInt(unsigned int *columns,
+	                              unsigned int *row_ptr,
+	                              int          *values ,
+	                              int          *x      ,
+	                              int          *y      ,
+	                              unsigned int  nrows  ,
+	                              cudaStream_t  stream ,
+	                              bool          async  )
+	{
 
-void gSpMatVecMulCSRVectorFloat(unsigned int *columns,
-                                unsigned int *row_ptr,
-                                float        *values ,
-                                float        *x      ,
-                                float        *y      ,
-                                unsigned int  nrows  ,
-                                cudaStream_t  stream ,
-                                bool          async  )
-{
+		gSpMatVecMulCSRVector<int>(columns, row_ptr, values , x, y, nrows, stream , async );
+	}
 
-	gSpMatVecMulCSRVector<float>(columns, row_ptr, values , x, y, nrows, stream , async );
-}
+	void gSpMatVecMulCSRVectorFloat(unsigned int *columns,
+	                                unsigned int *row_ptr,
+	                                float        *values ,
+	                                float        *x      ,
+	                                float        *y      ,
+	                                unsigned int  nrows  ,
+	                                cudaStream_t  stream ,
+	                                bool          async  )
+	{
 
-void gSpMatVecMulCSRVectorDouble(unsigned int *columns,
-                                 unsigned int *row_ptr,
-                                 double       *values ,
-                                 double       *x      ,
-                                 double       *y      ,
-                                 unsigned int  nrows  ,
-                                 cudaStream_t  stream ,
-                                 bool          async  )
-{
+		gSpMatVecMulCSRVector<float>(columns, row_ptr, values , x, y, nrows, stream , async );
+	}
 
-	gSpMatVecMulCSRVector<double>(columns, row_ptr, values , x, y, nrows, stream , async );
+	void gSpMatVecMulCSRVectorDouble(unsigned int *columns,
+	                                 unsigned int *row_ptr,
+	                                 double       *values ,
+	                                 double       *x      ,
+	                                 double       *y      ,
+	                                 unsigned int  nrows  ,
+	                                 cudaStream_t  stream ,
+	                                 bool          async  )
+	{
+
+		gSpMatVecMulCSRVector<double>(columns, row_ptr, values , x, y, nrows, stream , async );
+	}
 }

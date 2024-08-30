@@ -266,8 +266,6 @@ void gMatVecMulInt(const int          *A            ,
                          cudaStream_t  stream = 0   ,
                          bool          async = false);
 
-}
-
 /**
  * @brief   Perform sparse matrix-vector multiplication with CSR 
  *          format using floats.
@@ -322,6 +320,8 @@ void gSpMatVecMulCSRVectorInt(unsigned int *columns      ,
                               unsigned int  nrows        ,
                               cudaStream_t  stream = 0   ,
                               bool          async = false);
+
+}
 
 /**
  * @brief   Compute and return the row block array given the 
