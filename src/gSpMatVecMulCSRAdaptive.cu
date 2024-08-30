@@ -37,19 +37,20 @@ using namespace std::chrono;
 #define WARPS_PER_BLOCK 4
 #define THREADS_PER_BLOCK 128  // WARP_SIZE * WARPS_PER_BLOCK
 
-__global__ void gSpMatVecMulCSRAdaptiveKernel ( const int * __restrict__ columns   ,
-                                                const int * __restrict__ row_ptr   ,
-                                                const int * __restrict__ row_blocks,
-                                                const int * __restrict__ values    ,
-                                                const int * __restrict__ x         ,
-                                                      int * __restrict__ y         ,
-                                                      int                nrows     ) {
+template <typename T>
+__global__ void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * __restrict__ columns   ,
+                                                const unsigned int * __restrict__ row_ptr   ,
+                                                const unsigned int * __restrict__ row_blocks,
+                                                const T            * __restrict__ values    ,
+                                                const T            * __restrict__ x         ,
+                                                      T            * __restrict__ y         ,
+                                                      unsigned int                nrows     ) {
 
 	const unsigned int block_row_begin = row_blocks[blockIdx.x];
 	const unsigned int block_row_end = row_blocks[blockIdx.x + 1];
 	const unsigned int nnz = row_ptr[block_row_end] - row_ptr[block_row_begin];
 
-	__shared__ int cache[NNZ_PER_WG];
+	__shared__ T cache[NNZ_PER_WG];
 
 	if (block_row_end - block_row_begin > 1) {
 
@@ -70,7 +71,7 @@ __global__ void gSpMatVecMulCSRAdaptiveKernel ( const int * __restrict__ columns
 			const unsigned int thread_in_block = i % threads_for_reduction;
 			const unsigned int local_row = block_row_begin + i / threads_for_reduction;
 
-			int dot = 0;
+			T dot = 0;
 
 			if (local_row < block_row_end) {
 
@@ -87,7 +88,7 @@ __global__ void gSpMatVecMulCSRAdaptiveKernel ( const int * __restrict__ columns
 			cache[i] = dot;
 
 			// Now each row has threads_for_reduction values in cache
-			for (int j = threads_for_reduction / 2; j > 0; j /= 2) {
+			for (unsigned int j = threads_for_reduction / 2; j > 0; j /= 2) {
 
 				// Reduce for each row
 				__syncthreads ();
@@ -110,7 +111,7 @@ __global__ void gSpMatVecMulCSRAdaptiveKernel ( const int * __restrict__ columns
 			unsigned int local_row = block_row_begin + i;
 			while (local_row < block_row_end) {
 
-				int dot = 0;
+				T dot = 0;
 
 				for (unsigned int j = row_ptr[local_row] - block_data_begin;
 				                  j < row_ptr[local_row + 1] - block_data_begin;
@@ -129,7 +130,7 @@ __global__ void gSpMatVecMulCSRAdaptiveKernel ( const int * __restrict__ columns
 		const unsigned int warp_id = threadIdx.x / WARP_SIZE;
 		const unsigned int lane    = threadIdx.x % WARP_SIZE;
 
-		int dot = 0;
+		T dot = 0;
 
 		if (nnz <= 64 || NNZ_PER_WG <= 32) {
 
@@ -181,26 +182,71 @@ __global__ void gSpMatVecMulCSRAdaptiveKernel ( const int * __restrict__ columns
 	}
 }
 
-void gSpMatVecMulCSRAdaptive(int * columns     ,
-                             int * row_ptr     ,
-                             int * row_blocks  ,
-                             int * values      ,
-                             int * x           ,
-                             int * y           ,
-                             int   nrows       ,
-                             int   blocks_count) {
+template <typename T>
+void gSpMatVecMulCSRAdaptive(unsigned int *columns     ,
+                             unsigned int *row_ptr     ,
+                             unsigned int *row_blocks  ,
+                                      T   *values      ,
+                                      T   *x           ,
+                                      T   *y           ,
+                             unsigned int  nrows       ,
+                             unsigned int  blocks_count,
+                             cudaStream_t  stream      ,
+                             bool          async       ) {
 
-	dim3 block(NNZ_PER_WG);
-	dim3 grid(blocks_count);
+	dim3 threadsPerBlock(NNZ_PER_WG);
+	dim3 blocksPerGrid(blocks_count);
+	print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-	std::cout << "threadsPerBlock = " << NNZ_PER_WG << std::endl;
-	std::cout << "blocksPerGrid   = " << div_ceil(nrows, WARPS_PER_BLOCK) << std::endl;
+	TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
+	      gSpMatVecMulCSRAdaptiveKernel<T>,
+	      columns, row_ptr, row_blocks, values, x, y, nrows );
+}
 
-	auto start = high_resolution_clock::now();
-	gSpMatVecMulCSRAdaptiveKernel<<<grid, block>>>(columns, row_ptr, row_blocks, values, x, y, nrows);
-	check_cuda( cudaDeviceSynchronize() );
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl;
+void gSpMatVecMulCSRAdaptiveInt(unsigned int *columns     ,
+                                unsigned int *row_ptr     ,
+                                unsigned int *row_blocks  ,
+                                         int *values      ,
+                                         int *x           ,
+                                         int *y           ,
+                                unsigned int  nrows       ,
+                                unsigned int  blocks_count,
+                                cudaStream_t  stream      ,
+                                bool          async       )
+{
 
+	gSpMatVecMulCSRAdaptive<int>(columns, row_ptr, row_blocks , values,
+	                             x, y, nrows, blocks_count, stream, async);
+}
+
+void gSpMatVecMulCSRAdaptiveFloat(unsigned int   *columns     ,
+                                  unsigned int   *row_ptr     ,
+                                  unsigned int   *row_blocks  ,
+                                           float *values      ,
+                                           float *x           ,
+                                           float *y           ,
+                                  unsigned int    nrows       ,
+                                  unsigned int    blocks_count,
+                                  cudaStream_t    stream      ,
+                                  bool            async       )
+{
+
+	gSpMatVecMulCSRAdaptive<float>(columns, row_ptr, row_blocks , values,
+	                               x, y, nrows, blocks_count, stream, async);
+}
+
+void gSpMatVecMulCSRAdaptiveDouble(unsigned int    *columns     ,
+                                   unsigned int    *row_ptr     ,
+                                   unsigned int    *row_blocks  ,
+                                            double *values      ,
+                                            double *x           ,
+                                            double *y           ,
+                                   unsigned int     nrows       ,
+                                   unsigned int     blocks_count,
+                                   cudaStream_t     stream      ,
+                                   bool             async       )
+{
+
+	gSpMatVecMulCSRAdaptive<double>(columns, row_ptr, row_blocks , values,
+	                                x, y, nrows, blocks_count, stream, async);
 }

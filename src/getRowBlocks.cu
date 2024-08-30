@@ -33,17 +33,17 @@
 
 using namespace std::chrono;
 
-int * getRowBlocks( const int * row_ptr     ,
-                          int   nrows       ,
-                          int * blocks_count) {
+unsigned int * getRowBlocks( const unsigned int * row_ptr     ,
+                                   unsigned int   nrows       ,
+                                   unsigned int * blocks_count) {
 
 	auto start = high_resolution_clock::now();
 
 	// Part 1: compute size of row_blocks
-	int last_i = 0;
-	int current_wg = 1;
+	unsigned int last_i = 0;
+	unsigned int current_wg = 1;
 	unsigned int nnz_sum = 0;
-	for (int i = 1; i <= nrows; i++) {
+	for (unsigned int i = 1; i <= nrows; i++) {
 
 		nnz_sum += row_ptr[i] - row_ptr[i - 1];
 
@@ -73,14 +73,14 @@ int * getRowBlocks( const int * row_ptr     ,
 	}
 
 	// Part 2: Create and fill row_blocks
-	int * row_blocks = (int *)malloc((current_wg + 1) * sizeof(int));
+	unsigned int * row_blocks = (unsigned int *)malloc((current_wg + 1) * sizeof(unsigned int));
 
 	row_blocks[0] = 0;
 
 	last_i = 0;
 	current_wg = 1;
 	nnz_sum = 0;
-	for (int i = 1; i <= nrows; i++) {
+	for (unsigned int i = 1; i <= nrows; i++) {
 
 		nnz_sum += row_ptr[i] - row_ptr[i - 1];
 
@@ -119,9 +119,9 @@ int * getRowBlocks( const int * row_ptr     ,
 
 	*blocks_count = current_wg;
 
-	int * d_row_blocks;
-	check_cuda( cudaMalloc(&d_row_blocks, (current_wg + 1) * sizeof (int)) );
-	check_cuda( cudaMemcpy( d_row_blocks, row_blocks, sizeof (int) * (current_wg + 1), cudaMemcpyHostToDevice) );
+	unsigned int * d_row_blocks;
+	check_cuda( cudaMalloc(&d_row_blocks, (current_wg + 1) * sizeof (unsigned int)) );
+	check_cuda( cudaMemcpy( d_row_blocks, row_blocks, sizeof (unsigned int) * (current_wg + 1), cudaMemcpyHostToDevice) );
 	free(row_blocks);
 
 	auto stop = high_resolution_clock::now();

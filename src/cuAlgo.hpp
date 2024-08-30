@@ -340,13 +340,13 @@ void gSpMatVecMulCSRVectorInt(unsigned int *columns      ,
  * 
  * @ingroup algo
  */
-int * getRowBlocks( const int * row_ptr     ,
-                          int   nrows       ,
-                          int * blocks_count);
+unsigned int * getRowBlocks( const unsigned int * row_ptr     ,
+                                   unsigned int   nrows       ,
+                                   unsigned int * blocks_count);
 
 /**
  * @brief   Perform sparse matrix-vector multiplication with an 
- *          adaptive method.
+ *          adaptive methodn using floats.
  * 
  * @details The sparse matrix vector multiplication assumes that
  *          the matrix is provided in CSR format.
@@ -373,14 +373,46 @@ int * getRowBlocks( const int * row_ptr     ,
  * 
  * @ingroup algo
  */
-void gSpMatVecMulCSRAdaptive(int * columns     ,
-                             int * row_ptr     ,
-                             int * row_blocks  ,
-                             int * values      ,
-                             int * x           ,
-                             int * y           ,
-                             int   nrows       ,
-                             int   blocks_count) ;
+void gSpMatVecMulCSRAdaptiveFloat(unsigned int   *columns     ,
+                                  unsigned int   *row_ptr     ,
+                                  unsigned int   *row_blocks  ,
+                                           float *values      ,
+                                           float *x           ,
+                                           float *y           ,
+                                  unsigned int    nrows       ,
+                                  unsigned int    blocks_count,
+                                  cudaStream_t    stream      ,
+                                  bool            async       );
+
+/**
+ * @brief   Perform sparse matrix-vector multiplication with an 
+ *          adaptive methodn using doubles.
+ * 
+ * @details See documentation of gSpMatVecMulCSRAdaptiveFloat().
+ * 
+ * @ingroup algo
+ */
+void gSpMatVecMulCSRAdaptiveDouble(unsigned int    *columns     ,
+                                   unsigned int    *row_ptr     ,
+                                   unsigned int    *row_blocks  ,
+                                            double *values      ,
+                                            double *x           ,
+                                            double *y           ,
+                                   unsigned int     nrows       ,
+                                   unsigned int     blocks_count,
+                                   cudaStream_t     stream      ,
+                                   bool             async       );
+
+void gSpMatVecMulCSRAdaptiveInt(unsigned int *columns      ,
+                                unsigned int *row_ptr      ,
+                                unsigned int *row_blocks   ,
+                                         int *values       ,
+                                         int *x            ,
+                                         int *y            ,
+                                unsigned int  nrows        ,
+                                unsigned int  blocks_count ,
+                                cudaStream_t  stream = 0   ,
+                                bool          async = false);
 
 /**
  * @brief   Perform sparse matrix-vector multiplication with
