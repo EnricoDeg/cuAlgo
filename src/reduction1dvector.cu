@@ -133,7 +133,7 @@ void reduce1dVector(T            *g_idata,
 
 		dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
 		dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
+		print_kernel_config(threadsPerBlock3, blocksPerGrid3);
 
 		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
 		     reduce1dKernelFlexible<T>,
@@ -143,7 +143,7 @@ void reduce1dVector(T            *g_idata,
 
 		dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
 		dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
+		print_kernel_config(threadsPerBlock3, blocksPerGrid3);
 
 		T * d_buffer;
 		check_cuda( cudaMalloc(&d_buffer, blocksPerGrid*sizeof(T)) );
