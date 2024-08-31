@@ -1,0 +1,25 @@
+/**
+ * \page API API
+
+Vector:
+ - \c reduce1dVector : reduction of a vector in a scalar
+
+Dense Matrix:
+ - \c reduce1dMatrix : reduction of a matrix non contiguous dimension into a vector
+ - \c transposeMatrix : matrix transposition
+ - \c gMatMul : general matrix-matrix multiplication (`C = alpha * A * B + beta * C`)
+ - \c gMatVecMul : general matrix-vector multiplication
+
+Sparse Matrix:
+ - \c gSpMatVecMulCSRVector : general sparse matrix-vector multiplication using CSR format and vector algorithm
+ - \c gSpMatVecMulCSRAdaptive : general sparse matrix-vector multiplication using CSR format and adaptive algorithm
+ - \c gSpMatVecMulELL : general sparse matrix-vector multiplication using ELL format
+
+Signal processing:
+ - \c convolution1dMatrix : convolution of multiple signals in a matrix
+ - \c convolutionReduction1dMatrix: convolution of multiple signals in a matrix and 
+ reduction of the results in a vector
+ - \c convolutionTaperReduction1dMatrix: convolution of multiple signals applying a spatial taper 
+ in a matrix and reduction of the results in a vector
+
+*/

@@ -8,7 +8,7 @@ Enrico Degregori
 
 - @ref license
 - @ref installation
-- @ref start
+- @ref API
 
 @defgroup algo
           API functions

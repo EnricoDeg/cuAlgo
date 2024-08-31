@@ -19,4 +19,11 @@ make
 make install
 \endcode
 
+Tests:
+
+\code
+cd build/tests
+ctest
+\endcode
+
 */
