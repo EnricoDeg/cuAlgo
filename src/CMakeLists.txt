@@ -17,7 +17,8 @@ set(SOURCE_EXE  utils.cu
                 gMatVecMul.cu
                 gSpMatVecMulCSRVector.cu
                 gSpMatVecMulCSRAdaptive.cu
-                gSpMatVecMulELL.cu)
+                gSpMatVecMulELL.cu
+                exclusiveScan1dvector.cu)
 
 add_library(cuAlgo SHARED ${SOURCE_EXE})
 target_include_directories(cuAlgo PRIVATE ${PROJECT_SOURCE_DIR})

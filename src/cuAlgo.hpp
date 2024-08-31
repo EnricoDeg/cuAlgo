@@ -647,5 +647,11 @@ void convolutionTaperReduction1dMatrixInt(int          *R            ,
                                           cudaStream_t  stream = 0   ,
                                           bool          async = false);
 
+void exclusiveScan1dVector(int          *g_idata,
+                           int          *g_odata,
+                           unsigned int  size   ,
+                           cudaStream_t  stream = 0 ,
+                           bool          async = false ) ;
+
 }
 #endif
