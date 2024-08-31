@@ -35,7 +35,7 @@ using namespace std::chrono;
 
 int main() {
 
-	const unsigned int size = 1024;
+	const unsigned int size = 8192;
 	int *idata    = (int *)malloc(size * sizeof(int));
 	int *odata    = (int *)malloc(size * sizeof(int));
 	int *solution = (int *)malloc(size * sizeof(int));
@@ -62,17 +62,17 @@ int main() {
 	check_cuda( cudaMemcpy ( d_odata, odata, size * sizeof(int), cudaMemcpyHostToDevice ) );
 
 	std::cout << "launching kernels ..." << std::endl;
-	for (unsigned int i = 0; i < 5; ++i)
-		cuAlgo::exclusiveScan1dVector(d_idata, d_odata, size);
+	cuAlgo::exclusiveScan1dVector(d_idata, d_odata, size);
 	std::cout << "launching kernels done ..." << std::endl;
 
 	check_cuda( cudaMemcpy ( odata, d_odata, size * sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	for (unsigned int i = 0 ; i < size ; ++i)
+	for (unsigned int i = 0 ; i < size ; ++i) {
 		if (solution[i] != odata[i]) {
 			std::cout << "Values are different " << i << " - " << solution[i] << " - " << odata[i] << std::endl;
 			exit(EXIT_FAILURE);
 		}
+	}
 
 	free(idata);
 	free(odata);
