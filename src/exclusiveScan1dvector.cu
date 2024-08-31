@@ -44,8 +44,12 @@ __global__ void exclusiveScan1dKernelBlock(const int          *__restrict__ g_id
 	extern __shared__ int temp[];
 	unsigned int thid = threadIdx.x;
 	unsigned int offset = 1;
-	temp[2*thid  ] = g_idata[2*thid  ];
-	temp[2*thid+1] = g_idata[2*thid+1];
+	int ai = thid;
+	int bi = thid + (size / 2);
+	int bankOffsetA = CONFLICT_FREE_OFFSET(ai);
+	int bankOffsetB = CONFLICT_FREE_OFFSET(bi);
+	temp[ai + bankOffsetA] = g_idata[ai];
+	temp[bi + bankOffsetB] = g_idata[bi];
 
 	for (unsigned int d = size>>1 ; d > 0 ; d >>=1) {
 
@@ -54,13 +58,15 @@ __global__ void exclusiveScan1dKernelBlock(const int          *__restrict__ g_id
 
 			unsigned int ai = offset * (2 * thid + 1) - 1;
 			unsigned int bi = offset * (2 * thid + 2) - 1;
+			ai += CONFLICT_FREE_OFFSET(ai);
+			bi += CONFLICT_FREE_OFFSET(bi);
 			temp[bi] += temp[ai];
 		}
 		offset *= 2;
 	}
 
 	if (thid == 0)
-		temp[ size - 1 ] = 0;
+		temp[ size - 1 + CONFLICT_FREE_OFFSET(size - 1) ] = 0;
 
 	for (unsigned int d = 1; d < size; d *= 2) {
 
@@ -70,6 +76,9 @@ __global__ void exclusiveScan1dKernelBlock(const int          *__restrict__ g_id
 
 			unsigned int ai = offset * (2 * thid + 1) - 1;
 			unsigned int bi = offset * (2 * thid + 2) - 1;
+			ai += CONFLICT_FREE_OFFSET(ai);
+			bi += CONFLICT_FREE_OFFSET(bi);
+
 			int t = temp[ai];
 			temp[ai] = temp[bi];
 			temp[bi] += t;
