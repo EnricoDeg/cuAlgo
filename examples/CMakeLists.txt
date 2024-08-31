@@ -90,3 +90,12 @@ set_property(TARGET convolutionReductionMatrix PROPERTY CUDA_SEPARABLE_COMPILATI
 install (TARGETS
     convolutionReductionMatrix # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
+add_executable(exclusiveScanVector exclusiveScanVector.cu)
+target_link_libraries (exclusiveScanVector cuAlgo)
+target_include_directories(exclusiveScanVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET exclusiveScanVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install (TARGETS
+    exclusiveScanVector # executables
+    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
