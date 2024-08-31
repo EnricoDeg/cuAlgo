@@ -3,6 +3,7 @@
 
 Vector:
  - \c reduce1dVector : reduction of a vector in a scalar
+ - \c exclusiveScan1dvector: prefix sum
 
 Dense Matrix:
  - \c reduce1dMatrix : reduction of a matrix non contiguous dimension into a vector

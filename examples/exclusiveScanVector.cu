@@ -62,7 +62,7 @@ int main() {
 	check_cuda( cudaMemcpy ( d_odata, odata, size * sizeof(int), cudaMemcpyHostToDevice ) );
 
 	std::cout << "launching kernels ..." << std::endl;
-	cuAlgo::exclusiveScan1dVector(d_idata, d_odata, size);
+	cuAlgo::exclusiveScan1dVectorInt(d_idata, d_odata, size);
 	std::cout << "launching kernels done ..." << std::endl;
 
 	check_cuda( cudaMemcpy ( odata, d_odata, size * sizeof(int), cudaMemcpyDeviceToHost ) );

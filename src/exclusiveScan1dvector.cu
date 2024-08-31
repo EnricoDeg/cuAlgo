@@ -37,17 +37,22 @@
 #define CONFLICT_FREE_OFFSET(n) ((n) >> LOG_MEM_BANKS)
 #define ELEMENTS_PER_BLOCK (THREADS_PER_BLOCK * 2)
 
-__global__ void exclusiveScan1dKernelBlock(const int          *__restrict__ g_idata,
-                                                 int          *__restrict__ g_odata,
+template <typename T>
+__global__ void exclusiveScan1dKernelBlock(const T            *__restrict__ g_idata,
+                                                 T            *__restrict__ g_odata,
                                                  unsigned int               size   ) {
 
-	extern __shared__ int temp[];
+	// use dynamic shared memory
+	// needed for template
+	SharedMemory<T> smem;
+	T * temp = smem.getPointer();
+
 	unsigned int thid = threadIdx.x;
 	unsigned int offset = 1;
-	int ai = thid;
-	int bi = thid + (size / 2);
-	int bankOffsetA = CONFLICT_FREE_OFFSET(ai);
-	int bankOffsetB = CONFLICT_FREE_OFFSET(bi);
+	unsigned int ai = thid;
+	unsigned int bi = thid + (size / 2);
+	unsigned int bankOffsetA = CONFLICT_FREE_OFFSET(ai);
+	unsigned int bankOffsetB = CONFLICT_FREE_OFFSET(bi);
 	temp[ai + bankOffsetA] = g_idata[ai];
 	temp[bi + bankOffsetB] = g_idata[bi];
 
@@ -79,7 +84,7 @@ __global__ void exclusiveScan1dKernelBlock(const int          *__restrict__ g_id
 			ai += CONFLICT_FREE_OFFSET(ai);
 			bi += CONFLICT_FREE_OFFSET(bi);
 
-			int t = temp[ai];
+			T t = temp[ai];
 			temp[ai] = temp[bi];
 			temp[bi] += t;
 		}
@@ -89,33 +94,37 @@ __global__ void exclusiveScan1dKernelBlock(const int          *__restrict__ g_id
 	g_odata[2*thid+1] = temp[2*thid+1];
 }
 
-__global__ void exclusiveScan1dKernelMultiBlock(const int          *__restrict__ g_idata,
-                                                      int          *__restrict__ g_odata,
-                                                      int          *__restrict__ sums   ,
+template <typename T>
+__global__ void exclusiveScan1dKernelMultiBlock(const T            *__restrict__ g_idata,
+                                                      T            *__restrict__ g_odata,
+                                                      T            *__restrict__ sums   ,
                                                       unsigned int               size   ) {
 
-	extern __shared__ int temp[];
+	// use dynamic shared memory
+	// needed for template
+	SharedMemory<T> smem;
+	T * temp = smem.getPointer();
 
-	int blockID = blockIdx.x;
-	int threadID = threadIdx.x;
-	int blockOffset = blockID * size;
-	
-	int ai = threadID;
-	int bi = threadID + (size / 2);
-	int bankOffsetA = CONFLICT_FREE_OFFSET(ai);
-	int bankOffsetB = CONFLICT_FREE_OFFSET(bi);
+	unsigned int blockID = blockIdx.x;
+	unsigned int threadID = threadIdx.x;
+	unsigned int blockOffset = blockID * size;
+
+	unsigned int ai = threadID;
+	unsigned int bi = threadID + (size / 2);
+	unsigned int bankOffsetA = CONFLICT_FREE_OFFSET(ai);
+	unsigned int bankOffsetB = CONFLICT_FREE_OFFSET(bi);
 	temp[ai + bankOffsetA] = g_idata[blockOffset + ai];
 	temp[bi + bankOffsetB] = g_idata[blockOffset + bi];
 
 	// build sum in place up the tree
-	int offset = 1;
-	for (int d = size >> 1; d > 0; d >>= 1)
-	{
+	unsigned int offset = 1;
+	for (unsigned int d = size >> 1; d > 0; d >>= 1) {
+
 		__syncthreads();
-		if (threadID < d)
-		{
-			int ai = offset * (2 * threadID + 1) - 1;
-			int bi = offset * (2 * threadID + 2) - 1;
+		if (threadID < d) {
+
+			unsigned int ai = offset * (2 * threadID + 1) - 1;
+			unsigned int bi = offset * (2 * threadID + 2) - 1;
 			ai += CONFLICT_FREE_OFFSET(ai);
 			bi += CONFLICT_FREE_OFFSET(bi);
 
@@ -132,18 +141,18 @@ __global__ void exclusiveScan1dKernelMultiBlock(const int          *__restrict__
 	} 
 
 	// traverse down tree & build scan
-	for (int d = 1; d < size; d *= 2)
-	{
+	for (unsigned int d = 1; d < size; d *= 2) {
+
 		offset >>= 1;
 		__syncthreads();
-		if (threadID < d)
-		{
-			int ai = offset * (2 * threadID + 1) - 1;
-			int bi = offset * (2 * threadID + 2) - 1;
+		if (threadID < d) {
+
+			unsigned int ai = offset * (2 * threadID + 1) - 1;
+			unsigned int bi = offset * (2 * threadID + 2) - 1;
 			ai += CONFLICT_FREE_OFFSET(ai);
 			bi += CONFLICT_FREE_OFFSET(bi);
 
-			int t = temp[ai];
+			T t = temp[ai];
 			temp[ai] = temp[bi];
 			temp[bi] += t;
 		}
@@ -154,34 +163,27 @@ __global__ void exclusiveScan1dKernelMultiBlock(const int          *__restrict__
 	g_odata[blockOffset + bi] = temp[bi + bankOffsetB];
 }
 
-__global__ void add(int *output, int length, int *n) {
-	int blockID = blockIdx.x;
-	int threadID = threadIdx.x;
-	int blockOffset = blockID * length;
+template <typename T>
+__global__ void add(T *output, unsigned int length, T *n) {
+
+	unsigned int blockID = blockIdx.x;
+	unsigned int threadID = threadIdx.x;
+	unsigned int blockOffset = blockID * length;
 
 	output[blockOffset + threadID] += n[blockID];
 }
 
-__global__ void add(int *output, int length, int *n1, int *n2) {
-	int blockID = blockIdx.x;
-	int threadID = threadIdx.x;
-	int blockOffset = blockID * length;
-
-	output[blockOffset + threadID] += n1[blockID] + n2[blockID];
-}
-
-namespace cuAlgo {
-
-void exclusiveScan1dVector(int          *g_idata,
-                           int          *g_odata,
+template<typename T>
+void exclusiveScan1dVector(T            *g_idata,
+                           T            *g_odata,
                            unsigned int  size   ,
                            cudaStream_t  stream ,
                            bool          async  ) {
 
 	unsigned int blocks = size / ELEMENTS_PER_BLOCK;
-	int *d_sums, *d_incr;
-	check_cuda( cudaMalloc(&d_sums, blocks * sizeof(int)) );
-	check_cuda( cudaMalloc(&d_incr, blocks * sizeof(int)) );
+	T *d_sums, *d_incr;
+	check_cuda( cudaMalloc(&d_sums, blocks * sizeof(T)) );
+	check_cuda( cudaMalloc(&d_incr, blocks * sizeof(T)) );
 
 	// Multi blocks
 	{
@@ -189,28 +191,28 @@ void exclusiveScan1dVector(int          *g_idata,
 		dim3 blocksPerGrid(div_ceil(size, ELEMENTS_PER_BLOCK));
 		print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-		unsigned int shmem = ELEMENTS_PER_BLOCK*sizeof(int);
+		unsigned int shmem = ELEMENTS_PER_BLOCK*sizeof(T);
 
 		TIME(blocksPerGrid, threadsPerBlock, shmem, stream, async,
-		     exclusiveScan1dKernelMultiBlock,
+		     exclusiveScan1dKernelMultiBlock<T>,
 		     g_idata, g_odata, d_sums, ELEMENTS_PER_BLOCK);
 	}
 
 	// Multi block (recursion) or single block
-	const int sumsArrThreadsNeeded = (blocks + 1) / 2;
+	const unsigned int sumsArrThreadsNeeded = (blocks + 1) / 2;
 	if (sumsArrThreadsNeeded > THREADS_PER_BLOCK) {
 
-		exclusiveScan1dVector(d_sums, d_incr, blocks);
+		exclusiveScan1dVector<T>(d_sums, d_incr, blocks, stream, async);
 	} else {
 
 		dim3 threadsPerBlock((blocks + 1) / 2);
 		dim3 blocksPerGrid(1);
 		print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-		unsigned int shmem = (blocks + 1) / 2 * sizeof(int);
+		unsigned int shmem = (blocks + 1) / 2 * sizeof(T);
 
 		TIME( blocksPerGrid, threadsPerBlock, shmem, stream, async,
-		      exclusiveScan1dKernelBlock,
+		      exclusiveScan1dKernelBlock<T>,
 		      d_sums, d_incr, blocks );
 	}
 
@@ -222,11 +224,44 @@ void exclusiveScan1dVector(int          *g_idata,
 		print_kernel_config(threadsPerBlock, blocksPerGrid);
 
 		TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
-		      add,
+		      add<T>,
 		      g_odata, ELEMENTS_PER_BLOCK, d_incr );
 	}
 
 	check_cuda( cudaFree ( d_sums ) );
 	check_cuda( cudaFree ( d_incr ) );
 }
+
+namespace cuAlgo{
+
+	void exclusiveScan1dVectorInt(int          *g_idata,
+	                              int          *g_odata,
+	                              unsigned int  size   ,
+	                              cudaStream_t  stream ,
+	                              bool          async  )
+	{
+
+		exclusiveScan1dVector<int>(g_idata, g_odata, size, stream , async);
+	}
+
+	void exclusiveScan1dVectorFloat(float        *g_idata,
+	                                float        *g_odata,
+	                                unsigned int  size   ,
+	                                cudaStream_t  stream ,
+	                                bool          async  )
+	{
+
+		exclusiveScan1dVector<float>(g_idata, g_odata, size, stream , async);
+	}
+
+	void exclusiveScan1dVectorDouble(double       *g_idata,
+	                                 double       *g_odata,
+	                                 unsigned int  size   ,
+	                                 cudaStream_t  stream ,
+	                                 bool          async  )
+	{
+
+		exclusiveScan1dVector<double>(g_idata, g_odata, size, stream , async);
+	}
+
 }
