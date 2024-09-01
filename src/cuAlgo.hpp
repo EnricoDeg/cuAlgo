@@ -691,13 +691,56 @@ void exclusiveScan1dVectorInt(int          *g_idata      ,
                               cudaStream_t  stream = 0   ,
                               bool          async = false);
 
-void gradMatrix(int          *A ,
-                int          *Ax,
-                int          *Ay,
-                unsigned int  M,
-                unsigned int  N,
-                cudaStream_t  stream = 0,
-                bool          async = false);
+/**
+ * @brief   Compute the matrix gradient using floats.
+ * 
+ * @details The gradient is computed using first order
+ *          accuracy.
+ * 
+ * @param[in]  A input matrix of size {N,M}
+ * @param[out] Ax output matrix with x derivative.
+ *             The matrix has the same size of A.
+ * @param[out] Ay output matrix with y derivative.
+ *             The matrix has the same size of A.
+ * @param[in]  M size of contiguous dimension
+ * @param[in]  N size of non-contiguous dimension
+ * @param[in]  stream CUDA stream were the kernel is launched.
+ *                    Default is 0.
+ * @param[in]  async boolean defining if the kernel should be
+ *                   asynchronous. Default is false.
+ * 
+ * @ingroup algo
+ */
+void gradMatrixFloat(float        *A            ,
+                     float        *Ax           ,
+                     float        *Ay           ,
+                     unsigned int  M            ,
+                     unsigned int  N            ,
+                     cudaStream_t  stream = 0   ,
+                     bool          async = false);
+
+/**
+ * @brief   Compute the matrix gradient using doubles.
+ * 
+ * @details See documentation of gradMatrixFloat().
+ * 
+ * @ingroup algo
+ */
+void gradMatrixDouble(double       *A            ,
+                      double       *Ax           ,
+                      double       *Ay           ,
+                      unsigned int  M            ,
+                      unsigned int  N            ,
+                      cudaStream_t  stream = 0   ,
+                      bool          async = false);
+
+void gradMatrixInt(int          *A            ,
+                   int          *Ax           ,
+                   int          *Ay           ,
+                   unsigned int  M            ,
+                   unsigned int  N            ,
+                   cudaStream_t  stream = 0   ,
+                   bool          async = false);
 
 }
 #endif

@@ -30,9 +30,10 @@
 #include "cuAlgo.hpp"
 #include "utils.hpp"
 
-__global__ void gradMatrixKernel(const int          *__restrict__ A ,
-                                       int          *__restrict__ Ax,
-                                       int          *__restrict__ Ay,
+template<typename T>
+__global__ void gradMatrixKernel(const T            *__restrict__ A ,
+                                       T            *__restrict__ Ax,
+                                       T            *__restrict__ Ay,
                                        unsigned int               M ,
                                        unsigned int               N ) {
 
@@ -53,22 +54,59 @@ __global__ void gradMatrixKernel(const int          *__restrict__ A ,
 	}
 }
 
-namespace cuAlgo {
-void gradMatrix(int          *A ,
-                int          *Ax,
-                int          *Ay,
+template <typename T>
+void gradMatrix(T            *A ,
+                T            *Ax,
+                T            *Ay,
                 unsigned int  M,
                 unsigned int  N,
                 cudaStream_t  stream,
                 bool          async ) {
 
-	// create as many blocks as necessary to map all of C
 	dim3 blocksPerGrid(div_ceil(M, 32), div_ceil(N, 32));
 	dim3 threadsPerBlock(32 , 32);
 	print_kernel_config(threadsPerBlock, blocksPerGrid);
 
 	TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
-	      gradMatrixKernel,
+	      gradMatrixKernel<T>,
 	      A, Ax, Ay, M, N);
 }
+
+namespace cuAlgo {
+
+	void gradMatrixInt(int          *A     ,
+	                   int          *Ax    ,
+	                   int          *Ay    ,
+	                   unsigned int  M     ,
+	                   unsigned int  N     ,
+	                   cudaStream_t  stream,
+	                   bool          async )
+	{
+
+		gradMatrix<int>(A , Ax, Ay, M, N, stream, async );
+	}
+
+	void gradMatrixFloat(float        *A     ,
+	                     float        *Ax    ,
+	                     float        *Ay    ,
+	                     unsigned int  M     ,
+	                     unsigned int  N     ,
+	                     cudaStream_t  stream,
+	                     bool          async )
+	{
+
+		gradMatrix<float>(A , Ax, Ay, M, N, stream, async );
+	}
+
+	void gradMatrixDouble(double       *A     ,
+	                      double       *Ax    ,
+	                      double       *Ay    ,
+	                      unsigned int  M     ,
+	                      unsigned int  N     ,
+	                      cudaStream_t  stream,
+	                      bool          async )
+	{
+
+		gradMatrix<double>(A , Ax, Ay, M, N, stream, async );
+	}
 }

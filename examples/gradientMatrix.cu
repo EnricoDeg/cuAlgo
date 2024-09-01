@@ -58,7 +58,7 @@ int main() {
 
 	std::cout << "launching kernels ..." << std::endl;
 	for (unsigned int i = 0; i < 5; ++i)
-		cuAlgo::gradMatrix(d_A, d_Ax, d_Ay, M, N);
+		cuAlgo::gradMatrixInt(d_A, d_Ax, d_Ay, M, N);
 	std::cout << "launching kernels done ..." << std::endl;
 
 	for (unsigned int j = 0 ; j < M ; ++j)
