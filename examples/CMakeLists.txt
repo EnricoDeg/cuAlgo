@@ -108,3 +108,12 @@ set_property(TARGET gradientMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 install (TARGETS
     gradientMatrix # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
+add_executable(taperMatrix taperMatrix.cu)
+target_link_libraries (taperMatrix cuAlgo)
+target_include_directories(taperMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET taperMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install (TARGETS
+    taperMatrix # executables
+    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
