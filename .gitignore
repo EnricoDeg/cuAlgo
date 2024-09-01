@@ -13,3 +13,4 @@ examples/generalSparseMatrixVectorMultiplicationCSRVector
 examples/generalSparseMatrixVectorMultiplicationCSRAdaptive
 examples/generalSparseMatrixVectorMultiplicationELL
 examples/exclusiveScanVector
+examples/gradientMatrix
