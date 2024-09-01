@@ -37,20 +37,24 @@ __global__ void gradMatrixKernel(const T            *__restrict__ A ,
                                        unsigned int               M ,
                                        unsigned int               N ) {
 
+	__shared__ T sdata[32][32];
+
 	const unsigned int x = blockIdx.x * blockDim.x + threadIdx.x;
 	const unsigned int y = blockIdx.y * blockDim.y + threadIdx.y;
 
 	if (x < M && y < N) {
 
+		sdata[threadIdx.y][threadIdx.x] = A[x + y * M];
+
 		if (y == 0)
-			Ax[x + y * M] = A[x + y * M];
+			Ax[x + y * M] = sdata[threadIdx.y][threadIdx.x];
 		else
-			Ax[x + y * M] = A[x + y * M] - A[x + (y - 1) * M];
+			Ax[x + y * M] = sdata[threadIdx.y][threadIdx.x] - A[x + (y - 1) * M];
 
 		if (x == 0)
-			Ay[x + y * M] = A[x + y * M];
+			Ay[x + y * M] = sdata[threadIdx.y][threadIdx.x];
 		else
-			Ay[x + y * M] = A[x + y * M] - A[x - 1 + y * M];
+			Ay[x + y * M] = sdata[threadIdx.y][threadIdx.x] - A[x - 1 + y * M];
 	}
 }
 
