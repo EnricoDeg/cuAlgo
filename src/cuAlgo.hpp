@@ -691,6 +691,13 @@ void exclusiveScan1dVectorInt(int          *g_idata      ,
                               cudaStream_t  stream = 0   ,
                               bool          async = false);
 
+void gradMatrix(int          *A ,
+                int          *Ax,
+                int          *Ay,
+                unsigned int  M,
+                unsigned int  N,
+                cudaStream_t  stream = 0,
+                bool          async = false);
 
 }
 #endif
