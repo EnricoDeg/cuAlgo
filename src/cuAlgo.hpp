@@ -742,5 +742,15 @@ void gradMatrixInt(int          *A            ,
                    cudaStream_t  stream = 0   ,
                    bool          async = false);
 
+
+void taper1dMatrix(int          *A           ,
+                   int          *taper       ,
+                   unsigned int *startIndices,
+                   unsigned int *endIndices  ,
+                   unsigned int  M           ,
+                   unsigned int  N           ,
+                   unsigned int  taperLength ,
+                   cudaStream_t  stream =0     ,
+                   bool          async =false ) ;
 }
 #endif
