@@ -76,7 +76,7 @@ int main() {
 
 	std::cout << "launching kernels ..." << std::endl;
 	for (unsigned int i = 0; i < 1; ++i)
-		cuAlgo::taper1dMatrix(d_A, d_taper, d_startIndices, d_endIndices, M, N, taperLength);
+		cuAlgo::taper1dMatrixInt(d_A, d_taper, d_startIndices, d_endIndices, M, N, taperLength);
 	std::cout << "launching kernels done ..." << std::endl;
 
 	check_cuda( cudaMemcpy ( A, d_A, M * N * sizeof(int), cudaMemcpyDeviceToHost ) );

@@ -742,15 +742,70 @@ void gradMatrixInt(int          *A            ,
                    cudaStream_t  stream = 0   ,
                    bool          async = false);
 
+/**
+ * @brief   Apply 1d taper to matrix using floats.
+ * 
+ * @details The taper is applied on the fastest 
+ *          dimension. Each row of the matrix is associated
+ *          with a startIndex and an endIndex. The values
+ *          less than startIndex are set to 0. The values
+ *          greater than endIndex are also set to 0.
+ * 
+ * @param[inout]  A            input matrix of size {N,M}
+ * @param[in]     taper        taper array of sioze taperLength
+ * @param[in]     startIndices start indices to apply taper. 
+ *                Values with index less than startIndices are
+ *                set to 0. 
+ *                The array is of size {N}.
+ * @param[in]     endIndices   end indices to apply taper. 
+ *                Values with index greater than endIndices are
+ *                set to 0. 
+ *                The array is of size {N}.
+ * @param[in]     M            size of contiguous dimension.
+ * @param[in]     N            size of non-contiguous dimension.
+ * @param[in]     taperLength  size of taper array.
+ * @param[in]     stream       CUDA stream were the kernel is launched.
+ *                             Default is 0.
+ * @param[in]     async        boolean defining if the kernel should be
+ *                             asynchronous. Default is false.
+ * 
+ * @ingroup algo
+ */
+void taper1dMatrixFloat(float        *A            ,
+                        float        *taper        ,
+                        unsigned int *startIndices ,
+                        unsigned int *endIndices   ,
+                        unsigned int  M            ,
+                        unsigned int  N            ,
+                        unsigned int  taperLength  ,
+                        cudaStream_t  stream = 0   ,
+                        bool          async = false);
 
-void taper1dMatrix(int          *A           ,
-                   int          *taper       ,
-                   unsigned int *startIndices,
-                   unsigned int *endIndices  ,
-                   unsigned int  M           ,
-                   unsigned int  N           ,
-                   unsigned int  taperLength ,
-                   cudaStream_t  stream =0     ,
-                   bool          async =false ) ;
+/**
+ * @brief   Apply 1d taper to matrix using doubles.
+ * 
+ * @details See documentation of taper1dMatrixFloat().
+ * 
+ * @ingroup algo
+ */
+void taper1dMatrixDouble(double       *A            ,
+                         double       *taper        ,
+                         unsigned int *startIndices ,
+                         unsigned int *endIndices   ,
+                         unsigned int  M            ,
+                         unsigned int  N            ,
+                         unsigned int  taperLength  ,
+                         cudaStream_t  stream = 0   ,
+                         bool          async = false);
+
+void taper1dMatrixInt(int          *A            ,
+                      int          *taper        ,
+                      unsigned int *startIndices ,
+                      unsigned int *endIndices   ,
+                      unsigned int  M            ,
+                      unsigned int  N            ,
+                      unsigned int  taperLength  ,
+                      cudaStream_t  stream = 0   ,
+                      bool          async = false);
 }
 #endif

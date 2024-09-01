@@ -64,9 +64,9 @@ __global__ void taper1dMatrixKernel(      T            *__restrict__ A          
 		A[x + y * M] *= sdata[taperLength - 1 - ( x - ( endIndices[y] - taperLength + 1 ) )];
 }
 
-namespace cuAlgo {
-void taper1dMatrix(int          *A           ,
-                   int          *taper       ,
+template<typename T>
+void taper1dMatrix(T            *A           ,
+                   T            *taper       ,
                    unsigned int *startIndices,
                    unsigned int *endIndices  ,
                    unsigned int  M           ,
@@ -79,10 +79,57 @@ void taper1dMatrix(int          *A           ,
 	dim3 threadsPerBlock(32 , 32);
 	print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-	unsigned int shmem = taperLength*sizeof(int);
+	unsigned int shmem = taperLength*sizeof(T);
 
 	TIME( blocksPerGrid, threadsPerBlock, shmem, stream, async,
-	      taper1dMatrixKernel<int>,
+	      taper1dMatrixKernel<T>,
 	      A, taper, startIndices, endIndices, M, N, taperLength);
 }
+
+namespace cuAlgo {
+
+	void taper1dMatrixInt(int          *A           ,
+	                      int          *taper       ,
+	                      unsigned int *startIndices,
+	                      unsigned int *endIndices  ,
+	                      unsigned int  M           ,
+	                      unsigned int  N           ,
+	                      unsigned int  taperLength ,
+	                      cudaStream_t  stream      ,
+	                      bool          async       )
+	{
+
+		taper1dMatrix<int>(A, taper, startIndices, endIndices, 
+		                   M, N, taperLength, stream, async);
+	}
+
+	void taper1dMatrixFloat(float        *A           ,
+	                        float        *taper       ,
+	                        unsigned int *startIndices,
+	                        unsigned int *endIndices  ,
+	                        unsigned int  M           ,
+	                        unsigned int  N           ,
+	                        unsigned int  taperLength ,
+	                        cudaStream_t  stream      ,
+	                        bool          async       )
+	{
+
+		taper1dMatrix<float>(A, taper, startIndices, endIndices, 
+		                     M, N, taperLength, stream, async);
+	}
+
+	void taper1dMatrixDouble(double          *A           ,
+	                         double          *taper       ,
+	                         unsigned int *startIndices,
+	                         unsigned int *endIndices  ,
+	                         unsigned int  M           ,
+	                         unsigned int  N           ,
+	                         unsigned int  taperLength ,
+	                         cudaStream_t  stream      ,
+	                         bool          async       )
+	{
+
+		taper1dMatrix<double>(A, taper, startIndices, endIndices, 
+		                      M, N, taperLength, stream, async);
+	}
 }
