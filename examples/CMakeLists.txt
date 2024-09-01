@@ -99,3 +99,12 @@ set_property(TARGET exclusiveScanVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 install (TARGETS
     exclusiveScanVector # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
+add_executable(gradientMatrix gradientMatrix.cu)
+target_link_libraries (gradientMatrix cuAlgo)
+target_include_directories(gradientMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET gradientMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install (TARGETS
+    gradientMatrix # executables
+    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
