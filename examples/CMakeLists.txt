@@ -117,3 +117,12 @@ set_property(TARGET taperMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 install (TARGETS
     taperMatrix # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
+add_executable(fftshiftVector fftshiftVector.cu)
+target_link_libraries (fftshiftVector cuAlgo)
+target_include_directories(fftshiftVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET fftshiftVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install (TARGETS
+         fftshiftVector # executables
+         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
