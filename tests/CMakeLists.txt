@@ -31,6 +31,16 @@ target_include_directories(test_transposeMatrix PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries (test_transposeMatrix cuAlgo)
 target_link_libraries(test_transposeMatrix GTest::gtest_main)
 
+# fftshiftVector
+add_executable(
+  test_fftshiftVector
+  test_fftshiftVector.cu
+)
+target_include_directories(test_fftshiftVector PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_fftshiftVector cuAlgo)
+target_link_libraries(test_fftshiftVector GTest::gtest_main)
+
 include(GoogleTest)
 gtest_discover_tests(test_gMatMul)
 gtest_discover_tests(test_transposeMatrix)
+gtest_discover_tests(test_fftshiftVector)
