@@ -116,6 +116,43 @@ void reduce1dMatrixInt(int          *B            ,
                        bool          async = false);
 
 /**
+ * @brief   Perform fftshift on a vector with floats
+ * 
+ * @details The input vector has dimension {size} and 
+ *          the output vector has dimension {size}
+ * 
+ * @param[in]  idata pointer to input vector to be shifted
+ * @param[out] odata pointer to output vector with result of the fftshift
+ * @param[in]  size  contiguous dimension of the input and output vectors
+ * 
+ * @ingroup algo
+ */
+void fftshiftVectorFloat(float        *idata        ,
+                         float        *odata        ,
+                         unsigned int  size         ,
+                         cudaStream_t  stream = 0   ,
+                         bool          async = false);
+
+/**
+ * @brief   Perform fftshift on a vector with doubles
+ * 
+ * @details See documentation of fftshiftVectorFloat()
+ * 
+ * @ingroup algo
+ */
+void fftshiftVectorDouble(double       *idata        ,
+                          double       *odata        ,
+                          unsigned int  size         ,
+                          cudaStream_t  stream = 0   ,
+                          bool          async = false);
+
+void fftshiftVectorInt(int          *idata        ,
+                       int          *odata        ,
+                       unsigned int  size         ,
+                       cudaStream_t  stream = 0   ,
+                       bool          async = false);
+
+/**
  * @brief   Perform matrix transposition with floats
  * 
  * @details The input matrix has dimensions {size_x, size_y} and 
@@ -491,7 +528,7 @@ void gSpMatVecMulELLInt(unsigned int *columns         ,
  *               The matrix has dimensions {N,K}.
  * @param[out] C pointer to the output matrix with results of the convolution.
  *               The signals are still in the frequency domain.
- *               The vector has dimension {N}.
+ *               The matrix has dimension {N,K}.
  * @param[in]  N contiguous dimension of the input matrix
  * @param[in]  K non-contiguous dimension of the input matrix
  * 
