@@ -31,11 +31,7 @@
 #include "cuAlgo.hpp"
 #include <chrono>
 #include "utils.hpp"
-
-using namespace std::chrono;
-
-#define WARPS_PER_BLOCK 4
-#define THREADS_PER_BLOCK 128  // WARP_SIZE * WARPS_PER_BLOCK
+#include "kernelParameters.hpp"
 
 template <typename T>
 __global__ void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * __restrict__ columns   ,

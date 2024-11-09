@@ -1,5 +1,5 @@
 /*
- * @file utils.cu
+ * @file kernelParameters.hpp
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -26,42 +26,25 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "utils.hpp"
-#include "kernelParameters.hpp"
+#ifndef KERNELPARAMETERS_HPP
+#define KERNELPARAMETERS_HPP
 
-__device__ __host__ int div_ceil(int numerator, int denominator)
-{
+#define WARP_SIZE 32
+#define WARPS_PER_BLOCK 32
+#define THREADS_PER_BLOCK 1024
 
-	return (numerator % denominator != 0) ?
-	       (numerator / denominator+ 1  ) :
-	       (numerator / denominator     ) ;
-}
+#define THREADS_PER_BLOCK_X 32
+#define THREADS_PER_BLOCK_Y 32
 
-__device__ int warp_reduce(int val) {
+#define TILE_DIM 32
 
-	for (size_t offset = WARP_SIZE / 2; offset > 0; offset /= 2)
-		val += __shfl_down_sync(FULL_WARP_MASK, val, offset);
-	return val;
-}
+#define SHARED_MEMORY_BANKS 32
+#define LOG_MEM_BANKS 5
+#define CONFLICT_FREE_OFFSET(n) ((n) >> LOG_MEM_BANKS)
 
-// Compute closest number to n which is a power of 2.
-// The result is always less or equal to n.
-__device__ unsigned int prev_power_of_2 (unsigned int n) {
+#define NNZ_PER_WG 64
 
-	while (n & n - 1)
-		n = n & n - 1;
-	return n;
-}
 
-void print_kernel_config(dim3 threadsPerBlock, dim3 blocksPerGrid) {
 
-#ifdef CUALGO_VERBOSE
-	std::cout << "threadsPerBlock = " << threadsPerBlock.x << ", " <<
-	                                     threadsPerBlock.y << ", " <<
-	                                     threadsPerBlock.z << std::endl;
-	std::cout << "blocksPerGrid   = " << blocksPerGrid.x   << ", " <<
-	                                     blocksPerGrid.y   << ", " <<
-	                                     blocksPerGrid.z   << std::endl;
+
 #endif
-}
-

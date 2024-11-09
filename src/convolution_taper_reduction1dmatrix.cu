@@ -30,8 +30,8 @@
 #include "cuAlgo.hpp"
 #include "cuAlgoInternal.hpp"
 #include "utils.hpp"
+#include "kernelParameters.hpp"
 
-#define THREADS_PER_BLOCK 1024
 #define COMPUTE_PER_THREAD 128
 
 template<typename T>

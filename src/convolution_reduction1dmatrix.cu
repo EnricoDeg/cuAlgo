@@ -31,10 +31,8 @@
 #include "cuAlgo.hpp"
 #include "cuAlgoInternal.hpp"
 #include "utils.hpp"
+#include "kernelParameters.hpp"
 
-#define THREADS_PER_BLOCK 1024
-#define THREADS_PER_BLOCK_X 32
-#define THREADS_PER_BLOCK_Y 32
 #define COMPUTE_PER_THREAD   8
 
 template <typename T>
@@ -145,7 +143,7 @@ void convolutionReduction1dMatrix(T            *R     ,
 	if (chunks > THREADS_PER_BLOCK_Y) {
 
 		T * d_buffer;
-		check_cuda( cudaMalloc(&d_buffer, N * chunks / 32 *sizeof(T)) );
+		check_cuda( cudaMalloc(&d_buffer, N * chunks / THREADS_PER_BLOCK_Y * sizeof(T)) );
 
 		dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
 		dim3 blocksPerGrid(div_ceil(N / 2, THREADS_PER_BLOCK_X), div_ceil(chunks, THREADS_PER_BLOCK_Y));
@@ -155,7 +153,7 @@ void convolutionReduction1dMatrix(T            *R     ,
 		     convolutionReduction1dMatrixKernel1<T>,
 		     R, V, d_buffer, N, K, chunks);
 
-		reduce1dMatrix<T>(d_buffer, C, N, chunks/32, stream, async);
+		reduce1dMatrix<T>(d_buffer, C, N, chunks / THREADS_PER_BLOCK_Y, stream, async);
 
 		check_cuda( cudaFree ( d_buffer ) );
 	} else if (chunks < THREADS_PER_BLOCK_Y && chunks > 1) {

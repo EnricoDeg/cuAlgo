@@ -29,8 +29,8 @@
 #include <iostream>
 #include "cuAlgo.hpp"
 #include "utils.hpp"
+#include "kernelParameters.hpp"
 
-#define TILE_DIM 32
 #define BLOCK_ROWS (TILE_DIM / 4)
 
 template <typename T>

@@ -31,19 +31,16 @@
 #include "cuAlgo.hpp"
 #include "utils.hpp"
 #include "templateShMem.hpp"
-
-#define WARP_SIZE 32
-#define WARPS_PER_BLOCK 4
-#define THREADS_PER_BLOCK 128  // WARP_SIZE * WARPS_PER_BLOCK
+#include "kernelParameters.hpp"
 
 #define COLS_PER_WARP 2
-#define COLS_PER_BLOCK 8  // COLS_PER_WARP * WARPS_PER_BLOCK
-#define GROUP_SIZE 16     // WARP_SIZE / COLS_PER_WARP
+#define COLS_PER_BLOCK ( COLS_PER_WARP * WARPS_PER_BLOCK )
+#define GROUP_SIZE ( WARP_SIZE / COLS_PER_WARP )
 
 template <typename T>
-__global__ void gMatVecMulKernel(const T          * __restrict__ A,
-                                 const T          * __restrict__ B,
-                                       T          * __restrict__ C,
+__global__ void gMatVecMulKernel(const T            * __restrict__ A,
+                                 const T            * __restrict__ B,
+                                       T            * __restrict__ C,
                                        unsigned int                N,
                                        unsigned int                K) {
 

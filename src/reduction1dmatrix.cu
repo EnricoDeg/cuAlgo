@@ -30,12 +30,8 @@
 #include "cuAlgo.hpp"
 #include <chrono>
 #include "utils.hpp"
+#include "kernelParameters.hpp"
 
-using namespace std::chrono;
-
-#define THREADS_PER_BLOCK 1024
-#define THREADS_PER_BLOCK_X 32
-#define THREADS_PER_BLOCK_Y 32
 #define COMPUTE_PER_THREAD 128
 
 template <typename T>

@@ -29,8 +29,7 @@
 #include <iostream>
 #include "cuAlgo.hpp"
 #include "utils.hpp"
-
-#define TILE_DIM 1024
+#include "kernelParameters.hpp"
 
 template <typename T>
 __global__ void fftshiftVectorKernelEven(T * __restrict__ idata ,
@@ -71,8 +70,8 @@ void fftshiftVector(T            *idata ,
                     cudaStream_t  stream,
                     bool          async ) {
 
-	dim3 blocksPerGrid3(size / TILE_DIM, 1, 1);
-	dim3 threadsPerBlock3(TILE_DIM, 1, 1);
+	dim3 blocksPerGrid3(size / THREADS_PER_BLOCK, 1, 1);
+	dim3 threadsPerBlock3(THREADS_PER_BLOCK, 1, 1);
 
 	print_kernel_config(threadsPerBlock3, blocksPerGrid3) ;
 

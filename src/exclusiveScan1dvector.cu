@@ -30,12 +30,7 @@
 #include "cuAlgo.hpp"
 #include "utils.hpp"
 #include "templateShMem.hpp"
-
-#define THREADS_PER_BLOCK 512
-#define SHARED_MEMORY_BANKS 32
-#define LOG_MEM_BANKS 5
-#define CONFLICT_FREE_OFFSET(n) ((n) >> LOG_MEM_BANKS)
-#define ELEMENTS_PER_BLOCK (THREADS_PER_BLOCK * 2)
+#include "kernelParameters.hpp"
 
 template <typename T>
 __global__ void exclusiveScan1dKernelBlock(const T            *__restrict__ g_idata,
@@ -180,27 +175,27 @@ void exclusiveScan1dVector(T            *g_idata,
                            cudaStream_t  stream ,
                            bool          async  ) {
 
-	unsigned int blocks = size / ELEMENTS_PER_BLOCK;
+	unsigned int blocks = size / THREADS_PER_BLOCK;
 	T *d_sums, *d_incr;
 	check_cuda( cudaMalloc(&d_sums, blocks * sizeof(T)) );
 	check_cuda( cudaMalloc(&d_incr, blocks * sizeof(T)) );
 
 	// Multi blocks
 	{
-		dim3 threadsPerBlock(THREADS_PER_BLOCK);
-		dim3 blocksPerGrid(div_ceil(size, ELEMENTS_PER_BLOCK));
+		dim3 threadsPerBlock(THREADS_PER_BLOCK / 2);
+		dim3 blocksPerGrid(div_ceil(size, THREADS_PER_BLOCK));
 		print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-		unsigned int shmem = ELEMENTS_PER_BLOCK*sizeof(T);
+		unsigned int shmem = THREADS_PER_BLOCK*sizeof(T);
 
 		TIME(blocksPerGrid, threadsPerBlock, shmem, stream, async,
 		     exclusiveScan1dKernelMultiBlock<T>,
-		     g_idata, g_odata, d_sums, ELEMENTS_PER_BLOCK);
+		     g_idata, g_odata, d_sums, THREADS_PER_BLOCK);
 	}
 
 	// Multi block (recursion) or single block
 	const unsigned int sumsArrThreadsNeeded = (blocks + 1) / 2;
-	if (sumsArrThreadsNeeded > THREADS_PER_BLOCK) {
+	if (sumsArrThreadsNeeded > THREADS_PER_BLOCK / 2) {
 
 		exclusiveScan1dVector<T>(d_sums, d_incr, blocks, stream, async);
 	} else {
@@ -219,13 +214,13 @@ void exclusiveScan1dVector(T            *g_idata,
 	// Final step
 	{
 
-		dim3 threadsPerBlock(ELEMENTS_PER_BLOCK);
+		dim3 threadsPerBlock(THREADS_PER_BLOCK);
 		dim3 blocksPerGrid(blocks);
 		print_kernel_config(threadsPerBlock, blocksPerGrid);
 
 		TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
 		      add<T>,
-		      g_odata, ELEMENTS_PER_BLOCK, d_incr );
+		      g_odata, THREADS_PER_BLOCK, d_incr );
 	}
 
 	check_cuda( cudaFree ( d_sums ) );

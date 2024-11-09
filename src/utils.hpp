@@ -38,8 +38,6 @@
 using namespace std::chrono;
 
 #define FULL_WARP_MASK 0xffffffff
-#define WARP_SIZE 32
-#define NNZ_PER_WG 64
 
 __device__ __host__ int div_ceil(int numerator, int denominator) ;
 

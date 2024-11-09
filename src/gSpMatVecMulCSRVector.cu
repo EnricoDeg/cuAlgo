@@ -29,9 +29,7 @@
 #include <iostream>
 #include "cuAlgo.hpp"
 #include "utils.hpp"
-
-#define WARPS_PER_BLOCK 4
-#define THREADS_PER_BLOCK 128  // WARP_SIZE * WARPS_PER_BLOCK
+#include "kernelParameters.hpp"
 
 template<typename T>
 __global__ void gSpMatVecMulCSRVectorKernel(const unsigned int * __restrict__ columns,

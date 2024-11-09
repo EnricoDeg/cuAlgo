@@ -28,8 +28,7 @@
  */
 #include "cuAlgo.hpp"
 #include "utils.hpp"
-
-#define THREADS_PER_BLOCK 128  // WARP_SIZE * WARPS_PER_BLOCK
+#include "kernelParameters.hpp"
 
 template <typename T>
 __global__ void gSpMatVecMulELLKernel( const unsigned int * __restrict__ columns         ,

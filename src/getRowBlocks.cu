@@ -30,6 +30,7 @@
 #include "cuAlgo.hpp"
 #include <chrono>
 #include "utils.hpp"
+#include "kernelParameters.hpp"
 
 using namespace std::chrono;
 
