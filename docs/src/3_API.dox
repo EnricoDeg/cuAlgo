@@ -3,7 +3,8 @@
 
 Vector:
  - \c reduce1dVector : reduction of a vector in a scalar
- - \c exclusiveScan1dvector: prefix sum
+ - \c exclusiveScan1dVector: prefix sum
+ - \c fftshift1dVector: shift vector for FFT
 
 Dense Matrix:
  - \c reduce1dMatrix : reduction of a matrix non contiguous dimension into a vector
