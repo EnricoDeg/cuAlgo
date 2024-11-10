@@ -29,76 +29,45 @@
 #include <iostream>
 #include <stdlib.h>
 #include <cuAlgo.hpp>
-#include <chrono>
-
-using namespace std::chrono;
 
 int main() {
 
 	unsigned int K = 8192;
 	unsigned int N = 4096;
 
-	int * R = (int *)malloc(K * N * sizeof(int));
+	float * R = (float *)malloc(K * N * sizeof(float));
 	for (unsigned int i = 0 ; i < K ; ++i)
 		for (unsigned int j = 0 ; j < N ; ++j)
 			R [j + i * N] = j * i;
 
-	int * V = (int *)malloc(K * N * sizeof(int));
+	float * V = (float *)malloc(K * N * sizeof(float));
 	for (unsigned int i = 0 ; i < K ; ++i)
 		for (unsigned int j = 0 ; j < N ; ++j)
 			V [j + i * N] = N * K - j * i;
 
-	int * C = (int *)malloc(N*K * sizeof(int));
-	int * solution = (int *)malloc(N*K * sizeof(int));
+	float *d_R;
+	check_cuda( cudaMalloc(&d_R, K * N * sizeof(float)) );
 
-	int *d_R;
-	check_cuda( cudaMalloc(&d_R, K * N * sizeof(int)) );
+	float *d_V;
+	check_cuda( cudaMalloc(&d_V, K * N * sizeof(float)) );
 
-	int *d_V;
-	check_cuda( cudaMalloc(&d_V, K * N * sizeof(int)) );
+	float *d_C;
+	check_cuda( cudaMalloc(&d_C, N * K * sizeof(float)) );
 
-	int *d_C;
-	check_cuda( cudaMalloc(&d_C, N * K * sizeof(int)) );
+	check_cuda( cudaMemcpy ( d_R, R, K * N *sizeof(float), cudaMemcpyHostToDevice ) );
 
-	check_cuda( cudaMemcpy ( d_R, R, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
-
-	check_cuda( cudaMemcpy ( d_V, V, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_V, V, K * N *sizeof(float), cudaMemcpyHostToDevice ) );
 
 	std::cout << "launching kernels ..." << std::endl;
 	for (unsigned int i = 0; i < 5; ++i)
-		cuAlgo::convolution1dMatrixInt(d_R, d_V, d_C, N, K);
+		cuAlgo::convolution1dMatrixFloat(d_R, d_V, d_C, N, K);
 	std::cout << "launching kernels done ..." << std::endl;
 
-	for (unsigned int i = 0 ; i < N ; ++i)
-		solution[i] = 0;
-
-	auto start = high_resolution_clock::now();
-	for (int j = 0 ; j < K ; ++j) {
-
-		solution[j * N] = R[j * N] * V[j * N];
-
-		for (int i = 1; i < N / 2; ++i)
-			solution[i + j * N] = R[i + j * N] * V[i + j * N] -
-			                      R[N - i + j * N] * V[N - i + j * N];
-
-		solution[N / 2 + j * N] = R[N / 2 + j * N] * V[N / 2 + j * N];
-
-		for (int i = N / 2 + 1, k = 0; i < N; ++i, ++k)
-			solution[i + j * N] = R[N / 2 - 1 - k + j * N] * V[i + j * N] +
-			                      R[i + j * N] * V[N / 2 - 1 - k + j * N];
-	}
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	std::cout << "Time taken by function (CPU): " << duration.count() << " microseconds" << std::endl;
-
-	check_cuda( cudaMemcpy ( C, d_C, N * K * sizeof(int), cudaMemcpyDeviceToHost ) );
-
-	for (unsigned int j = 0 ; j < K ; ++j)
-		for (unsigned int i = 0 ; i < N ; ++i)
-			if (solution[i + j * N] != C[i + j * N]) {
-				std::cout << "Values are different" << std::endl;
-				exit(EXIT_FAILURE);
-			}
+	check_cuda( cudaFree(d_R) );
+	check_cuda( cudaFree(d_V) );
+	check_cuda( cudaFree(d_C) );
+	free(R);
+	free(V);
 
 	return 0;
 }
