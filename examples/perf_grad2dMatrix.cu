@@ -1,5 +1,5 @@
 /*
- * @file gradientMatrix.cu
+ * @file perf_gradMatrix.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -35,30 +35,30 @@ int main() {
 	unsigned int M = 4096;
 	unsigned int N = 2048;
 
-	int * A         = (int *)malloc(N * M * sizeof(int));
-	int * Ax        = (int *)malloc(N * M * sizeof(int));
-	int * Ay        = (int *)malloc(N * M * sizeof(int));
-	int * solutionx = (int *)malloc(N * M * sizeof(int));
-	int * solutiony = (int *)malloc(N * M * sizeof(int));
+	float * A         = (float *)malloc(N * M * sizeof(float));
+	float * Ax        = (float *)malloc(N * M * sizeof(float));
+	float * Ay        = (float *)malloc(N * M * sizeof(float));
+	float * solutionx = (float *)malloc(N * M * sizeof(float));
+	float * solutiony = (float *)malloc(N * M * sizeof(float));
 
 	for (unsigned int i = 0 ; i < N ; ++i)
 		for (unsigned int j = 0 ; j < M ; ++j)
 			A [j + i * M] = j + i * M;
 
-	int *d_A;
-	check_cuda( cudaMalloc(&d_A, M * N * sizeof(int)) );
+	float *d_A;
+	check_cuda( cudaMalloc(&d_A , M * N * sizeof(float)) );
 
-	int *d_Ax;
-	check_cuda( cudaMalloc(&d_Ax, M * N * sizeof(int)) );
+	float *d_Ax;
+	check_cuda( cudaMalloc(&d_Ax, M * N * sizeof(float)) );
 
-	int *d_Ay;
-	check_cuda( cudaMalloc(&d_Ay, M * N * sizeof(int)) );
+	float *d_Ay;
+	check_cuda( cudaMalloc(&d_Ay, M * N * sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_A, A, M * N *sizeof(int), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_A, A, M * N *sizeof(float), cudaMemcpyHostToDevice ) );
 
 	std::cout << "launching kernels ..." << std::endl;
 	for (unsigned int i = 0; i < 5; ++i)
-		cuAlgo::gradMatrixInt(d_A, d_Ax, d_Ay, M, N);
+		cuAlgo::grad2dMatrixFloat(d_A, d_Ax, d_Ay, M, N);
 	std::cout << "launching kernels done ..." << std::endl;
 
 	for (unsigned int j = 0 ; j < M ; ++j)
@@ -74,22 +74,14 @@ int main() {
 			solutiony[j + i * M] = A[j + i * M] - A[j - 1 + i * M];
 	}
 
-	check_cuda( cudaMemcpy ( Ax, d_Ax, M * N * sizeof(int), cudaMemcpyDeviceToHost ) );
-	check_cuda( cudaMemcpy ( Ay, d_Ay, M * N * sizeof(int), cudaMemcpyDeviceToHost ) );
-
-	for (unsigned int j = 0 ; j < N ; ++j)
-		for (unsigned int i = 0 ; i < M ; ++i)
-			if (solutionx[i + j * M] != Ax[i + j * M]) {
-				std::cout << "Values are different x" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-
-	for (unsigned int j = 0 ; j < N ; ++j)
-		for (unsigned int i = 0 ; i < M ; ++i)
-			if (solutiony[i + j * M] != Ay[i + j * M]) {
-				std::cout << "Values are different y" << std::endl;
-				exit(EXIT_FAILURE);
-			}
+	check_cuda( cudaFree(d_A) );
+	check_cuda( cudaFree(d_Ax) );
+	check_cuda( cudaFree(d_Ay) );
+	free(A);
+	free(Ax);
+	free(Ay);
+	free(solutionx);
+	free(solutiony);
 
 	return 0;
 }

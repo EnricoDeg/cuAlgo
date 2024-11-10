@@ -18,4 +18,4 @@ examples/perf_gMatVecMul
 examples/perf_gSpMatVecMulCSRAdaptive
 examples/perf_gSpMatVecMulCSRVector
 examples/perf_gSpMatVecMulELL
-
+examples/perf_grad2dMatrix

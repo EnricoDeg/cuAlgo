@@ -118,14 +118,15 @@ install(TARGETS
         perf_gSpMatVecMulELL # executables
         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
-add_executable(gradientMatrix gradientMatrix.cu)
-target_link_libraries (gradientMatrix cuAlgo)
-target_include_directories(gradientMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
-set_property(TARGET gradientMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+# grad2dMatrix
+add_executable(perf_grad2dMatrix perf_grad2dMatrix.cu)
+target_link_libraries (perf_grad2dMatrix cuAlgo)
+target_include_directories(perf_grad2dMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_grad2dMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
-install (TARGETS
-    gradientMatrix # executables
-    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+install(TARGETS
+        perf_grad2dMatrix # executables
+        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
 add_executable(taperMatrix taperMatrix.cu)
 target_link_libraries (taperMatrix cuAlgo)
