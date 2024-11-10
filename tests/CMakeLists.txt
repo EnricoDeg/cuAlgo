@@ -13,14 +13,6 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-# transposeMatrix
-add_executable( test_transposeMatrix
-                test_transposeMatrix.cu
-              )
-target_include_directories(test_transposeMatrix PRIVATE ${PROJECT_SOURCE_DIR})
-target_link_libraries (test_transposeMatrix cuAlgo)
-target_link_libraries(test_transposeMatrix GTest::gtest_main)
-
 # fftshift1dVector
 add_executable( test_fftshift1dVector
                 test_fftshift1dVector.cu
@@ -117,13 +109,28 @@ target_include_directories(test_reduction1dVector PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries(test_reduction1dVector cuAlgo)
 target_link_libraries(test_reduction1dVector GTest::gtest_main)
 
+# taper1dMatrix
+add_executable( test_taper1dMatrix
+                test_taper1dMatrix.cu
+              )
+target_include_directories(test_taper1dMatrix PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_taper1dMatrix cuAlgo)
+target_link_libraries(test_taper1dMatrix GTest::gtest_main)
+
+# transposeMatrix
+add_executable( test_transposeMatrix
+                test_transposeMatrix.cu
+              )
+target_include_directories(test_transposeMatrix PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_transposeMatrix cuAlgo)
+target_link_libraries(test_transposeMatrix GTest::gtest_main)
+
 # Add all tests to GoogleTest
 include(GoogleTest)
-gtest_discover_tests(test_transposeMatrix)
-gtest_discover_tests(test_fftshift1dVector)
 gtest_discover_tests(test_convolution1dMatrix)
 gtest_discover_tests(test_convolutionReduction1dMatrix)
 gtest_discover_tests(test_exclusiveScan1dVector)
+gtest_discover_tests(test_fftshift1dVector)
 gtest_discover_tests(test_gMatMul)
 gtest_discover_tests(test_gMatVecMul)
 gtest_discover_tests(test_gSpMatVecMulCSRAdaptive)
@@ -132,3 +139,5 @@ gtest_discover_tests(test_gSpMatVecMulELL)
 gtest_discover_tests(test_grad2dMatrix)
 gtest_discover_tests(test_reduction1dMatrix)
 gtest_discover_tests(test_reduction1dVector)
+gtest_discover_tests(test_taper1dMatrix)
+gtest_discover_tests(test_transposeMatrix)
