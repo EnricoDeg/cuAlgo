@@ -23,3 +23,5 @@ examples/perf_convolutionReduction1dMatrix
 examples/perf_exclusiveScan1dVector
 examples/perf_fftshift1dVector
 examples/perf_gMatMul
+examples/perf_gMatVecMul
+

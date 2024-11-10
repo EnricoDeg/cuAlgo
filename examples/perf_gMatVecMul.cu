@@ -1,5 +1,5 @@
 /*
- * @file generalMatrixVectorMultiplication.cu
+ * @file perf_gMatVecMul.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -33,49 +33,49 @@
 
 int main() {
 
-	int N     = 8192;
-	int K     = N;
+	unsigned int N = 8192;
+	unsigned int K = N;
 
-	int * B        = (int *)malloc(N * K * sizeof(int));
-	int * A        = (int *)malloc(K     * sizeof(int));
-	int * C        = (int *)malloc(N     * sizeof(int));
-	int * solution = (int *)malloc(N     * sizeof(int));
+	float * B        = (float *)malloc(N * K * sizeof(float));
+	float * A        = (float *)malloc(K     * sizeof(float));
+	float * C        = (float *)malloc(N     * sizeof(float));
+	float * solution = (float *)malloc(N     * sizeof(float));
 
-	for(int i = 0; i < K; ++i)
-		for (int j = 0; j < N ; ++j)
+	for(unsigned int i = 0; i < K; ++i)
+		for(unsigned int j = 0; j < N ; ++j)
 			B[j + i * N] = j*i;
 
-	for (int j = 0; j < K ; ++j)
+	for(unsigned int j = 0; j < K ; ++j)
 		A[j] = j;
 
-	int *d_B;
-	check_cuda( cudaMalloc(&d_B, N * K * sizeof(int)) );
+	float *d_B;
+	check_cuda( cudaMalloc(&d_B, N * K * sizeof(float)) );
 
-	int *d_A;
-	check_cuda( cudaMalloc(&d_A, K *     sizeof(int)) );
+	float *d_A;
+	check_cuda( cudaMalloc(&d_A, K *     sizeof(float)) );
 
-	int *d_C;
-	check_cuda( cudaMalloc(&d_C, N *     sizeof(int)) );
+	float *d_C;
+	check_cuda( cudaMalloc(&d_C, N *     sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_B, B, (size_t)N * K * sizeof(int), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_B, B, (size_t)N * K * sizeof(float), cudaMemcpyHostToDevice ) );
 
-	check_cuda( cudaMemcpy ( d_A, A, (size_t)K     * sizeof(int), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_A, A, (size_t)K     * sizeof(float), cudaMemcpyHostToDevice ) );
 
-	for (int i = 0; i < 5; ++i)
-		cuAlgo::gMatVecMulInt(d_A, d_B, d_C, N, K);
+	for(unsigned int i = 0; i < 5; ++i)
+		cuAlgo::gMatVecMulFloat(d_A, d_B, d_C, N, K);
 
-	check_cuda( cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost ) );
-
-	for (int j = 0; j < N ; ++j)
+	for(unsigned int j = 0; j < N ; ++j)
 		solution[j] = 0;
 
-	for(int i = 0; i < K; ++i)
-		for (int j = 0; j < N ; ++j)
+	for(unsigned int i = 0; i < K; ++i)
+		for(unsigned int j = 0; j < N ; ++j)
 			solution[j] += A[i] * B[j + i * K];
 
-	for (int j = 0; j < N ; ++j) {
-		if (  solution[j] != C[j] ) {
-			std::cout << "Values are different !" << std::endl;
-		}
-	}
+	check_cuda( cudaFree(d_A) );
+	check_cuda( cudaFree(d_B) );
+	check_cuda( cudaFree(d_C) );
+	free(A);
+	free(B);
+	free(C);
+	free(solution);
 }
