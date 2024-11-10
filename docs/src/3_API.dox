@@ -2,7 +2,7 @@
  * \page API API
 
 Vector:
- - \c reduce1dVector : reduction of a vector in a scalar
+ - \c reduction1dVector : reduction of a vector in a scalar
  - \c exclusiveScan1dVector: prefix sum
  - \c fftshift1dVector: shift vector for FFT
 

@@ -1,15 +1,6 @@
 set(CMAKE_CUDA_ARCHITECTURES 80)
 SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 -Xptxas -lineinfo -DCUDA ")
 
-add_executable(reductionVector reductionVector.cu)
-target_link_libraries (reductionVector cuAlgo)
-target_include_directories(reductionVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
-set_property(TARGET reductionVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-
-install (TARGETS
-    reductionVector # executables
-    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
-
 add_executable(transpositionMatrix transpositionMatrix.cu)
 target_link_libraries (transpositionMatrix cuAlgo)
 target_include_directories(transpositionMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
@@ -127,6 +118,16 @@ set_property(TARGET perf_reduction1dMatrix PROPERTY CUDA_SEPARABLE_COMPILATION O
 
 install(TARGETS
         perf_reduction1dMatrix # executables
+        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
+# reduction1dVector
+add_executable(perf_reduction1dVector perf_reduction1dVector.cu)
+target_link_libraries (perf_reduction1dVector cuAlgo)
+target_include_directories(perf_reduction1dVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_reduction1dVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install(TARGETS
+        perf_reduction1dVector # executables
         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
 add_executable(taperMatrix taperMatrix.cu)

@@ -7,7 +7,7 @@ endif()
 set(SOURCE_EXE  utils.cu
                 getRowBlocks.cu
                 checkError.cu
-                reduction1dvector.cu
+                reduction1dVector.cu
                 reduction1dMatrix.cu
                 convolution1dMatrix.cu
                 convolutionReduction1dMatrix.cu

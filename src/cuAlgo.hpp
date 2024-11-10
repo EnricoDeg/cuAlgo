@@ -46,30 +46,30 @@ namespace cuAlgo{
  * 
  * @ingroup algo
  */
-void reduce1dVectorFloat(float        *g_idata      ,
-                         float        *g_odata      ,
-                         unsigned int  size         ,
-                         cudaStream_t  stream = 0   ,
-                         bool          async = false);
+void reduction1dVectorFloat(float        *g_idata      ,
+                            float        *g_odata      ,
+                            unsigned int  size         ,
+                            cudaStream_t  stream = 0   ,
+                            bool          async = false);
 
 /**
  * @brief   Perform reduction on a vector of doubles
  * 
- * @details See documentation of reduce1dVectorFloat().
+ * @details See documentation of reduction1dVectorFloat().
  * 
  * @ingroup algo
  */
-void reduce1dVectorDouble(double       *g_idata      ,
-                          double       *g_odata      ,
+void reduction1dVectorDouble(double       *g_idata      ,
+                             double       *g_odata      ,
+                             unsigned int  size         ,
+                             cudaStream_t  stream = 0   ,
+                             bool          async = false);
+
+void reduction1dVectorInt(int          *g_idata      ,
+                          int          *g_odata      ,
                           unsigned int  size         ,
                           cudaStream_t  stream = 0   ,
                           bool          async = false);
-
-void reduce1dVectorInt(int          *g_idata      ,
-                       int          *g_odata      ,
-                       unsigned int  size         ,
-                       cudaStream_t  stream = 0   ,
-                       bool          async = false);
 
 /**
  * @brief   Perform 1D reduction with floats on a 2D array (matrix)

@@ -1,5 +1,5 @@
 /*
- * @file reductionVector.cu
+ * @file perf_reduction1dVector.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -34,32 +34,27 @@ int main() {
 
 	unsigned int nblocks = 4096;
 	unsigned int size = 1024*nblocks;
-	int * input = (int *)malloc(size * sizeof(int));
-	int * output = (int *)malloc(sizeof(int));
+	float * input  = (float *)malloc(size * sizeof(float));
+	float * output = (float *)malloc(       sizeof(float));
 	for(unsigned int i = 0; i < nblocks; ++i)
 		for (unsigned int j = 0; j < 1024 ; ++j)
 		input[j + i*1024] = j;
 
-	int *d_input;
-	check_cuda( cudaMalloc(&d_input, size*sizeof(int)) );
+	float *d_input;
+	check_cuda( cudaMalloc(&d_input, size*sizeof(float)) );
 
-	int *d_output;
-	check_cuda( cudaMalloc(&d_output, sizeof(int)) );
+	float *d_output;
+	check_cuda( cudaMalloc(&d_output, sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(float), cudaMemcpyHostToDevice ) );
 
 	for (unsigned int i = 0; i < 5; ++i)
-		cuAlgo::reduce1dVectorInt(d_input, d_output, size);
+		cuAlgo::reduction1dVectorFloat(d_input, d_output, size);
 
-	output[0] = 0;
-	for(unsigned int i = 0; i < size; ++i)
-		output[0] += input[i];
-
-	std::cout << "CPU solution = " << output[0] << std::endl;
-
-	check_cuda( cudaMemcpy ( output, d_output, sizeof(int), cudaMemcpyDeviceToHost ) );
-
-	std::cout << "GPU solution = " << output[0] << std::endl;
+	check_cuda( cudaFree(d_input ) );
+	check_cuda( cudaFree(d_output) );
+	free(input);
+	free(output);
 
 	return 0;
 }

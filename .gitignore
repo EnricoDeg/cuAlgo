@@ -3,7 +3,6 @@ include
 lib
 .vscode
 
-examples/reductionVector
 examples/transpositionMatrix
 examples/taperMatrix
 
@@ -18,3 +17,5 @@ examples/perf_gSpMatVecMulCSRVector
 examples/perf_gSpMatVecMulELL
 examples/perf_grad2dMatrix
 examples/perf_reduction1dMatrix
+examples/perf_reduction1dVector
+
