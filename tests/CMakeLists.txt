@@ -29,13 +29,13 @@ target_include_directories(test_transposeMatrix PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries (test_transposeMatrix cuAlgo)
 target_link_libraries(test_transposeMatrix GTest::gtest_main)
 
-# fftshiftVector
-add_executable( test_fftshiftVector
-                test_fftshiftVector.cu
+# fftshift1dVector
+add_executable( test_fftshift1dVector
+                test_fftshift1dVector.cu
               )
-target_include_directories(test_fftshiftVector PRIVATE ${PROJECT_SOURCE_DIR})
-target_link_libraries (test_fftshiftVector cuAlgo)
-target_link_libraries(test_fftshiftVector GTest::gtest_main)
+target_include_directories(test_fftshift1dVector PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_fftshift1dVector cuAlgo)
+target_link_libraries(test_fftshift1dVector GTest::gtest_main)
 
 # convolution1dMatrix
 add_executable( test_convolution1dMatrix
@@ -65,7 +65,7 @@ target_link_libraries(test_exclusiveScan1dVector GTest::gtest_main)
 include(GoogleTest)
 gtest_discover_tests(test_gMatMul)
 gtest_discover_tests(test_transposeMatrix)
-gtest_discover_tests(test_fftshiftVector)
+gtest_discover_tests(test_fftshift1dVector)
 gtest_discover_tests(test_convolution1dMatrix)
 gtest_discover_tests(test_convolutionReduction1dMatrix)
 gtest_discover_tests(test_exclusiveScan1dVector)

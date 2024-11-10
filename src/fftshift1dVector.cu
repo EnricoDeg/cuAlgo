@@ -1,5 +1,5 @@
 /*
- * @file fftshift1dvector.cu
+ * @file fftshift1dVector.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -64,7 +64,7 @@ __global__ void fftshiftVectorKernelOdd(T * __restrict__ idata ,
 }
 
 template <typename T>
-void fftshiftVector(T            *idata ,
+void fftshift1dVector(T            *idata ,
                     T            *odata ,
                     unsigned int  size,
                     cudaStream_t  stream,
@@ -90,30 +90,30 @@ void fftshiftVector(T            *idata ,
 
 namespace cuAlgo {
 
-	void fftshiftVectorFloat(float        *idata ,
+	void fftshift1dVectorFloat(float        *idata ,
 	                         float        *odata ,
 	                         unsigned int  size  ,
 	                         cudaStream_t  stream,
 	                         bool          async ) {
 
-		fftshiftVector<float>(idata, odata, size, stream, async);
+		fftshift1dVector<float>(idata, odata, size, stream, async);
 	}
 
-	void fftshiftVectorDouble(double       *idata ,
+	void fftshift1dVectorDouble(double       *idata ,
 	                          double       *odata ,
 	                          unsigned int  size  ,
 	                          cudaStream_t  stream,
 	                          bool          async ) {
 
-		fftshiftVector<double>(idata, odata, size, stream, async);
+		fftshift1dVector<double>(idata, odata, size, stream, async);
 	}
 
-	void fftshiftVectorInt(int          *idata ,
+	void fftshift1dVectorInt(int          *idata ,
 	                       int          *odata ,
 	                       unsigned int  size  ,
 	                       cudaStream_t  stream,
 	                       bool          async ) {
 
-		fftshiftVector<int>(idata, odata, size, stream, async);
+		fftshift1dVector<int>(idata, odata, size, stream, async);
 	}
 }

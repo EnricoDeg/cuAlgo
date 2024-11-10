@@ -127,11 +127,11 @@ void reduce1dMatrixInt(int          *B            ,
  * 
  * @ingroup algo
  */
-void fftshiftVectorFloat(float        *idata        ,
-                         float        *odata        ,
-                         unsigned int  size         ,
-                         cudaStream_t  stream = 0   ,
-                         bool          async = false);
+void fftshift1dVectorFloat(float        *idata        ,
+                           float        *odata        ,
+                           unsigned int  size         ,
+                           cudaStream_t  stream = 0   ,
+                           bool          async = false);
 
 /**
  * @brief   Perform fftshift on a vector with doubles
@@ -140,17 +140,17 @@ void fftshiftVectorFloat(float        *idata        ,
  * 
  * @ingroup algo
  */
-void fftshiftVectorDouble(double       *idata        ,
-                          double       *odata        ,
-                          unsigned int  size         ,
-                          cudaStream_t  stream = 0   ,
-                          bool          async = false);
+void fftshift1dVectorDouble(double       *idata        ,
+                            double       *odata        ,
+                            unsigned int  size         ,
+                            cudaStream_t  stream = 0   ,
+                            bool          async = false);
 
-void fftshiftVectorInt(int          *idata        ,
-                       int          *odata        ,
-                       unsigned int  size         ,
-                       cudaStream_t  stream = 0   ,
-                       bool          async = false);
+void fftshift1dVectorInt(int          *idata        ,
+                         int          *odata        ,
+                         unsigned int  size         ,
+                         cudaStream_t  stream = 0   ,
+                         bool          async = false);
 
 /**
  * @brief   Perform matrix transposition with floats

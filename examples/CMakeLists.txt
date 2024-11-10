@@ -103,6 +103,16 @@ install(TARGETS
         perf_exclusiveScan1dVector # executables
         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
+# fftshift1dVector
+add_executable(perf_fftshift1dVector perf_fftshift1dVector.cu)
+target_link_libraries (perf_fftshift1dVector cuAlgo)
+target_include_directories(perf_fftshift1dVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_fftshift1dVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install(TARGETS
+        perf_fftshift1dVector # executables
+        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
 add_executable(gradientMatrix gradientMatrix.cu)
 target_link_libraries (gradientMatrix cuAlgo)
 target_include_directories(gradientMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
@@ -120,12 +130,3 @@ set_property(TARGET taperMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 install (TARGETS
     taperMatrix # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
-
-add_executable(fftshiftVector fftshiftVector.cu)
-target_link_libraries (fftshiftVector cuAlgo)
-target_include_directories(fftshiftVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
-set_property(TARGET fftshiftVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-
-install (TARGETS
-         fftshiftVector # executables
-         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
