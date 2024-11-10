@@ -1,5 +1,5 @@
 /*
- * @file transpositionMatrix.cu
+ * @file perf_transposeMatrix.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -51,14 +51,10 @@ int main() {
 	for (int i = 0; i < 5; ++i)
 		cuAlgo::transposeMatrixFloat(d_input, d_output, size_x, size_y);
 
-	check_cuda( cudaMemcpy ( output, d_output, size_x * size_y * sizeof(float), cudaMemcpyDeviceToHost ) );
-
-	for(int j = 0; j < size_y; ++j)
-		for (int i = 0; i < size_x ; ++i)
-			if (input[i + j * size_x] != output[j + i * size_y]) {
-				std::cout << "Values different" << std::endl;
-				return 1;
-			}
+	check_cuda( cudaFree(d_input ) );
+	check_cuda( cudaFree(d_output) );
+	free(input);
+	free(output);
 
 	return 0;
 }

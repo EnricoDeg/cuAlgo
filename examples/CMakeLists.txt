@@ -1,15 +1,6 @@
 set(CMAKE_CUDA_ARCHITECTURES 80)
 SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 -Xptxas -lineinfo -DCUDA ")
 
-add_executable(transpositionMatrix transpositionMatrix.cu)
-target_link_libraries (transpositionMatrix cuAlgo)
-target_include_directories(transpositionMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
-set_property(TARGET transpositionMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-
-install (TARGETS
-    transpositionMatrix # executables
-    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
-
 # convolution1dMatrix
 add_executable(perf_convolution1dMatrix perf_convolution1dMatrix.cu)
 target_link_libraries(perf_convolution1dMatrix cuAlgo)
@@ -102,7 +93,7 @@ install(TARGETS
 
 # grad2dMatrix
 add_executable(perf_grad2dMatrix perf_grad2dMatrix.cu)
-target_link_libraries (perf_grad2dMatrix cuAlgo)
+target_link_libraries(perf_grad2dMatrix cuAlgo)
 target_include_directories(perf_grad2dMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
 set_property(TARGET perf_grad2dMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
@@ -112,7 +103,7 @@ install(TARGETS
 
 # reduction1dMatrix
 add_executable(perf_reduction1dMatrix perf_reduction1dMatrix.cu)
-target_link_libraries (perf_reduction1dMatrix cuAlgo)
+target_link_libraries(perf_reduction1dMatrix cuAlgo)
 target_include_directories(perf_reduction1dMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
 set_property(TARGET perf_reduction1dMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
@@ -122,7 +113,7 @@ install(TARGETS
 
 # reduction1dVector
 add_executable(perf_reduction1dVector perf_reduction1dVector.cu)
-target_link_libraries (perf_reduction1dVector cuAlgo)
+target_link_libraries(perf_reduction1dVector cuAlgo)
 target_include_directories(perf_reduction1dVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
 set_property(TARGET perf_reduction1dVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
@@ -130,11 +121,22 @@ install(TARGETS
         perf_reduction1dVector # executables
         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
-add_executable(taperMatrix taperMatrix.cu)
-target_link_libraries (taperMatrix cuAlgo)
-target_include_directories(taperMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
-set_property(TARGET taperMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+# taper1dMatrix
+add_executable(perf_taper1dMatrix perf_taper1dMatrix.cu)
+target_link_libraries(perf_taper1dMatrix cuAlgo)
+target_include_directories(perf_taper1dMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_taper1dMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
-install (TARGETS
-    taperMatrix # executables
-    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+install(TARGETS
+        perf_taper1dMatrix # executables
+        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
+# transposeMatrix
+add_executable(perf_transposeMatrix perf_transposeMatrix.cu)
+target_link_libraries(perf_transposeMatrix cuAlgo)
+target_include_directories(perf_transposeMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_transposeMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install(TARGETS
+        perf_transposeMatrix # executables
+        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)

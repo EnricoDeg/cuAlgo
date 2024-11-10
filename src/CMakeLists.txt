@@ -20,7 +20,7 @@ set(SOURCE_EXE  utils.cu
                 gSpMatVecMulCSRAdaptive.cu
                 gSpMatVecMulELL.cu
                 grad2dMatrix.cu
-                taper1dmatrix.cu
+                taper1dMatrix.cu
                 fftshift1dVector.cu)
 
 add_library(cuAlgo SHARED ${SOURCE_EXE})

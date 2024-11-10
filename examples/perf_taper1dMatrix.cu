@@ -1,5 +1,5 @@
 /*
- * @file taperMatrix.cu
+ * @file perf_taper1dMatrix.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -36,11 +36,11 @@ int main() {
 	unsigned int N = 2048;
 	unsigned int taperLength = 32;
 
-	int          * A            = (         int *)malloc(N           * M * sizeof(         int));
-	int          * taper        = (         int *)malloc(taperLength *     sizeof(         int));
-	unsigned int * startIndices = (unsigned int *)malloc(N           *     sizeof(unsigned int));
-	unsigned int * endIndices   = (unsigned int *)malloc(N           *     sizeof(unsigned int));
-	int          * solution     = (         int *)malloc(N           * M * sizeof(         int));
+	float        * A            = (         float *)malloc(N           * M * sizeof(         float));
+	float        * taper        = (         float *)malloc(taperLength *     sizeof(         float));
+	unsigned int * startIndices = (unsigned int   *)malloc(N           *     sizeof(unsigned int  ));
+	unsigned int * endIndices   = (unsigned int   *)malloc(N           *     sizeof(unsigned int  ));
+	float        * solution     = (         float *)malloc(N           * M * sizeof(         float));
 
 	for (unsigned int i = 0 ; i < N ; ++i)
 		for (unsigned int j = 0 ; j < M ; ++j) {
@@ -56,30 +56,30 @@ int main() {
 	for (unsigned int i = 0 ; i < taperLength ; ++i)
 		taper[i] = i;
 
-	int *d_A;
-	check_cuda( cudaMalloc(&d_A           , M           * N * sizeof(         int)) );
+	float *d_A;
+	check_cuda( cudaMalloc(&d_A           , M           * N * sizeof(         float)) );
 
-	int *d_taper;
-	check_cuda( cudaMalloc(&d_taper       , taperLength *     sizeof(         int)) );
+	float *d_taper;
+	check_cuda( cudaMalloc(&d_taper       , taperLength *     sizeof(         float)) );
 
 	unsigned int *d_startIndices;
-	check_cuda( cudaMalloc(&d_startIndices, N           *     sizeof(unsigned int)) );
+	check_cuda( cudaMalloc(&d_startIndices, N           *     sizeof(unsigned int  )) );
 
 	unsigned int *d_endIndices;
-	check_cuda( cudaMalloc(&d_endIndices  , N           *     sizeof(unsigned int)) );
+	check_cuda( cudaMalloc(&d_endIndices  , N           *     sizeof(unsigned int  )) );
 
-	check_cuda( cudaMemcpy ( d_A           , A           , M           * N * sizeof(         int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_taper       , taper       , taperLength *     sizeof(         int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_startIndices, startIndices, N           *     sizeof(unsigned int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_endIndices  , endIndices  , N           *     sizeof(unsigned int), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_A           , A           , M           * N * sizeof(         float), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_taper       , taper       , taperLength *     sizeof(         float), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_startIndices, startIndices, N           *     sizeof(unsigned int  ), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_endIndices  , endIndices  , N           *     sizeof(unsigned int  ), cudaMemcpyHostToDevice ) );
 
 
 	std::cout << "launching kernels ..." << std::endl;
-	for (unsigned int i = 0; i < 1; ++i)
-		cuAlgo::taper1dMatrixInt(d_A, d_taper, d_startIndices, d_endIndices, M, N, taperLength);
+	for (unsigned int i = 0; i < 5; ++i) {
+		cuAlgo::taper1dMatrixFloat(d_A, d_taper, d_startIndices, d_endIndices, M, N, taperLength);
+		check_cuda( cudaMemcpy ( d_A           , A           , M           * N * sizeof(     float), cudaMemcpyHostToDevice ) );
+	}
 	std::cout << "launching kernels done ..." << std::endl;
-
-	check_cuda( cudaMemcpy ( A, d_A, M * N * sizeof(int), cudaMemcpyDeviceToHost ) );
 
 	for (unsigned int j = 0 ; j < N ; ++j) {
 
@@ -96,13 +96,15 @@ int main() {
 			solution[i + j * M] = 0;
 	}
 
-	for (unsigned int j = 0 ; j < N ; ++j)
-		for (unsigned int i = 0 ; i < M ; ++i)
-			if (solution[i + j * M] != A[i + j * M]) {
-				std::cout << "Values are different" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-
+	check_cuda( cudaFree(d_A) );
+	check_cuda( cudaFree(d_taper) );
+	check_cuda( cudaFree(d_startIndices) );
+	check_cuda( cudaFree(d_endIndices) );
+	free(A);
+	free(taper);
+	free(startIndices);
+	free(endIndices);
+	free(solution);
 
 	return 0;
 }
