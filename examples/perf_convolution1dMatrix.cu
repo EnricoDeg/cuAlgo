@@ -1,5 +1,5 @@
 /*
- * @file convolutionMatrix.cu
+ * @file perf_convolution1dMatrix.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *

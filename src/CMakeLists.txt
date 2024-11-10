@@ -9,8 +9,8 @@ set(SOURCE_EXE  utils.cu
                 checkError.cu
                 reduction1dvector.cu
                 reduction1dmatrix.cu
-                convolution1dmatrix.cu
-                convolution_reduction1dmatrix.cu
+                convolution1dMatrix.cu
+                convolutionReduction1dMatrix.cu
                 convolution_taper_reduction1dmatrix.cu
                 transposeMatrix.cu
                 gMatMul.cu

@@ -73,23 +73,25 @@ install (TARGETS
     reductionMatrix # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
-add_executable(convolutionMatrix convolutionMatrix.cu)
-target_link_libraries (convolutionMatrix cuAlgo)
-target_include_directories(convolutionMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
-set_property(TARGET convolutionMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+# convolution1dMatrix
+add_executable(perf_convolution1dMatrix perf_convolution1dMatrix.cu)
+target_link_libraries(perf_convolution1dMatrix cuAlgo)
+target_include_directories(perf_convolution1dMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_convolution1dMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
 install (TARGETS
-    convolutionMatrix # executables
-    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+         perf_convolution1dMatrix # executables
+         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
-add_executable(convolutionReductionMatrix convolutionReductionMatrix.cu)
-target_link_libraries (convolutionReductionMatrix cuAlgo)
-target_include_directories(convolutionReductionMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
-set_property(TARGET convolutionReductionMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+# convolutionReduction1dMatrix
+add_executable(perf_convolutionReduction1dMatrix perf_convolutionReduction1dMatrix.cu)
+target_link_libraries(perf_convolutionReduction1dMatrix cuAlgo)
+target_include_directories(perf_convolutionReduction1dMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_convolutionReduction1dMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
-install (TARGETS
-    convolutionReductionMatrix # executables
-    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+install(TARGETS
+        perf_convolutionReduction1dMatrix # executables
+        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
 add_executable(exclusiveScanVector exclusiveScanVector.cu)
 target_link_libraries (exclusiveScanVector cuAlgo)

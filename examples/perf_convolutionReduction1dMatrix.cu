@@ -1,5 +1,5 @@
 /*
- * @file convolutionReductionMatrix.cu
+ * @file perf_convolutionReduction1dMatrix.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -97,13 +97,13 @@ int main() {
 	auto duration = duration_cast<microseconds>(stop - start);
 	std::cout << "Time taken by function (CPU): " << duration.count() << " microseconds" << std::endl;
 
-	check_cuda( cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost ) );
-
-	for (size_t i = 0 ; i < N ; ++i)
-		if (solution[i] != C[i]) {
-			std::cout << "Values different" << std::endl;
-			exit(EXIT_FAILURE);
-		}
+	check_cuda( cudaFree(d_R) );
+	check_cuda( cudaFree(d_V) );
+	check_cuda( cudaFree(d_C) );
+	free(R);
+	free(V);
+	free(C);
+	free(solution);
 
 	return 0;
 }
