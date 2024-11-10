@@ -153,7 +153,7 @@ void convolutionReduction1dMatrix(T            *R     ,
 		     convolutionReduction1dMatrixKernel1<T>,
 		     R, V, d_buffer, N, K, chunks);
 
-		reduce1dMatrix<T>(d_buffer, C, N, chunks / THREADS_PER_BLOCK_Y, stream, async);
+		reduction1dMatrix<T>(d_buffer, C, N, chunks / THREADS_PER_BLOCK_Y, stream, async);
 
 		check_cuda( cudaFree ( d_buffer ) );
 	} else if (chunks < THREADS_PER_BLOCK_Y && chunks > 1) {
@@ -169,7 +169,7 @@ void convolutionReduction1dMatrix(T            *R     ,
 		     convolutionReduction1dMatrixKernel<T>,
 		     R, V, d_buffer, N, K, chunks);
 
-		reduce1dMatrix<T>(d_buffer, C, N, chunks, stream, async);
+		reduction1dMatrix<T>(d_buffer, C, N, chunks, stream, async);
 
 		check_cuda( cudaFree ( d_buffer ) );
 	} else {

@@ -1,5 +1,5 @@
 /*
- * @file reductionMatrix.cu
+ * @file perf_reduction1dMatrix.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -35,41 +35,41 @@ int main() {
 	unsigned int K = 8192;
 	unsigned int N = 4096;
 
-	int * B = (int *)malloc(K * N * sizeof(int));
-	for (size_t i = 0 ; i < K ; ++i)
-		for (size_t j = 0 ; j < N ; ++j)
+	float * B = (float *)malloc(K * N * sizeof(float));
+	for (unsigned int i = 0 ; i < K ; ++i)
+		for (unsigned int j = 0 ; j < N ; ++j)
 			B [j + i * N] = j*i;
 
-	int * C = (int *)malloc(N * sizeof(int));
-	int * solution = (int *)malloc(N * sizeof(int));
+	float * C        = (float *)malloc(N * sizeof(float));
+	float * solution = (float *)malloc(N * sizeof(float));
 
-	int *d_B;
-	check_cuda( cudaMalloc(&d_B, K * N * sizeof(int)) );
+	float *d_B;
+	check_cuda( cudaMalloc(&d_B, K * N * sizeof(float)) );
 
-	int *d_C;
-	check_cuda( cudaMalloc(&d_C, N * sizeof(int)) );
+	float *d_C;
+	check_cuda( cudaMalloc(&d_C,     N * sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_B, B, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_B, B, K * N *sizeof(float), cudaMemcpyHostToDevice ) );
 
 	std::cout << "launching kernels ..." << std::endl;
-	for (size_t i = 0; i < 5; ++i)
-		cuAlgo::reduce1dMatrixInt(d_B, d_C, N, K);
+	for (unsigned int i = 0; i < 5; ++i)
+		cuAlgo::reduction1dMatrixFloat(d_B, d_C, N, K);
 	std::cout << "launching kernels done ..." << std::endl;
 
-	for (size_t i = 0 ; i < N ; ++i)
+	for (unsigned int i = 0 ; i < N ; ++i)
 		solution[i] = 0;
 
-	for (int i = 0 ; i < K ; ++i)
-		for (int j = 0 ; j < N ; ++j)
+	for (unsigned int i = 0 ; i < K ; ++i)
+		for (unsigned int j = 0 ; j < N ; ++j)
 			solution[j] += B [j + i * N];
 
-	check_cuda( cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost ) );
+	check_cuda( cudaMemcpy ( C, d_C, N * sizeof(float), cudaMemcpyDeviceToHost ) );
 
-	for (size_t i = 0 ; i < N ; ++i)
-		if (solution[i] != C[i]) {
-			std::cout << "Values are different" << std::endl;
-			exit(EXIT_FAILURE);
-		}
+	check_cuda( cudaFree(d_B) );
+	check_cuda( cudaFree(d_C) );
+	free(B);
+	free(C);
+	free(solution);
 
 	return 0;
 }

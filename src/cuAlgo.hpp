@@ -85,35 +85,35 @@ void reduce1dVectorInt(int          *g_idata      ,
  * 
  * @ingroup algo
  */
-void reduce1dMatrixFloat(float        *B            ,
-                         float        *C            ,
-                         unsigned int  N            ,
-                         unsigned int  K            ,
-                         cudaStream_t  stream = 0   ,
-                         bool          async = false);
+void reduction1dMatrixFloat(float        *B            ,
+                            float        *C            ,
+                            unsigned int  N            ,
+                            unsigned int  K            ,
+                            cudaStream_t  stream = 0   ,
+                            bool          async = false);
 
 /**
  * @brief   Perform 1D reduction with doubles on a 2D array (matrix)
  *          of size {N,K}
  * 
- * @details See documentation of reduce1dMatrixFloat()
+ * @details See documentation of reduction1dMatrixFloat()
  * 
  * @ingroup algo
  */
 
-void reduce1dMatrixDouble(double       *B     ,
-                          double       *C     ,
-                          unsigned int  N     ,
-                          unsigned int  K     ,
-                          cudaStream_t  stream,
-                          bool          async );
+void reduction1dMatrixDouble(double       *B            ,
+                             double       *C            ,
+                             unsigned int  N            ,
+                             unsigned int  K            ,
+                             cudaStream_t  stream = 0   ,
+                             bool          async = false);
 
-void reduce1dMatrixInt(int          *B            ,
-                       int          *C            ,
-                       unsigned int  N            ,
-                       unsigned int  K            ,
-                       cudaStream_t  stream = 0   ,
-                       bool          async = false);
+void reduction1dMatrixInt(int          *B            ,
+                          int          *C            ,
+                          unsigned int  N            ,
+                          unsigned int  K            ,
+                          cudaStream_t  stream = 0   ,
+                          bool          async = false);
 
 /**
  * @brief   Perform fftshift on a vector with floats
@@ -569,7 +569,7 @@ void convolution1dMatrixInt(int          *R            ,
  * @brief   Perform 1D convolution with floats on the input matrices and then a 
  *          1D reduction in the slow dimension.
  * 
- * @details This function combines convolution1dMatrix() and reduce1dMatrix()
+ * @details This function combines convolution1dMatrix() and reduction1dMatrix()
  *          in a single kernel. The input matrices has dimensions {N,K}
  *          and the output vector has dimension {N}.
  * 
@@ -772,12 +772,12 @@ void grad2dMatrixDouble(double       *A            ,
                         bool          async = false);
 
 void grad2dMatrixInt(int          *A            ,
-                   int          *Ax           ,
-                   int          *Ay           ,
-                   unsigned int  M            ,
-                   unsigned int  N            ,
-                   cudaStream_t  stream = 0   ,
-                   bool          async = false);
+                     int          *Ax           ,
+                     int          *Ay           ,
+                     unsigned int  M            ,
+                     unsigned int  N            ,
+                     cudaStream_t  stream = 0   ,
+                     bool          async = false);
 
 /**
  * @brief   Apply 1d taper to matrix using floats.

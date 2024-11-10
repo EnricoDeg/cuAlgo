@@ -115,7 +115,7 @@ __global__ void reduction1dMatrixKernel2(const T *__restrict__ B,
 }
 
 template <typename T>
-void reduce1dMatrix(T            *B     ,
+void reduction1dMatrix(T            *B     ,
                     T            *C     ,
                     unsigned int  N     ,
                     unsigned int  K     ,
@@ -137,7 +137,7 @@ void reduce1dMatrix(T            *B     ,
 		     reduction1dMatrixKernel2<T>,
 		     B, d_buffer, N, K, chunks);
 
-		reduce1dMatrix<T>(d_buffer, C, N, chunks/32, stream, async);
+		reduction1dMatrix<T>(d_buffer, C, N, chunks/32, stream, async);
 
 		check_cuda( cudaFree ( d_buffer ) );
 	} else if (chunks < THREADS_PER_BLOCK_Y && chunks > 1) {
@@ -153,7 +153,7 @@ void reduce1dMatrix(T            *B     ,
 		     reduction1dMatrixKernel<T>,
 		     B, d_buffer, N, K, chunks);
 
-		reduce1dMatrix<T>(d_buffer, C, N, chunks, stream, async);
+		reduction1dMatrix<T>(d_buffer, C, N, chunks, stream, async);
 
 		check_cuda( cudaFree ( d_buffer ) );
 	} else {
@@ -170,33 +170,33 @@ void reduce1dMatrix(T            *B     ,
 
 namespace cuAlgo {
 
-	void reduce1dMatrixInt(int *         B     ,
-	                       int *         C     ,
-	                       unsigned int  N     ,
-	                       unsigned int  K     ,
-	                       cudaStream_t  stream,
-	                       bool          async ) {
-
-		reduce1dMatrix<int>(B, C, N , K, stream, async);
-	}
-
-	void reduce1dMatrixFloat(float *         B     ,
-	                         float *         C     ,
-	                         unsigned int  N     ,
-	                         unsigned int  K     ,
-	                         cudaStream_t  stream,
-	                         bool          async ) {
-
-		reduce1dMatrix<float>(B, C, N , K, stream, async);
-	}
-
-	void reduce1dMatrixDouble(double *         B     ,
-	                          double *         C     ,
+	void reduction1dMatrixInt(int *         B     ,
+	                          int *         C     ,
 	                          unsigned int  N     ,
 	                          unsigned int  K     ,
 	                          cudaStream_t  stream,
 	                          bool          async ) {
 
-		reduce1dMatrix<double>(B, C, N , K, stream, async);
+		reduction1dMatrix<int>(B, C, N , K, stream, async);
+	}
+
+	void reduction1dMatrixFloat(float *         B     ,
+	                            float *         C     ,
+	                            unsigned int  N     ,
+	                            unsigned int  K     ,
+	                            cudaStream_t  stream,
+	                            bool          async ) {
+
+		reduction1dMatrix<float>(B, C, N , K, stream, async);
+	}
+
+	void reduction1dMatrixDouble(double *         B     ,
+	                             double *         C     ,
+	                             unsigned int  N     ,
+	                             unsigned int  K     ,
+	                             cudaStream_t  stream,
+	                             bool          async ) {
+
+		reduction1dMatrix<double>(B, C, N , K, stream, async);
 	}
 }

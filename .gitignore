@@ -5,8 +5,6 @@ lib
 
 examples/reductionVector
 examples/transpositionMatrix
-examples/reductionMatrix
-examples/gradientMatrix
 examples/taperMatrix
 
 examples/perf_convolution1dMatrix
@@ -19,3 +17,4 @@ examples/perf_gSpMatVecMulCSRAdaptive
 examples/perf_gSpMatVecMulCSRVector
 examples/perf_gSpMatVecMulELL
 examples/perf_grad2dMatrix
+examples/perf_reduction1dMatrix

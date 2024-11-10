@@ -19,15 +19,6 @@ install (TARGETS
     transpositionMatrix # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
-add_executable(reductionMatrix reductionMatrix.cu)
-target_link_libraries (reductionMatrix cuAlgo)
-target_include_directories(reductionMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
-set_property(TARGET reductionMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-
-install (TARGETS
-    reductionMatrix # executables
-    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
-
 # convolution1dMatrix
 add_executable(perf_convolution1dMatrix perf_convolution1dMatrix.cu)
 target_link_libraries(perf_convolution1dMatrix cuAlgo)
@@ -126,6 +117,16 @@ set_property(TARGET perf_grad2dMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
 install(TARGETS
         perf_grad2dMatrix # executables
+        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
+# reduction1dMatrix
+add_executable(perf_reduction1dMatrix perf_reduction1dMatrix.cu)
+target_link_libraries (perf_reduction1dMatrix cuAlgo)
+target_include_directories(perf_reduction1dMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_reduction1dMatrix PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install(TARGETS
+        perf_reduction1dMatrix # executables
         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
 add_executable(taperMatrix taperMatrix.cu)

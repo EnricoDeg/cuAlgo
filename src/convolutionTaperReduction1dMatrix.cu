@@ -100,7 +100,7 @@ void convolutionTaperReduction1dMatrix(T            *R     ,
 		     convolutionTaperReduction1dMatrixKernel<T>,
 		     R, V, Taper, d_buffer, N, K, chunks);
 
-		reduce1dMatrix<T>(d_buffer, C, N, chunks, 0, false);
+		reduction1dMatrix<T>(d_buffer, C, N, chunks, 0, false);
 
 		check_cuda( cudaFree ( d_buffer ) );
 	} else {

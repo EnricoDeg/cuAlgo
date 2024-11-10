@@ -7,7 +7,7 @@ Vector:
  - \c fftshift1dVector: shift vector for FFT
 
 Dense Matrix:
- - \c reduce1dMatrix : reduction of a matrix non contiguous dimension into a vector
+ - \c reduction1dMatrix : reduction of a matrix non contiguous dimension into a vector
  - \c transposeMatrix : matrix transposition
  - \c gMatMul : general matrix-matrix multiplication (`C = alpha * A * B + beta * C`)
  - \c gMatVecMul : general matrix-vector multiplication

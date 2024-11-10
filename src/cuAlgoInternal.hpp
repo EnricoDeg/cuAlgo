@@ -33,11 +33,11 @@
 #include <cuda.h>
 
 template <typename T>
-void reduce1dMatrix(T            *B     ,
-                    T            *C     ,
-                    unsigned int  N     ,
-                    unsigned int  K     ,
-                    cudaStream_t  stream,
-                    bool          async );
+void reduction1dMatrix(T            *B     ,
+                      T            *C     ,
+                      unsigned int  N     ,
+                      unsigned int  K     ,
+                      cudaStream_t  stream,
+                      bool          async );
 
 #endif

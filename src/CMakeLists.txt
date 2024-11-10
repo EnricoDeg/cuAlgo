@@ -8,7 +8,7 @@ set(SOURCE_EXE  utils.cu
                 getRowBlocks.cu
                 checkError.cu
                 reduction1dvector.cu
-                reduction1dmatrix.cu
+                reduction1dMatrix.cu
                 convolution1dMatrix.cu
                 convolutionReduction1dMatrix.cu
                 convolutionTaperReduction1dMatrix.cu
