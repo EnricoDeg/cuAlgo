@@ -93,6 +93,14 @@ target_include_directories(test_grad2dMatrix PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries(test_grad2dMatrix cuAlgo)
 target_link_libraries(test_grad2dMatrix GTest::gtest_main)
 
+# normL1Vector
+add_executable( test_normL1Vector
+                test_normL1Vector.cu
+              )
+target_include_directories(test_normL1Vector PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_normL1Vector cuAlgo)
+target_link_libraries(test_normL1Vector GTest::gtest_main)
+
 # reduction1dMatrix
 add_executable( test_reduction1dMatrix
                 test_reduction1dMatrix.cu
