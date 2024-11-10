@@ -109,6 +109,14 @@ target_include_directories(test_reduction1dMatrix PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries(test_reduction1dMatrix cuAlgo)
 target_link_libraries(test_reduction1dMatrix GTest::gtest_main)
 
+# reduction1dVector
+add_executable( test_reduction1dVector
+                test_reduction1dVector.cu
+              )
+target_include_directories(test_reduction1dVector PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_reduction1dVector cuAlgo)
+target_link_libraries(test_reduction1dVector GTest::gtest_main)
+
 # Add all tests to GoogleTest
 include(GoogleTest)
 gtest_discover_tests(test_transposeMatrix)
@@ -123,3 +131,4 @@ gtest_discover_tests(test_gSpMatVecMulCSRVector)
 gtest_discover_tests(test_gSpMatVecMulELL)
 gtest_discover_tests(test_grad2dMatrix)
 gtest_discover_tests(test_reduction1dMatrix)
+gtest_discover_tests(test_reduction1dVector)
