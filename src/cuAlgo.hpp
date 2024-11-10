@@ -659,6 +659,43 @@ void gSpMatVecMulELLInt(unsigned int *columns         ,
                         bool          async = false   );
 
 /**
+ * @brief   Compute L1 norm on a vector of floats
+ * 
+ * @details Sum absolute value of elements of the input vector and
+ *          return a pointer to a scalar
+ * 
+ * @param[in]  idata pointer to input vector
+ * @param[out] odata pointer to output scalar with result of the L1 norm
+ * @param[in]  size  size of the input vector
+ * 
+ * @ingroup algo
+ */
+void normL1VectorFloat(float        *g_idata      ,
+                       float        *g_odata      ,
+                       unsigned int  size         ,
+                       cudaStream_t  stream = 0   ,
+                       bool          async = false);
+
+/**
+ * @brief   Compute L1 norm on a vector of doubles
+ * 
+ * @details See documentation of normL1VectorFloat().
+ * 
+ * @ingroup algo
+ */
+void normL1VectorDouble(double       *g_idata      ,
+                        double       *g_odata      ,
+                        unsigned int  size         ,
+                        cudaStream_t  stream = 0   ,
+                        bool          async = false);
+
+void normL1VectorInt(int          *g_idata      ,
+                     int          *g_odata      ,
+                     unsigned int  size         ,
+                     cudaStream_t  stream = 0   ,
+                     bool          async = false);
+
+/**
  * @brief   Perform 1D reduction with floats on a 2D array (matrix)
  *          of size {N,K}
  * 

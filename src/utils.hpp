@@ -61,6 +61,16 @@ size_t getSmem(size_t K) {
 	return smem_max_size;
 }
 
+template <unsigned int blockSize, typename T>
+__device__ void warpReduceShMem(volatile T* sdata, unsigned int tid) {
+	if (blockSize >= 64) sdata[tid] += sdata[tid + 32];
+	if (blockSize >= 32) sdata[tid] += sdata[tid + 16];
+	if (blockSize >= 16) sdata[tid] += sdata[tid +  8];
+	if (blockSize >= 8)  sdata[tid] += sdata[tid +  4];
+	if (blockSize >= 4)  sdata[tid] += sdata[tid +  2];
+	if (blockSize >= 2)  sdata[tid] += sdata[tid +  1];
+}
+
 __device__ int warp_reduce(int val) ;
 
 __device__ unsigned int prev_power_of_2 (unsigned int n) ;

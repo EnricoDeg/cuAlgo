@@ -21,7 +21,8 @@ set(SOURCE_EXE  utils.cu
                 gSpMatVecMulELL.cu
                 grad2dMatrix.cu
                 taper1dMatrix.cu
-                fftshift1dVector.cu)
+                fftshift1dVector.cu
+                normL1Vector.cu)
 
 add_library(cuAlgo SHARED ${SOURCE_EXE})
 target_include_directories(cuAlgo PRIVATE ${PROJECT_SOURCE_DIR})

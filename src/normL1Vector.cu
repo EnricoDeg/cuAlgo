@@ -1,5 +1,5 @@
 /*
- * @file reduction1dVector.cu
+ * @file normL1Vector.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -28,11 +28,12 @@
  */
 #include <iostream>
 #include "cuAlgo.hpp"
+#include "cuAlgoInternal.hpp"
 #include "utils.hpp"
 #include "templateShMem.hpp"
 
 template <unsigned int blockSize, typename T>
-__global__ void reduction1dKernel(T *g_idata, T *g_odata, unsigned int n) {
+__global__ void normL1Kernel(T *g_idata, T *g_odata, unsigned int n) {
 
 	// use dynamic shared memory
 	// needed for template
@@ -46,7 +47,7 @@ __global__ void reduction1dKernel(T *g_idata, T *g_odata, unsigned int n) {
 	// load to shared memory
 	sdata[tid] = 0;
 	while (i < n) {
-		sdata[tid] += g_idata[i] + g_idata[i+blockSize];
+		sdata[tid] += abs(g_idata[i]) + abs(g_idata[i+blockSize]);
 		i += gridSize;
 	}
 	__syncthreads();
@@ -84,7 +85,7 @@ __global__ void reduction1dKernel(T *g_idata, T *g_odata, unsigned int n) {
 }
 
 template<typename T>
-__global__ void reduction1dKernelFlexible(T *g_idata, T *g_odata) {
+__global__ void normL1KernelFlexible(T *g_idata, T *g_odata) {
 
 	// use dynamic shared memory
 	// neeeded for template
@@ -94,7 +95,7 @@ __global__ void reduction1dKernelFlexible(T *g_idata, T *g_odata) {
 	// each thread loads one element from global to shared mem
 	unsigned int tid = threadIdx.x;
 	unsigned int i = blockIdx.x*(blockDim.x*2) + threadIdx.x;
-	sdata[tid] = g_idata[i] + g_idata[i+blockDim.x];
+	sdata[tid] = abs(g_idata[i]) + abs(g_idata[i+blockDim.x]);
 	__syncthreads();
 	// do reduction in shared mem
 	for (unsigned int s=blockDim.x/2; s>0; s>>=1) {
@@ -109,13 +110,13 @@ __global__ void reduction1dKernelFlexible(T *g_idata, T *g_odata) {
 }
 
 template<typename T>
-void reduction1dVector(T            *g_idata,
-                       T            *g_odata,
-                       unsigned int  size   ,
-                       cudaStream_t  stream ,
-                       bool          async  ) {
+void normL1Vector(T            *g_idata,
+                  T            *g_odata,
+                  unsigned int  size   ,
+                  cudaStream_t  stream ,
+                  bool          async  ) {
 
-	unsigned int threadsPerBlock = size > 1024 ? 1024 : size/2;
+	unsigned int threadsPerBlock = size > 1024 ? 1024 : size / 2;
 	unsigned int blocksPerGrid = size / (2*threadsPerBlock) + (size % (2*threadsPerBlock) > 0);
 	unsigned int shmem = threadsPerBlock*sizeof(T);
 
@@ -126,7 +127,7 @@ void reduction1dVector(T            *g_idata,
 		print_kernel_config(threadsPerBlock3, blocksPerGrid3);
 
 		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     reduction1dKernelFlexible<T>,
+		     normL1KernelFlexible<T>,
 		     g_idata, g_odata);
 
 	} else {
@@ -140,57 +141,57 @@ void reduction1dVector(T            *g_idata,
 		switch (threadsPerBlock) {
 			case 1024:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduction1dKernel<1024 COMMA T>,
+			     normL1Kernel<1024 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 512:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduction1dKernel< 512 COMMA T>,
+			     normL1Kernel< 512 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 256:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduction1dKernel< 256 COMMA T>,
+			     normL1Kernel< 256 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 128:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduction1dKernel< 128 COMMA T>,
+			     normL1Kernel< 128 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 64:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduction1dKernel<  64 COMMA T>,
+			     normL1Kernel<  64 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 32:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduction1dKernel< 128 COMMA T>,
+			     normL1Kernel< 128 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 16:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduction1dKernel<  16 COMMA T>,
+			     normL1Kernel<  16 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 8:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduction1dKernel<   8 COMMA T>,
+			     normL1Kernel<   8 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 4:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduction1dKernel<   4 COMMA T>,
+			     normL1Kernel<   4 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 2:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduction1dKernel<   2 COMMA T>,
+			     normL1Kernel<   2 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 			case 1:
 			TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-			     reduction1dKernel<   1 COMMA T>,
+			     normL1Kernel<   1 COMMA T>,
 			     g_idata, d_buffer, size);
 			break;
 		}
@@ -202,33 +203,33 @@ void reduction1dVector(T            *g_idata,
 
 namespace cuAlgo {
 
-	void reduction1dVectorFloat(float        *g_idata,
-	                            float        *g_odata,
-	                            unsigned int  size   ,
-	                            cudaStream_t  stream ,
-	                            bool          async  )
+	void normL1VectorFloat(float        *g_idata,
+	                       float        *g_odata,
+	                       unsigned int  size   ,
+	                       cudaStream_t  stream ,
+	                       bool          async  )
 	{
 
-		reduction1dVector<float>(g_idata, g_odata, size, stream, async);
+		normL1Vector<float>(g_idata, g_odata, size, stream, async);
 	}
 
-	void reduction1dVectorDouble(double       *g_idata,
-	                             double       *g_odata,
-	                             unsigned int  size   ,
-	                             cudaStream_t  stream ,
-	                             bool          async  )
+	void normL1VectorDouble(double       *g_idata,
+	                        double       *g_odata,
+	                        unsigned int  size   ,
+	                        cudaStream_t  stream ,
+	                        bool          async  )
 	{
 
-		reduction1dVector<double>(g_idata, g_odata, size, stream, async);
+		normL1Vector<double>(g_idata, g_odata, size, stream, async);
 	}
 
-	void reduction1dVectorInt(int          *g_idata,
-	                          int          *g_odata,
-	                          unsigned int  size   ,
-	                          cudaStream_t  stream ,
-	                          bool          async  )
+	void normL1VectorInt(int          *g_idata,
+	                     int          *g_odata,
+	                     unsigned int  size   ,
+	                     cudaStream_t  stream ,
+	                     bool          async  )
 	{
 
-		reduction1dVector<int>(g_idata, g_odata, size, stream, async);
+		normL1Vector<int>(g_idata, g_odata, size, stream, async);
 	}
 }

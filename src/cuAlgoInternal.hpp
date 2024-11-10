@@ -40,4 +40,11 @@ void reduction1dMatrix(T            *B     ,
                       cudaStream_t  stream,
                       bool          async );
 
+template<typename T>
+void reduction1dVector(T            *g_idata,
+                       T            *g_odata,
+                       unsigned int  size   ,
+                       cudaStream_t  stream ,
+                       bool          async  );
+
 #endif
