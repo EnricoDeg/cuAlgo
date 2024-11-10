@@ -19,14 +19,14 @@ install (TARGETS
     transpositionMatrix # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
-add_executable(generalMatrixMultiplication generalMatrixMultiplication.cu)
-target_link_libraries (generalMatrixMultiplication cuAlgo)
-target_include_directories(generalMatrixMultiplication PRIVATE ${PROJECT_SOURCE_DIR}/src)
-set_property(TARGET generalMatrixMultiplication PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+add_executable(perf_gMatMul perf_gMatMul.cu)
+target_link_libraries (perf_gMatMul cuAlgo)
+target_include_directories(perf_gMatMul PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_gMatMul PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
-install (TARGETS
-    generalMatrixMultiplication # executables
-    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+install(TARGETS
+        perf_gMatMul # executables
+        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
 add_executable(generalMatrixVectorMultiplication generalMatrixVectorMultiplication.cu)
 target_link_libraries (generalMatrixVectorMultiplication cuAlgo)

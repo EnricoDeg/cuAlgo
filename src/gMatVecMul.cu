@@ -27,7 +27,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <iostream>
-#include <cuda.h>
 #include "cuAlgo.hpp"
 #include "utils.hpp"
 #include "templateShMem.hpp"

@@ -108,4 +108,12 @@ TEST(gMatMul, default_value) {
 		for (int j = 0; j < N ; ++j) {
 			ASSERT_EQ(solution[j + i * N] , C[j + i * N]);
 		}
+
+	check_cuda( cudaFree(d_A) );
+	check_cuda( cudaFree(d_B) );
+	check_cuda( cudaFree(d_C) );
+	free(A);
+	free(B);
+	free(C);
+	free(solution);
 }

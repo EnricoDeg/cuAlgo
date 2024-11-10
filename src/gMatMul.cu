@@ -27,12 +27,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <iostream>
-#include <cuda.h>
 #include "cuAlgo.hpp"
-#include <chrono>
 #include "utils.hpp"
-
-using namespace std::chrono;
 
 template <const uint BLOCKSIZE, typename T>
 __global__ void gMatMulKernel(T                      alpha,
