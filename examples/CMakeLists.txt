@@ -28,15 +28,6 @@ install (TARGETS
     generalSparseMatrixVectorMultiplicationCSRVector # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
-add_executable(generalSparseMatrixVectorMultiplicationCSRAdaptive generalSparseMatrixVectorMultiplicationCSRAdaptive.cu)
-target_link_libraries (generalSparseMatrixVectorMultiplicationCSRAdaptive cuAlgo)
-target_include_directories(generalSparseMatrixVectorMultiplicationCSRAdaptive PRIVATE ${PROJECT_SOURCE_DIR}/src)
-set_property(TARGET generalSparseMatrixVectorMultiplicationCSRAdaptive PROPERTY CUDA_SEPARABLE_COMPRAdaptive ON)
-
-install (TARGETS
-    generalSparseMatrixVectorMultiplicationCSRAdaptive # executables
-    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
-
 add_executable(generalSparseMatrixVectorMultiplicationELL generalSparseMatrixVectorMultiplicationELL.cu)
 target_link_libraries (generalSparseMatrixVectorMultiplicationELL cuAlgo)
 target_include_directories(generalSparseMatrixVectorMultiplicationELL PRIVATE ${PROJECT_SOURCE_DIR}/src)
@@ -113,6 +104,16 @@ set_property(TARGET perf_gMatVecMul PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
 install(TARGETS
         perf_gMatVecMul # executables
+        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
+# gSpMatVecMulCSRAdaptive
+add_executable(perf_gSpMatVecMulCSRAdaptive perf_gSpMatVecMulCSRAdaptive.cu)
+target_link_libraries (perf_gSpMatVecMulCSRAdaptive cuAlgo)
+target_include_directories(perf_gSpMatVecMulCSRAdaptive PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_gSpMatVecMulCSRAdaptive PROPERTY CUDA_SEPARABLE_COMPRAdaptive ON)
+
+install(TARGETS
+        perf_gSpMatVecMulCSRAdaptive # executables
         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
 add_executable(gradientMatrix gradientMatrix.cu)

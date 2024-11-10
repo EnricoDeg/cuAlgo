@@ -1,5 +1,5 @@
 /*
- * @file generalSparseMatrixVectorMultiplicationCSRAdaptive.cu
+ * @file perf_gSpMatVecMulCSRAdaptive.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -44,12 +44,12 @@ int main(int argc, char *argv[])
 
 	// Allocate enough storage for the matix.  We allocate more than
 	// is needed in order to simplify the code
-	unsigned int * columns  = (unsigned int *)malloc(   nrows * nnz  * sizeof(unsigned int));
-	int          * values   = (         int *)malloc(   nrows * nnz  * sizeof(         int));
-	unsigned int * row_ptr  = (unsigned int *)malloc( ( nrows + 1 )  * sizeof(unsigned int));
-	int          * x        = (         int *)malloc(   nrows        * sizeof(         int));
-	int          * y        = (         int *)malloc(   nrows        * sizeof(         int));
-	int          * solution = (         int *)malloc(   nrows        * sizeof(         int));
+	unsigned int * columns  = (unsigned int   *)malloc(   nrows * nnz  * sizeof(unsigned int  ));
+	float        * values   = (         float *)malloc(   nrows * nnz  * sizeof(         float));
+	unsigned int * row_ptr  = (unsigned int   *)malloc( ( nrows + 1 )  * sizeof(unsigned int  ));
+	float        * x        = (         float *)malloc(   nrows        * sizeof(         float));
+	float        * y        = (         float *)malloc(   nrows        * sizeof(         float));
+	float        * solution = (         float *)malloc(   nrows        * sizeof(         float));
 
 	// Create a sparse matrix with nnz non zeros per row constant.
 	// The non zero location and values are set randomly
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 
 	// Create the source (x) vector
 	for (unsigned int i = 0; i < nrows; ++i)
-		x[i] = 1;
+		x[i] = 1.0;
 
 	// sanity check
 	for (unsigned int i = 0; i < nrows; ++i)
@@ -91,40 +91,39 @@ int main(int argc, char *argv[])
 	}
 
 	unsigned int *d_columns;
-	check_cuda( cudaMalloc(&d_columns,   nrows * nnz * sizeof(unsigned int)) );
-	int *d_values;
-	check_cuda( cudaMalloc(&d_values ,   nrows * nnz * sizeof(         int)) );
+	check_cuda( cudaMalloc(&d_columns,   nrows * nnz * sizeof(unsigned int  )) );
+	float *d_values;
+	check_cuda( cudaMalloc(&d_values ,   nrows * nnz * sizeof(         float)) );
 	unsigned int *d_row_ptr;
-	check_cuda( cudaMalloc(&d_row_ptr, ( nrows + 1 ) * sizeof(unsigned int)) );
-	int *d_x;
-	check_cuda( cudaMalloc(&d_x      ,   nrows       * sizeof(         int)) );
-	int *d_y;
-	check_cuda( cudaMalloc(&d_y      ,   nrows       * sizeof(         int)) );
+	check_cuda( cudaMalloc(&d_row_ptr, ( nrows + 1 ) * sizeof(unsigned int  )) );
+	float *d_x;
+	check_cuda( cudaMalloc(&d_x      ,   nrows       * sizeof(         float)) );
+	float *d_y;
+	check_cuda( cudaMalloc(&d_y      ,   nrows       * sizeof(         float)) );
 
-	check_cuda( cudaMemcpy ( d_columns, columns,   nrows * nnz * sizeof(unsigned int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_values , values ,   nrows * nnz * sizeof(         int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_row_ptr, row_ptr, ( nrows + 1 ) * sizeof(unsigned int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_x      , x      ,   nrows       * sizeof(         int), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_columns, columns,   nrows * nnz * sizeof(unsigned int  ), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_values , values ,   nrows * nnz * sizeof(         float), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_row_ptr, row_ptr, ( nrows + 1 ) * sizeof(unsigned int  ), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_x      , x      ,   nrows       * sizeof(         float), cudaMemcpyHostToDevice ) );
 
 	unsigned int blocks_count = 0;
 	std::cout << "Compute row blocks" << std::endl;
 	unsigned int * d_row_blocks = cuAlgo::getRowBlocks(row_ptr, nrows, &blocks_count);
 
 	for (unsigned int i = 0; i < 5; ++i)
-		cuAlgo::gSpMatVecMulCSRAdaptiveInt( d_columns, d_row_ptr, d_row_blocks, d_values , d_x , d_y , nrows, blocks_count ) ;
+		cuAlgo::gSpMatVecMulCSRAdaptiveFloat( d_columns, d_row_ptr, d_row_blocks, d_values , d_x , d_y , nrows, blocks_count ) ;
 
-	check_cuda( cudaMemcpy ( y        , d_y    ,   nrows       * sizeof(         int), cudaMemcpyDeviceToHost ) );
-
-	for (unsigned int j = 0; j < nrows ; ++j) {
-		if (  solution[j] != y[j] ) {
-			std::cout << "Values are different !" << std::endl;
-		}
-	}
-
+	check_cuda( cudaFree(d_columns) );
+	check_cuda( cudaFree(d_values) );
+	check_cuda( cudaFree(d_row_ptr) );
+	check_cuda( cudaFree(d_x) );
+	check_cuda( cudaFree(d_y) );
 	free(columns);
 	free(values);
 	free(row_ptr);
 	free(x);
 	free(y);
+	free(solution);
+
 	return 0;
 }
