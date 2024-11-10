@@ -1,5 +1,5 @@
 /*
- * @file exclusiveScanVector.cu
+ * @file perf_exclusiveScan1dVector.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -31,50 +31,33 @@
 #include <cuAlgo.hpp>
 #include <chrono>
 
-using namespace std::chrono;
-
 int main() {
 
 	const unsigned int size = 8192;
-	int *idata    = (int *)malloc(size * sizeof(int));
-	int *odata    = (int *)malloc(size * sizeof(int));
-	int *solution = (int *)malloc(size * sizeof(int));
+	float *idata = (float *)malloc(size * sizeof(float));
+	float *odata = (float *)malloc(size * sizeof(float));
 
 	for (unsigned int i = 0 ; i < size ; ++i) {
-
 		idata[i]    = i * 2;
 		odata[i]    = size - i;
-		solution[i] = size - i;
 	}
 
-	solution[0] = 0;
-	for (unsigned int i = 1 ; i < size ; ++i) {
+	float *d_idata;
+	check_cuda( cudaMalloc(&d_idata, size * sizeof(float)) );
+	float *d_odata;
+	check_cuda( cudaMalloc(&d_odata, size * sizeof(float)) );
 
-		solution[i] = idata[i-1] + solution[i-1];
+	check_cuda( cudaMemcpy ( d_idata, idata, size * sizeof(float), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_odata, odata, size * sizeof(float), cudaMemcpyHostToDevice ) );
+
+	for (unsigned int i = 0; i < 5; ++i) {
+		std::cout << "launching kernels ..." << std::endl;
+		cuAlgo::exclusiveScan1dVectorFloat(d_idata, d_odata, size);
+		std::cout << "launching kernels done ..." << std::endl;
 	}
 
-	int *d_idata;
-	check_cuda( cudaMalloc(&d_idata, size * sizeof(int)) );
-	int *d_odata;
-	check_cuda( cudaMalloc(&d_odata, size * sizeof(int)) );
-
-	check_cuda( cudaMemcpy ( d_idata, idata, size * sizeof(int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_odata, odata, size * sizeof(int), cudaMemcpyHostToDevice ) );
-
-	std::cout << "launching kernels ..." << std::endl;
-	cuAlgo::exclusiveScan1dVectorInt(d_idata, d_odata, size);
-	std::cout << "launching kernels done ..." << std::endl;
-
-	check_cuda( cudaMemcpy ( odata, d_odata, size * sizeof(int), cudaMemcpyDeviceToHost ) );
-
-	for (unsigned int i = 0 ; i < size ; ++i) {
-		if (solution[i] != odata[i]) {
-			std::cout << "Values are different " << i << " - " << solution[i] << " - " << odata[i] << std::endl;
-			exit(EXIT_FAILURE);
-		}
-	}
-
+	check_cuda( cudaFree(d_idata) );
+	check_cuda( cudaFree(d_odata) );
 	free(idata);
 	free(odata);
-	free(solution);
 }

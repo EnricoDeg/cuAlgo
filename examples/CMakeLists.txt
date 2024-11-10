@@ -93,14 +93,15 @@ install(TARGETS
         perf_convolutionReduction1dMatrix # executables
         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
-add_executable(exclusiveScanVector exclusiveScanVector.cu)
-target_link_libraries (exclusiveScanVector cuAlgo)
-target_include_directories(exclusiveScanVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
-set_property(TARGET exclusiveScanVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+# exclusiveScan1dVector
+add_executable(perf_exclusiveScan1dVector perf_exclusiveScan1dVector.cu)
+target_link_libraries(perf_exclusiveScan1dVector cuAlgo)
+target_include_directories(perf_exclusiveScan1dVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_exclusiveScan1dVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
-install (TARGETS
-    exclusiveScanVector # executables
-    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+install(TARGETS
+        perf_exclusiveScan1dVector # executables
+        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
 add_executable(gradientMatrix gradientMatrix.cu)
 target_link_libraries (gradientMatrix cuAlgo)

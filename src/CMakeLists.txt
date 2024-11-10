@@ -11,14 +11,14 @@ set(SOURCE_EXE  utils.cu
                 reduction1dmatrix.cu
                 convolution1dMatrix.cu
                 convolutionReduction1dMatrix.cu
-                convolution_taper_reduction1dmatrix.cu
+                convolutionTaperReduction1dMatrix.cu
+                exclusiveScan1dVector.cu
                 transposeMatrix.cu
                 gMatMul.cu
                 gMatVecMul.cu
                 gSpMatVecMulCSRVector.cu
                 gSpMatVecMulCSRAdaptive.cu
                 gSpMatVecMulELL.cu
-                exclusiveScan1dvector.cu
                 gradMatrix.cu
                 taper1dmatrix.cu
                 fftshift1dvector.cu)

@@ -1,5 +1,5 @@
 /*
- * @file convolution_taper_reduction1dmatrix.cu
+ * @file convolutionTaperReduction1dMatrix.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *

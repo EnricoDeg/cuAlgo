@@ -1,5 +1,5 @@
 /*
- * @file exclusiveScan1dvector.cu
+ * @file exclusiveScan1dVector.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
