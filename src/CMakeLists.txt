@@ -19,7 +19,7 @@ set(SOURCE_EXE  utils.cu
                 gSpMatVecMulCSRVector.cu
                 gSpMatVecMulCSRAdaptive.cu
                 gSpMatVecMulELL.cu
-                gradMatrix.cu
+                grad2dMatrix.cu
                 taper1dmatrix.cu
                 fftshift1dVector.cu)
 

@@ -748,13 +748,13 @@ void exclusiveScan1dVectorInt(int          *g_idata      ,
  * 
  * @ingroup algo
  */
-void gradMatrixFloat(float        *A            ,
-                     float        *Ax           ,
-                     float        *Ay           ,
-                     unsigned int  M            ,
-                     unsigned int  N            ,
-                     cudaStream_t  stream = 0   ,
-                     bool          async = false);
+void grad2dMatrixFloat(float        *A            ,
+                       float        *Ax           ,
+                       float        *Ay           ,
+                       unsigned int  M            ,
+                       unsigned int  N            ,
+                       cudaStream_t  stream = 0   ,
+                       bool          async = false);
 
 /**
  * @brief   Compute the matrix gradient using doubles.
@@ -763,15 +763,15 @@ void gradMatrixFloat(float        *A            ,
  * 
  * @ingroup algo
  */
-void gradMatrixDouble(double       *A            ,
-                      double       *Ax           ,
-                      double       *Ay           ,
-                      unsigned int  M            ,
-                      unsigned int  N            ,
-                      cudaStream_t  stream = 0   ,
-                      bool          async = false);
+void grad2dMatrixDouble(double       *A            ,
+                        double       *Ax           ,
+                        double       *Ay           ,
+                        unsigned int  M            ,
+                        unsigned int  N            ,
+                        cudaStream_t  stream = 0   ,
+                        bool          async = false);
 
-void gradMatrixInt(int          *A            ,
+void grad2dMatrixInt(int          *A            ,
                    int          *Ax           ,
                    int          *Ay           ,
                    unsigned int  M            ,

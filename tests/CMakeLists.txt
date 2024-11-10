@@ -93,6 +93,14 @@ target_include_directories(test_gSpMatVecMulELL PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries(test_gSpMatVecMulELL cuAlgo)
 target_link_libraries(test_gSpMatVecMulELL GTest::gtest_main)
 
+# grad2dMatrix
+add_executable( test_grad2dMatrix
+                test_grad2dMatrix.cu
+              )
+target_include_directories(test_grad2dMatrix PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_grad2dMatrix cuAlgo)
+target_link_libraries(test_grad2dMatrix GTest::gtest_main)
+
 # Add all tests to GoogleTest
 include(GoogleTest)
 gtest_discover_tests(test_transposeMatrix)
@@ -105,3 +113,4 @@ gtest_discover_tests(test_gMatVecMul)
 gtest_discover_tests(test_gSpMatVecMulCSRAdaptive)
 gtest_discover_tests(test_gSpMatVecMulCSRVector)
 gtest_discover_tests(test_gSpMatVecMulELL)
+gtest_discover_tests(test_grad2dMatrix)
