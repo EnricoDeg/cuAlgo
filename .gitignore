@@ -5,18 +5,9 @@ lib
 
 examples/reductionVector
 examples/transpositionMatrix
-examples/generalMatrixMultiplication
 examples/reductionMatrix
-examples/convolutionMatrix
-examples/convolutionReductionMatrix
-examples/generalMatrixVectorMultiplication
-examples/generalSparseMatrixVectorMultiplicationCSRVector
-examples/generalSparseMatrixVectorMultiplicationCSRAdaptive
-examples/generalSparseMatrixVectorMultiplicationELL
-examples/exclusiveScanVector
 examples/gradientMatrix
 examples/taperMatrix
-examples/fftshiftVector
 
 examples/perf_convolution1dMatrix
 examples/perf_convolutionReduction1dMatrix
@@ -26,3 +17,5 @@ examples/perf_gMatMul
 examples/perf_gMatVecMul
 examples/perf_gSpMatVecMulCSRAdaptive
 examples/perf_gSpMatVecMulCSRVector
+examples/perf_gSpMatVecMulELL
+
