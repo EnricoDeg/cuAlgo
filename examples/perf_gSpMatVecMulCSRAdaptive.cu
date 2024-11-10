@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 	// The non zero location and values are set randomly
 	for (unsigned int i = 0 ; i < nrows ; ++i) {
 
-		unsigned int start = rand() % nrows / nnz;
+		int start = rand() % nrows / nnz;
 		columns[i * nnz] = start;
 		values [i * nnz] = rand() % 100;
 		for (unsigned int j = 1 ; j < nnz ; ++j) {

@@ -19,15 +19,6 @@ install (TARGETS
     transpositionMatrix # executables
     RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
-add_executable(generalSparseMatrixVectorMultiplicationCSRVector generalSparseMatrixVectorMultiplicationCSRVector.cu)
-target_link_libraries (generalSparseMatrixVectorMultiplicationCSRVector cuAlgo)
-target_include_directories(generalSparseMatrixVectorMultiplicationCSRVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
-set_property(TARGET generalSparseMatrixVectorMultiplicationCSRVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
-
-install (TARGETS
-    generalSparseMatrixVectorMultiplicationCSRVector # executables
-    RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
-
 add_executable(generalSparseMatrixVectorMultiplicationELL generalSparseMatrixVectorMultiplicationELL.cu)
 target_link_libraries (generalSparseMatrixVectorMultiplicationELL cuAlgo)
 target_include_directories(generalSparseMatrixVectorMultiplicationELL PRIVATE ${PROJECT_SOURCE_DIR}/src)
@@ -78,7 +69,7 @@ install(TARGETS
 
 # fftshift1dVector
 add_executable(perf_fftshift1dVector perf_fftshift1dVector.cu)
-target_link_libraries (perf_fftshift1dVector cuAlgo)
+target_link_libraries(perf_fftshift1dVector cuAlgo)
 target_include_directories(perf_fftshift1dVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
 set_property(TARGET perf_fftshift1dVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
@@ -88,7 +79,7 @@ install(TARGETS
 
 # gMatMul
 add_executable(perf_gMatMul perf_gMatMul.cu)
-target_link_libraries (perf_gMatMul cuAlgo)
+target_link_libraries(perf_gMatMul cuAlgo)
 target_include_directories(perf_gMatMul PRIVATE ${PROJECT_SOURCE_DIR}/src)
 set_property(TARGET perf_gMatMul PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
@@ -98,7 +89,7 @@ install(TARGETS
 
 # gMatVecMul
 add_executable(perf_gMatVecMul perf_gMatVecMul.cu)
-target_link_libraries (perf_gMatVecMul cuAlgo)
+target_link_libraries(perf_gMatVecMul cuAlgo)
 target_include_directories(perf_gMatVecMul PRIVATE ${PROJECT_SOURCE_DIR}/src)
 set_property(TARGET perf_gMatVecMul PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
@@ -108,12 +99,22 @@ install(TARGETS
 
 # gSpMatVecMulCSRAdaptive
 add_executable(perf_gSpMatVecMulCSRAdaptive perf_gSpMatVecMulCSRAdaptive.cu)
-target_link_libraries (perf_gSpMatVecMulCSRAdaptive cuAlgo)
+target_link_libraries(perf_gSpMatVecMulCSRAdaptive cuAlgo)
 target_include_directories(perf_gSpMatVecMulCSRAdaptive PRIVATE ${PROJECT_SOURCE_DIR}/src)
 set_property(TARGET perf_gSpMatVecMulCSRAdaptive PROPERTY CUDA_SEPARABLE_COMPRAdaptive ON)
 
 install(TARGETS
         perf_gSpMatVecMulCSRAdaptive # executables
+        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
+# gSpMatVecMulCSRVector
+add_executable(perf_gSpMatVecMulCSRVector perf_gSpMatVecMulCSRVector.cu)
+target_link_libraries(perf_gSpMatVecMulCSRVector cuAlgo)
+target_include_directories(perf_gSpMatVecMulCSRVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_gSpMatVecMulCSRVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install(TARGETS
+        perf_gSpMatVecMulCSRVector # executables
         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
 add_executable(gradientMatrix gradientMatrix.cu)

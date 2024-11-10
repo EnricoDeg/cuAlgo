@@ -25,3 +25,4 @@ examples/perf_fftshift1dVector
 examples/perf_gMatMul
 examples/perf_gMatVecMul
 examples/perf_gSpMatVecMulCSRAdaptive
+examples/perf_gSpMatVecMulCSRVector
