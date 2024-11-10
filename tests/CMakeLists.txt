@@ -69,6 +69,14 @@ target_include_directories(test_gMatVecMul PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries (test_gMatVecMul cuAlgo)
 target_link_libraries(test_gMatVecMul GTest::gtest_main)
 
+# gSpMatVecMulCSRAdaptive
+add_executable( test_gSpMatVecMulCSRAdaptive
+                test_gSpMatVecMulCSRAdaptive.cu
+              )
+target_include_directories(test_gSpMatVecMulCSRAdaptive PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_gSpMatVecMulCSRAdaptive cuAlgo)
+target_link_libraries(test_gSpMatVecMulCSRAdaptive GTest::gtest_main)
+
 # Add all tests to GoogleTest
 include(GoogleTest)
 gtest_discover_tests(test_transposeMatrix)
@@ -78,3 +86,4 @@ gtest_discover_tests(test_convolutionReduction1dMatrix)
 gtest_discover_tests(test_exclusiveScan1dVector)
 gtest_discover_tests(test_gMatMul)
 gtest_discover_tests(test_gMatVecMul)
+gtest_discover_tests(test_gSpMatVecMulCSRAdaptive)
