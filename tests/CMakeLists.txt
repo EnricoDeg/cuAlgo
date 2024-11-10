@@ -13,14 +13,6 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-# gMatMul
-add_executable( test_gMatMul
-                test_gMatMul.cu
-              )
-target_include_directories(test_gMatMul PRIVATE ${PROJECT_SOURCE_DIR})
-target_link_libraries (test_gMatMul cuAlgo)
-target_link_libraries(test_gMatMul GTest::gtest_main)
-
 # transposeMatrix
 add_executable( test_transposeMatrix
                 test_transposeMatrix.cu
@@ -61,11 +53,28 @@ target_include_directories(test_exclusiveScan1dVector PRIVATE ${PROJECT_SOURCE_D
 target_link_libraries (test_exclusiveScan1dVector cuAlgo)
 target_link_libraries(test_exclusiveScan1dVector GTest::gtest_main)
 
+# gMatMul
+add_executable( test_gMatMul
+                test_gMatMul.cu
+              )
+target_include_directories(test_gMatMul PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_gMatMul cuAlgo)
+target_link_libraries(test_gMatMul GTest::gtest_main)
+
+# gMatVecMul
+add_executable( test_gMatVecMul
+                test_gMatVecMul.cu
+              )
+target_include_directories(test_gMatVecMul PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_gMatVecMul cuAlgo)
+target_link_libraries(test_gMatVecMul GTest::gtest_main)
+
 # Add all tests to GoogleTest
 include(GoogleTest)
-gtest_discover_tests(test_gMatMul)
 gtest_discover_tests(test_transposeMatrix)
 gtest_discover_tests(test_fftshift1dVector)
 gtest_discover_tests(test_convolution1dMatrix)
 gtest_discover_tests(test_convolutionReduction1dMatrix)
 gtest_discover_tests(test_exclusiveScan1dVector)
+gtest_discover_tests(test_gMatMul)
+gtest_discover_tests(test_gMatVecMul)
