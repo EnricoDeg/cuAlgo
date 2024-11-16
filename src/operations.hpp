@@ -82,7 +82,7 @@ class normL2_impl {
 
 	public:
 	__device__ inline T globalMemory(T * __restrict__ a, T * __restrict__ b ) {
-		return abs(*a) * abs(*a) + abs(*b) * abs(*b);
+		return (*a) * (*a) + (*b) * (*b);
 	}
 	__device__ inline void loadSharedMemory(volatile T * result, T * __restrict__ a) {
 		*result += *a;
