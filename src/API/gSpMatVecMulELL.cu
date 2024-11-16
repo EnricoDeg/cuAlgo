@@ -27,8 +27,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "cuAlgo.hpp"
-#include "utils.hpp"
-#include "kernelParameters.hpp"
+#include "internals/utils.hpp"
+#include "internals/kernelParameters.hpp"
 
 template <typename T>
 __global__ void gSpMatVecMulELLKernel( const unsigned int * __restrict__ columns         ,

@@ -31,7 +31,7 @@
 
 #include <cuda.h>
 
-#include "checkError.hpp"
+#include "internals/checkError.hpp"
 
 namespace cuAlgo{
 

@@ -27,8 +27,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "cuAlgo.hpp"
-#include "utils.hpp"
-#include "templateShMem.hpp"
+#include "internals/utils.hpp"
+#include "internals/templateShMem.hpp"
 
 template<typename T>
 __global__ void taper1dMatrixKernel(      T            *__restrict__ A           ,

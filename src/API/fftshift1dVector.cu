@@ -26,10 +26,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <iostream>
 #include "cuAlgo.hpp"
-#include "utils.hpp"
-#include "kernelParameters.hpp"
+#include "internals/utils.hpp"
+#include "internals/kernelParameters.hpp"
 
 template <typename T>
 __global__ void fftshiftVectorKernelEven(T * __restrict__ idata ,

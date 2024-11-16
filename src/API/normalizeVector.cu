@@ -27,9 +27,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "cuAlgo.hpp"
-#include "cuAlgoInternal.hpp"
-#include "utils.hpp"
-#include "kernelParameters.hpp"
+#include "internals/cuAlgoInternal.hpp"
+#include "internals/utils.hpp"
+#include "internals/kernelParameters.hpp"
 
 template<typename T>
 __global__ void normalizeKernel(T            * __restrict__ data,

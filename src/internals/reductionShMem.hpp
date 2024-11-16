@@ -31,7 +31,7 @@
 #define REDUCTIONSHMEM_H
 
 #include <cuda.h>
-#include "operations.hpp"
+#include "internals/operations.hpp"
 
 template <unsigned int blockSize, typename T, template<typename> class op_t>
 __device__ void warpReduceShMem(volatile T* sdata, unsigned int tid, op_t<T> &Op) {

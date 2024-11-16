@@ -26,9 +26,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <iostream>
 #include "cuAlgo.hpp"
-#include "utils.hpp"
+#include "internals/utils.hpp"
 
 template <const uint BLOCKSIZE, typename T>
 __global__ void gMatMulKernel(T                      alpha,

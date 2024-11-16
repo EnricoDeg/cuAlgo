@@ -26,10 +26,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <iostream>
 #include "cuAlgo.hpp"
-#include "utils.hpp"
-#include "kernelParameters.hpp"
+#include "internals/utils.hpp"
+#include "internals/kernelParameters.hpp"
 
 #define BLOCK_ROWS (TILE_DIM / 4)
 

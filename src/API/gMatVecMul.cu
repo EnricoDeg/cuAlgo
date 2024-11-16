@@ -26,11 +26,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <iostream>
 #include "cuAlgo.hpp"
-#include "utils.hpp"
-#include "templateShMem.hpp"
-#include "kernelParameters.hpp"
+#include "internals/utils.hpp"
+#include "internals/templateShMem.hpp"
+#include "internals/kernelParameters.hpp"
 
 #define COLS_PER_WARP 2
 #define COLS_PER_BLOCK ( COLS_PER_WARP * WARPS_PER_BLOCK )

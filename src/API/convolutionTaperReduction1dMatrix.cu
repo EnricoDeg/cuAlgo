@@ -26,11 +26,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <iostream>
 #include "cuAlgo.hpp"
-#include "cuAlgoInternal.hpp"
-#include "utils.hpp"
-#include "kernelParameters.hpp"
+#include "internals/cuAlgoInternal.hpp"
+#include "internals/utils.hpp"
+#include "internals/kernelParameters.hpp"
 
 #define COMPUTE_PER_THREAD 128
 

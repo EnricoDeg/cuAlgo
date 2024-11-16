@@ -28,7 +28,7 @@
  */
 
 #include "cuAlgo.hpp"
-#include "utils.hpp"
+#include "internals/utils.hpp"
 
 template<typename T>
 __global__ void gradMatrixKernel(const T            *__restrict__ A ,

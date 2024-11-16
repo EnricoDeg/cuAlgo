@@ -27,10 +27,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <iostream>
-#include "cuAlgo.hpp"
 #include <chrono>
-#include "utils.hpp"
-#include "kernelParameters.hpp"
+#include "cuAlgo.hpp"
+#include "internals/utils.hpp"
+#include "internals/kernelParameters.hpp"
 
 using namespace std::chrono;
 

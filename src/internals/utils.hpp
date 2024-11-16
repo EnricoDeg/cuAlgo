@@ -32,7 +32,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <cuda.h>
-#include "checkError.hpp"
+#include "internals/checkError.hpp"
 #include <chrono>
 
 using namespace std::chrono;

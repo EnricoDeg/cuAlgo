@@ -27,8 +27,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "cuAlgo.hpp"
-#include "cuAlgoInternal.hpp"
-#include "gReduction1dVector.hpp"
+#include "internals/cuAlgoInternal.hpp"
+#include "internals/gReduction1dVector.hpp"
 
 template<typename T>
 void normLInfVector(T            *g_idata,

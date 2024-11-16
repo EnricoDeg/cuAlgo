@@ -1,5 +1,5 @@
 /*
- * @file normL1Vector.cu
+ * @file normL2Vector.cu
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -27,11 +27,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "cuAlgo.hpp"
-#include "cuAlgoInternal.hpp"
-#include "gReduction1dVector.hpp"
+#include "internals/cuAlgoInternal.hpp"
+#include "internals/gReduction1dVector.hpp"
 
 template<typename T>
-void normL1Vector(T            *g_idata,
+void normL2Vector(T            *g_idata,
                   T            *g_odata,
                   unsigned int  size   ,
                   cudaStream_t  stream ,
@@ -42,7 +42,7 @@ void normL1Vector(T            *g_idata,
 
 	if (blocksPerGrid == 1) {
 
-		gReduction1dVectorFlexible<T, normL1_impl>(g_idata        ,
+		gReduction1dVectorFlexible<T, normL2_impl>(g_idata        ,
 		                                           g_odata        ,
 		                                           size           ,
 		                                           stream         ,
@@ -54,7 +54,7 @@ void normL1Vector(T            *g_idata,
 		T * d_buffer;
 		check_cuda( cudaMalloc(&d_buffer, blocksPerGrid*sizeof(T)) );
 
-		gReduction1dVectorPower2<T, normL1_impl>(g_idata,
+		gReduction1dVectorPower2<T, normL2_impl>(g_idata,
 		                                         d_buffer,
 		                                         size   ,
 		                                         stream ,
@@ -69,38 +69,33 @@ void normL1Vector(T            *g_idata,
 
 namespace cuAlgo {
 
-	void normL1VectorFloat(float        *g_idata,
+	void normL2VectorFloat(float        *g_idata,
 	                       float        *g_odata,
 	                       unsigned int  size   ,
 	                       cudaStream_t  stream ,
 	                       bool          async  )
 	{
 
-		normL1Vector<float>(g_idata, g_odata, size, stream, async);
+		normL2Vector<float>(g_idata, g_odata, size, stream, async);
 	}
 
-	void normL1VectorDouble(double       *g_idata,
+	void normL2VectorDouble(double       *g_idata,
 	                        double       *g_odata,
 	                        unsigned int  size   ,
 	                        cudaStream_t  stream ,
 	                        bool          async  )
 	{
 
-		normL1Vector<double>(g_idata, g_odata, size, stream, async);
+		normL2Vector<double>(g_idata, g_odata, size, stream, async);
 	}
 
-	void normL1VectorInt(int          *g_idata,
+	void normL2VectorInt(int          *g_idata,
 	                     int          *g_odata,
 	                     unsigned int  size   ,
 	                     cudaStream_t  stream ,
 	                     bool          async  )
 	{
 
-		normL1Vector<int>(g_idata, g_odata, size, stream, async);
+		normL2Vector<int>(g_idata, g_odata, size, stream, async);
 	}
 }
-
-template void  normL1Vector( float *, float *, unsigned int , cudaStream_t , bool );
-template void  normL1Vector( double *, double *, unsigned int , cudaStream_t , bool );
-template void  normL1Vector( int *, int *, unsigned int , cudaStream_t , bool );
-

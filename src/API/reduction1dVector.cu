@@ -27,7 +27,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "cuAlgo.hpp"
-#include "gReduction1dVector.hpp"
+#include "internals/gReduction1dVector.hpp"
 
 template<typename T>
 void reduction1dVector(T            *g_idata,

@@ -27,8 +27,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "cuAlgo.hpp"
-#include "cuAlgoInternal.hpp"
-#include "gOperationAndReduction1dVector.hpp"
+#include "internals/cuAlgoInternal.hpp"
+#include "internals/gOperationAndReduction1dVector.hpp"
 
 template<typename T>
 void dotProduct1dVector(T            *g_idata1,

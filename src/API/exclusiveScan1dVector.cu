@@ -28,9 +28,9 @@
  */
 
 #include "cuAlgo.hpp"
-#include "utils.hpp"
-#include "templateShMem.hpp"
-#include "kernelParameters.hpp"
+#include "internals/utils.hpp"
+#include "internals/templateShMem.hpp"
+#include "internals/kernelParameters.hpp"
 
 template <typename T>
 __global__ void exclusiveScan1dKernelBlock(const T            *__restrict__ g_idata,

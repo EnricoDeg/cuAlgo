@@ -26,8 +26,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "utils.hpp"
-#include "kernelParameters.hpp"
+#include "internals/utils.hpp"
+#include "internals/kernelParameters.hpp"
 
 __device__ __host__ int div_ceil(int numerator, int denominator)
 {

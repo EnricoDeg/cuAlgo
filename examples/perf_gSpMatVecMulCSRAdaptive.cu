@@ -32,7 +32,6 @@
 #include <stdio.h>
 #include <ctime> 
 #include <cuAlgo.hpp>
-#include <utils.hpp>
 
 int main(int argc, char *argv[])
 {
