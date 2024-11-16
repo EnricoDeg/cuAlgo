@@ -21,6 +21,16 @@ install(TARGETS
         perf_convolutionReduction1dMatrix # executables
         RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
 
+# dotProduct1dVector
+add_executable(perf_dotProduct1dVector perf_dotProduct1dVector.cu)
+target_link_libraries(perf_dotProduct1dVector cuAlgo)
+target_include_directories(perf_dotProduct1dVector PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET perf_dotProduct1dVector PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+install(TARGETS
+        perf_dotProduct1dVector # executables
+        RUNTIME DESTINATION ${PROJECT_SOURCE_DIR}/examples)
+
 # exclusiveScan1dVector
 add_executable(perf_exclusiveScan1dVector perf_exclusiveScan1dVector.cu)
 target_link_libraries(perf_exclusiveScan1dVector cuAlgo)
