@@ -34,16 +34,7 @@
 #include "operations.hpp"
 #include "templateShMem.hpp"
 #include "utils.hpp"
-
-template <unsigned int blockSize, typename T, template<typename> class op_t>
-__device__ void warpReduceShMem(volatile T* sdata, unsigned int tid, op_t<T> &Op) {
-	if (blockSize >= 64) Op.sharedMemory(&sdata[tid], &sdata[tid + 32]);
-	if (blockSize >= 32) Op.sharedMemory(&sdata[tid], &sdata[tid + 16]);
-	if (blockSize >= 16) Op.sharedMemory(&sdata[tid], &sdata[tid +  8]);
-	if (blockSize >= 8)  Op.sharedMemory(&sdata[tid], &sdata[tid +  4]);
-	if (blockSize >= 4)  Op.sharedMemory(&sdata[tid], &sdata[tid +  2]);
-	if (blockSize >= 2)  Op.sharedMemory(&sdata[tid], &sdata[tid +  1]);
-};
+#include "reductionShMem.hpp"
 
 template <unsigned int blockSize, typename T, template<typename> class op_t>
 __global__ void reduction1dKernel(T *g_idata, T *g_odata, unsigned int n, op_t<T> Op) {
@@ -53,11 +44,12 @@ __global__ void reduction1dKernel(T *g_idata, T *g_odata, unsigned int n, op_t<T
 	SharedMemory<T> smem;
 	T * sdata = smem.getPointer();
 
+	// parameters
 	unsigned int tid = threadIdx.x;
 	unsigned int i = blockIdx.x*(blockSize*2) + threadIdx.x;
 	unsigned int gridSize = blockSize*2*gridDim.x;
 
-	// load to shared memory
+	// load multiple elements to shared memory
 	sdata[tid] = 0;
 	while (i < n) {
 		T a = Op.globalMemory( &g_idata[i] , &g_idata[i+blockSize] );
@@ -67,32 +59,7 @@ __global__ void reduction1dKernel(T *g_idata, T *g_odata, unsigned int n, op_t<T
 	__syncthreads();
 
 	// do reduction in shared mem
-	if (blockSize >= 1024) {
-		if (tid < 512) {
-			Op.sharedMemory(&sdata[tid], &sdata[tid + 512]);
-		}
-		__syncthreads();
-	}
-	if (blockSize >= 512) {
-		if (tid < 256) {
-			Op.sharedMemory(&sdata[tid], &sdata[tid + 256]);
-		}
-		__syncthreads();
-	}
-	if (blockSize >= 256) {
-		if (tid < 128) {
-			Op.sharedMemory(&sdata[tid], &sdata[tid + 128]);
-		}
-		__syncthreads();
-	}
-	if (blockSize >= 128) {
-		if (tid < 64) {
-			Op.sharedMemory(&sdata[tid], &sdata[tid + 64]);
-		}
-		__syncthreads();
-	}
-	
-	if (tid < 32) warpReduceShMem<blockSize, T, op_t>(sdata, tid, Op);
+	blockReduceShMemUnroll<blockSize, T, op_t>(sdata, tid, Op);
 
 	// write result for this block to global mem
 	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
@@ -106,18 +73,16 @@ __global__ void reduction1dKernelFlexible(T *g_idata, T *g_odata, op_t<T> Op) {
 	SharedMemory<T> smem;
 	T * sdata = smem.getPointer();
 
-	// each thread loads one element from global to shared mem
+	// parameters
 	unsigned int tid = threadIdx.x;
 	unsigned int i = blockIdx.x*(blockDim.x*2) + threadIdx.x;
+
+	// load one element to shared mem
 	sdata[tid] = Op.globalMemory( &g_idata[i] , &g_idata[i+blockDim.x]);
 	__syncthreads();
+
 	// do reduction in shared mem
-	for (unsigned int s=blockDim.x/2; s>0; s>>=1) {
-		if (tid < s) {
-			Op.sharedMemory(&sdata[tid], &sdata[tid + s]);
-		}
-		__syncthreads();
-	}
+	blockReduceShMem<T, op_t>(sdata, tid, Op);
 
 	// write result for this block to global mem
 	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
