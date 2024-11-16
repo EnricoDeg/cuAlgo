@@ -106,6 +106,14 @@ target_include_directories(test_normL1Vector PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries(test_normL1Vector cuAlgo)
 target_link_libraries(test_normL1Vector GTest::gtest_main)
 
+# normL2Vector
+add_executable( test_normL2Vector
+                test_normL2Vector.cu
+              )
+target_include_directories(test_normL2Vector PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_normL2Vector cuAlgo)
+target_link_libraries(test_normL2Vector GTest::gtest_main)
+
 # normLInfVector
 add_executable( test_normLInfVector
                 test_normLInfVector.cu
@@ -159,6 +167,7 @@ gtest_discover_tests(test_gSpMatVecMulCSRVector)
 gtest_discover_tests(test_gSpMatVecMulELL)
 gtest_discover_tests(test_grad2dMatrix)
 gtest_discover_tests(test_normL1Vector)
+gtest_discover_tests(test_normL2Vector)
 gtest_discover_tests(test_normLInfVector)
 gtest_discover_tests(test_reduction1dMatrix)
 gtest_discover_tests(test_reduction1dVector)
