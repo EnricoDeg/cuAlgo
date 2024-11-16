@@ -209,6 +209,47 @@ void convolutionTaperReduction1dMatrixInt(int          *R            ,
                                           bool          async = false);
 
 /**
+ * @brief   Compute dot product of two vectors of floats
+ * 
+ * @details Sum product of elements of the input vectors and
+ *          return a pointer to a scalar
+ * 
+ * @param[in]  g_idata1 pointer to input vector
+ * @param[in]  g_idata2 pointer to input vector
+ * @param[out] g_odata pointer to output scalar with result of the L1 norm
+ * @param[in]  size  size of the input vector
+ * 
+ * @ingroup algo
+ */
+void dotProduct1dVectorFloat(float        *g_idata1     ,
+                             float        *g_idata2     ,
+                             float        *g_odata      ,
+                             unsigned int  size         ,
+                             cudaStream_t  stream = 0   ,
+                             bool          async = false);
+
+/**
+ * @brief   Compute dot product of two vectors of double
+ * 
+ * @details See documentation of dotProductVectorFloat().
+ * 
+ * @ingroup algo
+ */
+void dotProduct1dVectorDouble(double       *g_idata1     ,
+                              double       *g_idata2     ,
+                              double       *g_odata      ,
+                              unsigned int  size         ,
+                              cudaStream_t  stream = 0   ,
+                              bool          async = false);
+
+void dotProduct1dVectorInt(int          *g_idata1     ,
+                           int          *g_idata2     ,
+                           int          *g_odata      ,
+                           unsigned int  size         ,
+                           cudaStream_t  stream = 0   ,
+                           bool          async = false);
+
+/**
  * @brief   Perform exclusive scan or prefix sum on a vector using
  *          floats.
  * 
