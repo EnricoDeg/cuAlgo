@@ -8,6 +8,7 @@ set(SOURCE_EXE  utils.cu
                 getRowBlocks.cu
                 checkError.cu
                 reduction1dVector.cu
+                normL1Vector.cu
                 reduction1dMatrix.cu
                 convolution1dMatrix.cu
                 convolutionReduction1dMatrix.cu
@@ -22,10 +23,10 @@ set(SOURCE_EXE  utils.cu
                 grad2dMatrix.cu
                 taper1dMatrix.cu
                 fftshift1dVector.cu
-                normL1Vector.cu
                 normL2Vector.cu
                 normLInfVector.cu
-                dotProduct1dVector.cu)
+                dotProduct1dVector.cu
+                normalizeVector.cu)
 
 add_library(cuAlgo SHARED ${SOURCE_EXE})
 target_include_directories(cuAlgo PRIVATE ${PROJECT_SOURCE_DIR})

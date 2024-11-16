@@ -700,6 +700,39 @@ void gSpMatVecMulELLInt(unsigned int *columns         ,
                         bool          async = false   );
 
 /**
+ * @brief   Normalize a vector of floats
+ * 
+ * @details Each element of the vector is divided by the L1 norm
+ *          of the vector
+ * 
+ * @param[inout]  idata pointer to input vector which will be normalized
+ * @param[in]     size  size of the input vector
+ * 
+ * @ingroup algo
+ */
+void normalizeVectorFloat(float        *g_idata      ,
+                          unsigned int  size         ,
+                          cudaStream_t  stream = 0   ,
+                          bool          async = false);
+
+/**
+ * @brief   Normalize a vector of doubles
+ * 
+ * @details See documentation of normalizeVectorFloat().
+ * 
+ * @ingroup algo
+ */
+void normalizeVectorDouble(double       *g_idata      ,
+                           unsigned int  size         ,
+                           cudaStream_t  stream = 0   ,
+                           bool          async = false);
+
+void normalizeVectorInt(int          *g_idata      ,
+                        unsigned int  size         ,
+                        cudaStream_t  stream = 0   ,
+                        bool          async = false);
+
+/**
  * @brief   Compute L1 norm on a vector of floats
  * 
  * @details Sum absolute value of elements of the input vector and

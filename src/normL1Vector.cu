@@ -99,3 +99,8 @@ namespace cuAlgo {
 		normL1Vector<int>(g_idata, g_odata, size, stream, async);
 	}
 }
+
+template void  normL1Vector( float *, float *, unsigned int , cudaStream_t , bool );
+template void  normL1Vector( double *, double *, unsigned int , cudaStream_t , bool );
+template void  normL1Vector( int *, int *, unsigned int , cudaStream_t , bool );
+

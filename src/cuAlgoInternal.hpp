@@ -47,4 +47,10 @@ void reduction1dVector(T            *g_idata,
                        cudaStream_t  stream ,
                        bool          async  );
 
+template<typename T>
+void normL1Vector(T            *g_idata,
+                  T            *g_odata,
+                  unsigned int  size   ,
+                  cudaStream_t  stream ,
+                  bool          async  );
 #endif
