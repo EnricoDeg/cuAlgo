@@ -107,4 +107,20 @@ class normLInf_impl {
 	}
 };
 
+template <typename T>
+class dotProduct_impl {
+
+	public:
+	__device__ inline T globalMemory(T * __restrict__ a1, T * __restrict__ a2 ,
+	                                 T * __restrict__ b1, T * __restrict__ b2 ) {
+		return (*a1) * (*a2) + (*b1) * (*b2);
+	}
+	__device__ inline void loadSharedMemory(volatile T * result, T * __restrict__ a) {
+		*result += *a;
+	}
+	__device__ inline void sharedMemory(volatile T * result, volatile T * data) {
+		*result += *data;
+	}
+};
+
 #endif
