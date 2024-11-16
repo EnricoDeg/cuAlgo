@@ -2,6 +2,11 @@
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24:
+if (CMAKE_VERSION VERSION_GREATER_EQUAL "3.24.0")
+  cmake_policy(SET CMP0135 NEW)
+endif()
+
 include(FetchContent)
 FetchContent_Declare(
   googletest
@@ -101,6 +106,14 @@ target_include_directories(test_normL1Vector PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries(test_normL1Vector cuAlgo)
 target_link_libraries(test_normL1Vector GTest::gtest_main)
 
+# normLInfVector
+add_executable( test_normLInfVector
+                test_normLInfVector.cu
+              )
+target_include_directories(test_normLInfVector PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_normLInfVector cuAlgo)
+target_link_libraries(test_normLInfVector GTest::gtest_main)
+
 # reduction1dMatrix
 add_executable( test_reduction1dMatrix
                 test_reduction1dMatrix.cu
@@ -145,6 +158,8 @@ gtest_discover_tests(test_gSpMatVecMulCSRAdaptive)
 gtest_discover_tests(test_gSpMatVecMulCSRVector)
 gtest_discover_tests(test_gSpMatVecMulELL)
 gtest_discover_tests(test_grad2dMatrix)
+gtest_discover_tests(test_normL1Vector)
+gtest_discover_tests(test_normLInfVector)
 gtest_discover_tests(test_reduction1dMatrix)
 gtest_discover_tests(test_reduction1dVector)
 gtest_discover_tests(test_taper1dMatrix)
