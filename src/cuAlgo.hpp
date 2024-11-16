@@ -696,6 +696,43 @@ void normL1VectorInt(int          *g_idata      ,
                      bool          async = false);
 
 /**
+ * @brief   Compute LInfinity norm on a vector of floats
+ * 
+ * @details Max of absolute value of elements of the input vector and
+ *          return a pointer to a scalar
+ * 
+ * @param[in]  idata pointer to input vector
+ * @param[out] odata pointer to output scalar with result of the L1 norm
+ * @param[in]  size  size of the input vector
+ * 
+ * @ingroup algo
+ */
+void normLInfVectorFloat(float        *g_idata      ,
+                         float        *g_odata      ,
+                         unsigned int  size         ,
+                         cudaStream_t  stream = 0   ,
+                         bool          async = false);
+
+/**
+ * @brief   Compute LInfinity norm on a vector of doubles
+ * 
+ * @details See documentation of normL1VectorFloat().
+ * 
+ * @ingroup algo
+ */
+void normLInfVectorDouble(double       *g_idata      ,
+                          double       *g_odata      ,
+                          unsigned int  size         ,
+                          cudaStream_t  stream = 0   ,
+                          bool          async = false);
+
+void normLInfVectorInt(int          *g_idata      ,
+                       int          *g_odata      ,
+                       unsigned int  size         ,
+                       cudaStream_t  stream = 0   ,
+                       bool          async = false);
+
+/**
  * @brief   Perform 1D reduction with floats on a 2D array (matrix)
  *          of size {N,K}
  * 
