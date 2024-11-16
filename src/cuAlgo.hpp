@@ -696,13 +696,50 @@ void normL1VectorInt(int          *g_idata      ,
                      bool          async = false);
 
 /**
+ * @brief   Compute squared L2 norm on a vector of floats
+ * 
+ * @details Sum squared value of elements of the input vector and
+ *          return a pointer to a scalar
+ * 
+ * @param[in]  idata pointer to input vector
+ * @param[out] odata pointer to output scalar with result of the squared L2 norm
+ * @param[in]  size  size of the input vector
+ * 
+ * @ingroup algo
+ */
+void normL2VectorFloat(float        *g_idata      ,
+                       float        *g_odata      ,
+                       unsigned int  size         ,
+                       cudaStream_t  stream = 0   ,
+                       bool          async = false);
+
+/**
+ * @brief   Compute L2 norm on a vector of doubles
+ * 
+ * @details See documentation of normL2VectorFloat().
+ * 
+ * @ingroup algo
+ */
+void normL2VectorDouble(double       *g_idata      ,
+                        double       *g_odata      ,
+                        unsigned int  size         ,
+                        cudaStream_t  stream = 0   ,
+                        bool          async = false);
+
+void normL2VectorInt(int          *g_idata      ,
+                     int          *g_odata      ,
+                     unsigned int  size         ,
+                     cudaStream_t  stream = 0   ,
+                     bool          async = false);
+
+/**
  * @brief   Compute LInfinity norm on a vector of floats
  * 
  * @details Max of absolute value of elements of the input vector and
  *          return a pointer to a scalar
  * 
  * @param[in]  idata pointer to input vector
- * @param[out] odata pointer to output scalar with result of the L1 norm
+ * @param[out] odata pointer to output scalar with result of the L infinity norm
  * @param[in]  size  size of the input vector
  * 
  * @ingroup algo
@@ -716,7 +753,7 @@ void normLInfVectorFloat(float        *g_idata      ,
 /**
  * @brief   Compute LInfinity norm on a vector of doubles
  * 
- * @details See documentation of normL1VectorFloat().
+ * @details See documentation of normLInfVectorFloat().
  * 
  * @ingroup algo
  */

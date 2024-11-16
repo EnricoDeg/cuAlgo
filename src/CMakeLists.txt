@@ -23,6 +23,7 @@ set(SOURCE_EXE  utils.cu
                 taper1dMatrix.cu
                 fftshift1dVector.cu
                 normL1Vector.cu
+                normL2Vector.cu
                 normLInfVector.cu)
 
 add_library(cuAlgo SHARED ${SOURCE_EXE})
