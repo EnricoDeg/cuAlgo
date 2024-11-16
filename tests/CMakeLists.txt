@@ -42,6 +42,14 @@ target_include_directories(test_convolutionReduction1dMatrix PRIVATE ${PROJECT_S
 target_link_libraries (test_convolutionReduction1dMatrix cuAlgo)
 target_link_libraries(test_convolutionReduction1dMatrix GTest::gtest_main)
 
+# dotProduct1dVector
+add_executable( test_dotProduct1dVector
+                test_dotProduct1dVector.cu
+              )
+target_include_directories(test_dotProduct1dVector PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_dotProduct1dVector cuAlgo)
+target_link_libraries(test_dotProduct1dVector GTest::gtest_main)
+
 # exclusiveScan1dVector
 add_executable( test_exclusiveScan1dVector
                 test_exclusiveScan1dVector.cu
@@ -158,6 +166,7 @@ target_link_libraries(test_transposeMatrix GTest::gtest_main)
 include(GoogleTest)
 gtest_discover_tests(test_convolution1dMatrix)
 gtest_discover_tests(test_convolutionReduction1dMatrix)
+gtest_discover_tests(test_dotProduct1dVector)
 gtest_discover_tests(test_exclusiveScan1dVector)
 gtest_discover_tests(test_fftshift1dVector)
 gtest_discover_tests(test_gMatMul)
