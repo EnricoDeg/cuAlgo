@@ -18,14 +18,6 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-# fftshift1dVector
-add_executable( test_fftshift1dVector
-                test_fftshift1dVector.cu
-              )
-target_include_directories(test_fftshift1dVector PRIVATE ${PROJECT_SOURCE_DIR})
-target_link_libraries (test_fftshift1dVector cuAlgo)
-target_link_libraries(test_fftshift1dVector GTest::gtest_main)
-
 # convolution1dMatrix
 add_executable( test_convolution1dMatrix
                 test_convolution1dMatrix.cu
@@ -33,6 +25,14 @@ add_executable( test_convolution1dMatrix
 target_include_directories(test_convolution1dMatrix PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries (test_convolution1dMatrix cuAlgo)
 target_link_libraries(test_convolution1dMatrix GTest::gtest_main)
+
+# convolution2dMatrixDD
+add_executable( test_convolution2dMatrixDD
+                test_convolution2dMatrixDD.cu
+              )
+target_include_directories(test_convolution2dMatrixDD PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_convolution2dMatrixDD cuAlgo)
+target_link_libraries(test_convolution2dMatrixDD GTest::gtest_main)
 
 # convolutionReduction1dMatrix
 add_executable( test_convolutionReduction1dMatrix
@@ -57,6 +57,14 @@ add_executable( test_exclusiveScan1dVector
 target_include_directories(test_exclusiveScan1dVector PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries (test_exclusiveScan1dVector cuAlgo)
 target_link_libraries(test_exclusiveScan1dVector GTest::gtest_main)
+
+# fftshift1dVector
+add_executable( test_fftshift1dVector
+                test_fftshift1dVector.cu
+              )
+target_include_directories(test_fftshift1dVector PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_fftshift1dVector cuAlgo)
+target_link_libraries(test_fftshift1dVector GTest::gtest_main)
 
 # gMatMul
 add_executable( test_gMatMul
@@ -173,6 +181,7 @@ target_link_libraries(test_transposeMatrix GTest::gtest_main)
 # Add all tests to GoogleTest
 include(GoogleTest)
 gtest_discover_tests(test_convolution1dMatrix)
+gtest_discover_tests(test_convolution2dMatrixDD)
 gtest_discover_tests(test_convolutionReduction1dMatrix)
 gtest_discover_tests(test_dotProduct1dVector)
 gtest_discover_tests(test_exclusiveScan1dVector)
