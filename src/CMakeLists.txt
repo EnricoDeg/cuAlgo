@@ -26,7 +26,8 @@ set(SOURCE_EXE  internals/utils.cu
                 API/normL2Vector.cu
                 API/normLInfVector.cu
                 API/dotProduct1dVector.cu
-                API/normalizeVector.cu)
+                API/normalizeVector.cu
+                API/convolution2dMatrixDD.cu)
 
 set(HEADER_FILES internals/checkError.hpp
                  internals/cuAlgoInternal.hpp
