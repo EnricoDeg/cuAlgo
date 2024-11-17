@@ -30,7 +30,7 @@
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
-#define COMPUTE_PER_THREAD 128
+#define COMPUTE_PER_THREAD 16
 
 template <typename T>
 __global__ void reduction1dMatrixKernel(const T *__restrict__ B,
@@ -112,6 +112,54 @@ __global__ void reduction1dMatrixKernel2(const T *__restrict__ B,
 		C[tidx+blockIdx.y*N] = sdata[0][threadIdx.x];
 }
 
+template<typename T>
+__global__ void reduction1dMatrixKernel3(const T *__restrict__ B,
+                                               T *__restrict__ C,
+                                         unsigned int          N,
+                                         unsigned int          K,
+                                         unsigned int     chunks) {
+
+	__shared__ T sdata[THREADS_PER_BLOCK_Y][THREADS_PER_BLOCK_X];
+
+	const unsigned int tidx = blockIdx.x * THREADS_PER_BLOCK_X + threadIdx.x;
+	const unsigned int tidy = blockIdx.y * THREADS_PER_BLOCK_Y + threadIdx.y;
+	if (tidx + N * tidy > N * chunks)
+		return;
+
+	const unsigned int tidm = tidx + tidy * N;
+
+	sdata[threadIdx.y][threadIdx.x] = 0;
+#pragma unroll
+	for (unsigned int i = 0; i < K / chunks; ++i) {
+		sdata[threadIdx.y][threadIdx.x] += B[i * N*chunks + tidm];
+	}
+
+	__syncthreads();
+
+	if (threadIdx.y < 16)
+		sdata[threadIdx.y][threadIdx.x] += sdata[threadIdx.y + 16][threadIdx.x];
+	__syncthreads();
+
+	if (threadIdx.y <  8)
+		sdata[threadIdx.y][threadIdx.x] += sdata[threadIdx.y +  8][threadIdx.x];
+	__syncthreads();
+
+	if (threadIdx.y <  4)
+		sdata[threadIdx.y][threadIdx.x] += sdata[threadIdx.y +  4][threadIdx.x];
+	__syncthreads();
+
+	if (threadIdx.y <  2)
+		sdata[threadIdx.y][threadIdx.x] += sdata[threadIdx.y +  2][threadIdx.x];
+	__syncthreads();
+
+	if (threadIdx.y <  1)
+		sdata[threadIdx.y][threadIdx.x] += sdata[threadIdx.y +  1][threadIdx.x];
+	__syncthreads();
+
+	if (threadIdx.y == 0)
+		C[tidx+blockIdx.y*N] = sdata[0][threadIdx.x];
+}
+
 template <typename T>
 void reduction1dMatrix(T            *B     ,
                     T            *C     ,
@@ -132,7 +180,7 @@ void reduction1dMatrix(T            *B     ,
 		print_kernel_config(threadsPerBlock, blocksPerGrid);
 
 		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     reduction1dMatrixKernel2<T>,
+		     reduction1dMatrixKernel3<T>,
 		     B, d_buffer, N, K, chunks);
 
 		reduction1dMatrix<T>(d_buffer, C, N, chunks/32, stream, async);
