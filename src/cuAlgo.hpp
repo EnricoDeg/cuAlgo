@@ -296,6 +296,31 @@ void dotProduct1dVectorInt(int          *g_idata1     ,
                            bool          async = false);
 
 /**
+ * @brief   dshear operator in 1d on matrix of floats
+ * 
+ * @details The operation can be applied on both direction
+ * 
+ * @param[in]  idata pointer to input matrix
+ * @param[out] odata pointer to output matrix
+ * @param[in]  k  long int to define the shift
+ * @param[in]  dim dimension where to apply the dshear operation.
+ *             0 for rows and 1 for columns.
+ * @param[in]  mRows non-contiguous dimension of the input and output matrices
+ * @param[in]  mCols contiguous dimension of the input and output matrices
+ * 
+ * @ingroup algo
+ */
+void dshear1dMatrixFloat(float        *idata ,
+                         float        *odata ,
+                         long int      k     ,
+                         unsigned int  dim   ,
+                         unsigned int  mRows ,
+                         unsigned int  mCols ,
+                         cudaStream_t  stream = 0,
+                         bool          async = false);
+
+
+/**
  * @brief   Perform exclusive scan or prefix sum on a vector using
  *          floats.
  * 
