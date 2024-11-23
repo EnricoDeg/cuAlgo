@@ -50,6 +50,14 @@ target_include_directories(test_dotProduct1dVector PRIVATE ${PROJECT_SOURCE_DIR}
 target_link_libraries(test_dotProduct1dVector cuAlgo)
 target_link_libraries(test_dotProduct1dVector GTest::gtest_main)
 
+# downsample1dMatrix
+add_executable( test_downsample1dMatrix
+                test_downsample1dMatrix.cu
+              )
+target_include_directories(test_downsample1dMatrix PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_downsample1dMatrix cuAlgo)
+target_link_libraries(test_downsample1dMatrix GTest::gtest_main)
+
 # dshear1dMatrix
 add_executable( test_dshear1dMatrix
                 test_dshear1dMatrix.cu
@@ -192,6 +200,7 @@ gtest_discover_tests(test_convolution1dMatrix)
 gtest_discover_tests(test_convolution2dMatrixDD)
 gtest_discover_tests(test_convolutionReduction1dMatrix)
 gtest_discover_tests(test_dotProduct1dVector)
+gtest_discover_tests(test_downsample1dMatrix)
 gtest_discover_tests(test_dshear1dMatrix)
 gtest_discover_tests(test_exclusiveScan1dVector)
 gtest_discover_tests(test_fftshift1dVector)
