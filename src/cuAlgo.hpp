@@ -43,6 +43,8 @@ namespace cuAlgo{
  *          slow dimension is independent.
  *          It can be used to convolve two groups of signals in a single kernel.
  *          The signals are expected to be in the frequency domain.
+ *          The input matrices are expected to have the half complex memory
+ *          layout. This means that this is a convolution on real signals.
  * 
  * @param[in]  R pointer to the first input matrix for the convolution.
  *               The signals are assumed to be in the frequency domain already.
@@ -82,6 +84,62 @@ void convolution1dMatrixDouble(double       *R            ,
                                bool          async = false);
 
 void convolution1dMatrixInt(int          *R            ,
+                            int          *V            ,
+                            int          *C            ,
+                            unsigned int  N            ,
+                            unsigned int  K            ,
+                            cudaStream_t  stream = 0   ,
+                            bool          async = false);
+
+/**
+ * @brief   Perform 1D correlation with floats on the input matrices.
+ * 
+ * @details The correlation is done on the fast dimension of the input
+ *          matrices R and V. This means that each correlation in the 
+ *          slow dimension is independent.
+ *          It can be used to convolve two groups of signals in a single kernel.
+ *          The signals are expected to be in the frequency domain.
+ *          The input matrices are expected to have the half complex memory
+ *          layout. This means that this is a correlation on real signals.
+ * 
+ * @param[in]  R pointer to the first input matrix for the correlation.
+ *               The signals are assumed to be in the frequency domain already.
+ *               The matrix has dimensions {N,K}.
+ * @param[in]  V pointer to the second input matrix for the correlation.
+ *               The signals are assumed to be in the frequency domain already.
+ *               The matrix has dimensions {N,K}.
+ * @param[out] C pointer to the output matrix with results of the correlation.
+ *               The signals are still in the frequency domain.
+ *               The matrix has dimension {N,K}.
+ * @param[in]  N contiguous dimension of the input matrix
+ * @param[in]  K non-contiguous dimension of the input matrix
+ * 
+ * @ingroup algo
+ */
+void correlation1dMatrixFloat(float        *R            ,
+                              float        *V            ,
+                              float        *C            ,
+                              unsigned int  N            ,
+                              unsigned int  K            ,
+                              cudaStream_t  stream = 0   ,
+                              bool          async = false);
+
+/**
+ * @brief   Perform 1D correlation with doubles on the input matrices.
+ * 
+ * @details See documentation of correlation1dMatrixFloat().
+ * 
+ * @ingroup algo
+ */
+void correlation1dMatrixDouble(double       *R            ,
+                               double       *V            ,
+                               double       *C            ,
+                               unsigned int  N            ,
+                               unsigned int  K            ,
+                               cudaStream_t  stream = 0   ,
+                               bool          async = false);
+
+void correlation1dMatrixInt(int          *R            ,
                             int          *V            ,
                             int          *C            ,
                             unsigned int  N            ,
