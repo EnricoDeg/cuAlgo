@@ -3,19 +3,3 @@ include
 lib
 .vscode
 
-examples/perf_convolution1dMatrix
-examples/perf_convolutionReduction1dMatrix
-examples/perf_dotProduct1dVector
-examples/perf_exclusiveScan1dVector
-examples/perf_fftshift1dVector
-examples/perf_gMatMul
-examples/perf_gMatVecMul
-examples/perf_gSpMatVecMulCSRAdaptive
-examples/perf_gSpMatVecMulCSRVector
-examples/perf_gSpMatVecMulELL
-examples/perf_grad2dMatrix
-examples/perf_reduction1dMatrix
-examples/perf_reduction1dVector
-examples/perf_taper1dMatrix
-examples/perf_transposeMatrix
-
