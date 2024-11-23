@@ -29,8 +29,11 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include <chrono>
 #include "src/cuAlgo.hpp"
 #include <gtest/gtest.h>
+
+using namespace std::chrono;
 
 TEST(convolution1dMatrix, default_values) {
 
@@ -96,4 +99,53 @@ TEST(convolution1dMatrix, default_values) {
 	free(V);
 	free(C);
 	free(solution);
+}
+
+TEST(convolution1dMatrix, performance) {
+
+	unsigned int K = 8192;
+	unsigned int N = 4096;
+	unsigned int iterations = 10;
+
+	float * R = (float *)malloc(K * N * sizeof(float));
+	for (unsigned int i = 0 ; i < K ; ++i)
+		for (unsigned int j = 0 ; j < N ; ++j)
+			R [j + i * N] = j * i;
+
+	float * V = (float *)malloc(K * N * sizeof(float));
+	for (unsigned int i = 0 ; i < K ; ++i)
+		for (unsigned int j = 0 ; j < N ; ++j)
+			V [j + i * N] = N * K - j * i;
+
+	float * C = (float *)malloc(N*K * sizeof(float));
+
+	float *d_R;
+	check_cuda( cudaMalloc(&d_R, K * N * sizeof(float)) );
+
+	float *d_V;
+	check_cuda( cudaMalloc(&d_V, K * N * sizeof(float)) );
+
+	float *d_C;
+	check_cuda( cudaMalloc(&d_C, N * K * sizeof(float)) );
+
+	check_cuda( cudaMemcpy ( d_R, R, K * N *sizeof(float), cudaMemcpyHostToDevice ) );
+
+	check_cuda( cudaMemcpy ( d_V, V, K * N *sizeof(float), cudaMemcpyHostToDevice ) );
+
+	// warm-up
+	cuAlgo::convolution1dMatrixFloat(d_R, d_V, d_C, N, K);
+
+	auto start = high_resolution_clock::now();
+	for (unsigned int i = 0; i < iterations; ++i)
+		cuAlgo::convolution1dMatrixFloat(d_R, d_V, d_C, N, K);
+	auto stop = high_resolution_clock::now();
+	auto duration = duration_cast<microseconds>(stop - start);
+	ASSERT_TRUE(duration.count() / iterations < 325);
+
+	check_cuda( cudaFree(d_R) );
+	check_cuda( cudaFree(d_V) );
+	check_cuda( cudaFree(d_C) );
+	free(R);
+	free(V);
+	free(C);
 }
