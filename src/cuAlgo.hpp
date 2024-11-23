@@ -296,6 +296,46 @@ void dotProduct1dVectorInt(int          *g_idata1     ,
                            bool          async = false);
 
 /**
+ * @brief   downsample operator in 1d on matrix of floats
+ * 
+ * @details The operation can be applied on both direction
+ * 
+ * @param[in]  idata pointer to input matrix
+ * @param[out] odata pointer to output matrix
+ * @param[in]  dim dimension where to apply the dshear operation.
+ *             0 for rows and 1 for columns.
+ * @param[in]  stride downsample stride on dimension `dim`
+ * @param[in]  mRows non-contiguous dimension of the input matrix
+ * @param[in]  mCols contiguous dimension of the input matrix
+ * 
+ * @ingroup algo
+ */
+void downsample1dMatrixFloat(float        *idata        ,
+                             float        *odata        ,
+                             unsigned int  dim          ,
+                             unsigned int  stride       ,
+                             unsigned int  mRows        ,
+                             unsigned int  mCols        ,
+                             cudaStream_t  stream = 0   ,
+                             bool          async = false);
+
+/**
+ * @brief   downsample operator in 1d on matrix of doubles
+ * 
+ * @details See documentation of downsample1dMatrixFloat().
+ * 
+ * @ingroup algo
+ */
+void downsample1dMatrixDouble(double       *idata        ,
+                              double       *odata        ,
+                              unsigned int  dim          ,
+                              unsigned int  stride       ,
+                              unsigned int  mRows        ,
+                              unsigned int  mCols        ,
+                              cudaStream_t  stream = 0   ,
+                              bool          async = false);
+
+/**
  * @brief   dshear operator in 1d on matrix of floats
  * 
  * @details The operation can be applied on both direction
@@ -310,15 +350,30 @@ void dotProduct1dVectorInt(int          *g_idata1     ,
  * 
  * @ingroup algo
  */
-void dshear1dMatrixFloat(float        *idata ,
-                         float        *odata ,
-                         long int      k     ,
-                         unsigned int  dim   ,
-                         unsigned int  mRows ,
-                         unsigned int  mCols ,
-                         cudaStream_t  stream = 0,
+void dshear1dMatrixFloat(float        *idata        ,
+                         float        *odata        ,
+                         long int      k            ,
+                         unsigned int  dim          ,
+                         unsigned int  mRows        ,
+                         unsigned int  mCols        ,
+                         cudaStream_t  stream = 0   ,
                          bool          async = false);
 
+/**
+ * @brief   dshear operator in 1d on matrix of doubles
+ * 
+ * @details See documentation of dshear1dMatrixDouble().
+ * 
+ * @ingroup algo
+ */
+void dshear1dMatrixDouble(double       *idata        ,
+                          double       *odata        ,
+                          long int      k            ,
+                          unsigned int  dim          ,
+                          unsigned int  mRows        ,
+                          unsigned int  mCols        ,
+                          cudaStream_t  stream = 0   ,
+                          bool          async = false);
 
 /**
  * @brief   Perform exclusive scan or prefix sum on a vector using

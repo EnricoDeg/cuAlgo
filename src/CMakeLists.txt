@@ -28,7 +28,8 @@ set(SOURCE_EXE  internals/utils.cu
                 API/dotProduct1dVector.cu
                 API/normalizeVector.cu
                 API/convolution2dMatrixDD.cu
-                API/dshear1dMatrix.cu)
+                API/dshear1dMatrix.cu
+                API/downsample1dMatrix.cu)
 
 set(HEADER_FILES internals/checkError.hpp
                  internals/cuAlgoInternal.hpp
