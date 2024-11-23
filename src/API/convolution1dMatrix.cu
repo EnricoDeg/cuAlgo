@@ -29,41 +29,7 @@
 #include "cuAlgo.hpp"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
-
-#define COMPUTE_PER_THREAD  4
-
-template <typename T>
-__global__ void convolution1dMatrixKernel(const T *__restrict__ R,
-                                          const T *__restrict__ V,
-                                                T *__restrict__ C,
-                                          unsigned int          N,
-                                          unsigned int          K,
-                                          unsigned int     chunks) {
-
-	const unsigned int col = blockIdx.x * THREADS_PER_BLOCK_X + threadIdx.x;
-	      unsigned int row = blockIdx.y * THREADS_PER_BLOCK_Y + threadIdx.y;
-
-	if (col < N / 2 && row < chunks) {
-
-		if (col == 0) {
-
-#pragma unroll
-			for (unsigned int i = 0; i < K / chunks; ++i, row+=chunks) {
-				C[col         + N * row] = R[col + N * row]         * V[col + N * row];
-				C[col + N / 2 + N * row] = R[col + N / 2 + N * row] * V[col + N / 2 + N * row];
-			}
-		} else if (col > 0 && col < N / 2) {
-
-#pragma unroll
-			for (unsigned int i = 0; i < K / chunks; ++i, row+=chunks) {
-				C[col         + N * row] = R[col + N * row]         * V[col + N * row] -
-				                           R[N - col + N * row]     * V[N - col + N * row] ;
-				C[col + N / 2 + N * row] = R[N / 2 - col + N * row] * V[col + N / 2 + N * row] +
-				                           R[col + N / 2 + N * row] * V[N / 2 - col + N * row] ;
-			}
-		}
-	}
-}
+#include "internals/gConvolutionCorrelation1dMatrix.hpp"
 
 template<typename T>
 void convolution1dMatrix(T            *R     ,
@@ -74,15 +40,7 @@ void convolution1dMatrix(T            *R     ,
                          cudaStream_t  stream,
                          bool          async ) {
 
-	unsigned int chunks = K / COMPUTE_PER_THREAD;
-
-	dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-	dim3 blocksPerGrid(div_ceil(N / 2, THREADS_PER_BLOCK_X), div_ceil(chunks, THREADS_PER_BLOCK_Y));
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-	TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-	     convolution1dMatrixKernel<T>,
-	     R, V, C, N, K, chunks);
+	gConvolutionCorrelation1dMatrix<T, convolution_impl>(R, V, C, N, K, stream, async);
 }
 
 namespace cuAlgo {

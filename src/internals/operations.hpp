@@ -123,4 +123,38 @@ class dotProduct_impl {
 	}
 };
 
+template<typename T>
+class convolution_impl {
+
+	public:
+	__device__ inline T firstRealImag(const T * __restrict__ a, const T * __restrict__ b) {
+		return (*a) * (*b);
+	}
+	__device__ inline T nReal(const T * __restrict__ a, const T * __restrict__ b,
+	                          const T * __restrict__ c, const T * __restrict__ d) {
+		return (*a) * (*b) - (*c) * (*d);
+	}
+	__device__ inline T nImag(const T * __restrict__ a, const T * __restrict__ b,
+	                          const T * __restrict__ c, const T * __restrict__ d) {
+		return (*a) * (*b) + (*c) * (*d);
+	}
+};
+
+template<typename T>
+class correlation_impl {
+
+	public:
+	__device__ inline T firstRealImag(const T * __restrict__ a, const T * __restrict__ b) {
+		return (*a) * (*b);
+	}
+	__device__ inline T nReal(const T * __restrict__ a, const T * __restrict__ b,
+	                          const T * __restrict__ c, const T * __restrict__ d) {
+		return (*a) * (*b) + (*c) * (*d);
+	}
+	__device__ inline T nImag(const T * __restrict__ a, const T * __restrict__ b,
+	                          const T * __restrict__ c, const T * __restrict__ d) {
+		return (*a) * (*b) - (*c) * (*d);
+	}
+};
+
 #endif
