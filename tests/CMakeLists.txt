@@ -26,6 +26,14 @@ target_include_directories(test_convolution1dMatrix PRIVATE ${PROJECT_SOURCE_DIR
 target_link_libraries (test_convolution1dMatrix cuAlgo)
 target_link_libraries(test_convolution1dMatrix GTest::gtest_main)
 
+# correlation1dMatrix
+add_executable( test_correlation1dMatrix
+                test_correlation1dMatrix.cu
+              )
+target_include_directories(test_correlation1dMatrix PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_correlation1dMatrix cuAlgo)
+target_link_libraries(test_correlation1dMatrix GTest::gtest_main)
+
 # convolution2dMatrixDD
 add_executable( test_convolution2dMatrixDD
                 test_convolution2dMatrixDD.cu
@@ -197,6 +205,7 @@ target_link_libraries(test_transposeMatrix GTest::gtest_main)
 # Add all tests to GoogleTest
 include(GoogleTest)
 gtest_discover_tests(test_convolution1dMatrix)
+gtest_discover_tests(test_correlation1dMatrix)
 gtest_discover_tests(test_convolution2dMatrixDD)
 gtest_discover_tests(test_convolutionReduction1dMatrix)
 gtest_discover_tests(test_dotProduct1dVector)
