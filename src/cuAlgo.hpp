@@ -498,7 +498,7 @@ void fftshift1dVectorFloat(float        *idata        ,
 /**
  * @brief   Perform fftshift on a vector with doubles
  * 
- * @details See documentation of fftshiftVectorFloat()
+ * @details See documentation of fftshift1dVectorFloat()
  * 
  * @ingroup algo
  */
@@ -513,6 +513,37 @@ void fftshift1dVectorInt(int          *idata        ,
                          unsigned int  size         ,
                          cudaStream_t  stream = 0   ,
                          bool          async = false);
+
+/**
+ * @brief   Perform fftshift on a matrix with floats in place
+ * 
+ * @details The fftshift operation is performed on both
+ *          dimensions
+ * 
+ * @param[inout] data  pointer to matrix to be shifted
+ * @param[in]    mRows non-contiguous dimension of the matrix
+ * @param[in]    mCols contiguous dimension of the matrix
+ * 
+ * @ingroup algo
+ */
+void fftshift2dMatrixFloat(float        *data         ,
+                           unsigned int  mRows        ,
+                           unsigned int  mCols        ,
+                           cudaStream_t  stream = 0   ,
+                           bool          async = false);
+
+/**
+ * @brief   Perform fftshift on a matrix with doubles in place
+ * 
+ * @details See documentation of fftshift2dMatrixFloat()
+ * 
+ * @ingroup algo
+ */
+void fftshift2dMatrixDouble(double       *data         ,
+                            unsigned int  mRows        ,
+                            unsigned int  mCols        ,
+                            cudaStream_t  stream = 0   ,
+                            bool          async = false);
 
 /**
  * @brief   Compute and return the row block array given the 
