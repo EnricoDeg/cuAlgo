@@ -1,6 +1,5 @@
 INPUT                  = "@DOXYGEN_INPUT_DIR@/src" \
-                         "@DOXYGEN_INPUT_DIR@/docs/src" \
-                         "@DOXYGEN_INPUT_DIR@/examples"
+                         "@DOXYGEN_INPUT_DIR@/docs/src"
 
 HAVE_DOT = no
 
@@ -8,7 +7,6 @@ EXTRACT_ALL = yes
 
 FILE_PATTERNS = *.hpp \
                 *.dox \
-                */examples/*.cu \
                 */tests/*.cu
 
 OPTIMIZE_OUTPUT_FOR_C = yes

@@ -4,24 +4,35 @@
 Vector:
  - \c reduction1dVector : reduction of a vector in a scalar
  - \c exclusiveScan1dVector: prefix sum
- - \c fftshift1dVector: shift vector for FFT
+ - \c dotProduct1dVector: dot product between two vectors
+ - \c fftshift1dVector: fftshift operator on vector
+ - \c normalizeVector: normalize vector by L1 norm
+ - \c normL1Vector: L1 norm of a vector
+ - \c normL2Vector: L2 norm of a vector
+ - \c normLInfVector: L infinity norm of a vector
 
 Dense Matrix:
- - \c reduction1dMatrix : reduction of a matrix non contiguous dimension into a vector
- - \c transposeMatrix : matrix transposition
- - \c gMatMul : general matrix-matrix multiplication (`C = alpha * A * B + beta * C`)
- - \c gMatVecMul : general matrix-vector multiplication
+ - \c reduction1dMatrix: reduction of a matrix non contiguous dimension into a vector
+ - \c transposeMatrix: matrix transposition
+ - \c gMatMul: general matrix-matrix multiplication (`C = alpha * A * B + beta * C`)
+ - \c gMatVecMul: general matrix-vector multiplication
+ - \c grad2dMatrix: gradient of a matrix
+ - \c fliplr1dMatrix: flip elements in a matrix on one dimension
+ - \c fftshift2dMatrix: fftshift operator on a matrix
+ - \c dshear1dMatrix: dshear operator in a matrix on one dimension
+ - \c downsample1dMatrix: downsample matrix on one dimension given a stride
+ - \c convolution1dMatrix: convolution of multiple real signals in a matrix in frequency domain (half complex data layout)
+ - \c correlation1dMatrix: correlation of multiple real signals in a matrix in frequency domain (half complex data layout)
+ - \c convolutionReduction1dMatrix: convolution of multiple real signals in a matrix in frequency domain (half complex data layout) and 
+ reduction of the results in a vector
+ - \c convolutionTaperReduction1dMatrix: convolution of multiple real signals applying a spatial taper 
+ in a matrix in frequency domain (half complex data layout) and reduction of the results in a vector
+ - \c taper1dMatrix: apply different tapers on multiple 1d signals in a matrix
+ - \c convolution2dMatrixDD: 2d convolution on a matrix in the data domain
 
 Sparse Matrix:
  - \c gSpMatVecMulCSRVector : general sparse matrix-vector multiplication using CSR format and vector algorithm
  - \c gSpMatVecMulCSRAdaptive : general sparse matrix-vector multiplication using CSR format and adaptive algorithm
  - \c gSpMatVecMulELL : general sparse matrix-vector multiplication using ELL format
-
-Signal processing:
- - \c convolution1dMatrix : convolution of multiple signals in a matrix
- - \c convolutionReduction1dMatrix: convolution of multiple signals in a matrix and 
- reduction of the results in a vector
- - \c convolutionTaperReduction1dMatrix: convolution of multiple signals applying a spatial taper 
- in a matrix and reduction of the results in a vector
 
 */

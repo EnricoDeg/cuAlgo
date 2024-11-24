@@ -13,10 +13,4 @@ Enrico Degregori
 @defgroup algo
           API functions
 
-@defgroup examples
-          Standalone examples of applications using cuAlgo library
-
-@defgroup algo_tests
-          Tests of the API functions
-
 */
