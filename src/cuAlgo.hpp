@@ -546,6 +546,40 @@ void fftshift2dMatrixDouble(double       *data         ,
                             bool          async = false);
 
 /**
+ * @brief   Flip rows or columns of a matrix of floats in place
+ * 
+ * @details The `dim` argument defines if rows or columns 
+ *          should be flipped.
+ * 
+ * @param[inout] data  pointer to matrix to be flipped
+ * @param[in]    dim   dimension to flip
+ * @param[in]    mRows non-contiguous dimension of the matrix
+ * @param[in]    mCols contiguous dimension of the matrix
+ * 
+ * @ingroup algo
+ */
+void fliplr1dMatrixFloat(float        *data         ,
+                         unsigned int  dim          ,
+                         unsigned int  mRows        ,
+                         unsigned int  mCols        ,
+                         cudaStream_t  stream = 0   ,
+                         bool          async = false);
+
+/**
+ * @brief   Flip rows or columns of a matrix of doubles in place
+ * 
+ * @details See documentation of fliplr1dMatrixFloat()
+ * 
+ * @ingroup algo
+ */
+void fliplr1dMatrixDouble(double       *data         ,
+                          unsigned int  dim          ,
+                          unsigned int  mRows        ,
+                          unsigned int  mCols        ,
+                          cudaStream_t  stream = 0   ,
+                          bool          async = false);
+
+/**
  * @brief   Compute and return the row block array given the 
  *          row_ptr array of a matrix in CSR format.
  * 
