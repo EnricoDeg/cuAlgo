@@ -90,6 +90,14 @@ target_include_directories(test_fftshift1dVector PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries (test_fftshift1dVector cuAlgo)
 target_link_libraries(test_fftshift1dVector GTest::gtest_main)
 
+# fftshift2dMatrix
+add_executable( test_fftshift2dMatrix
+                test_fftshift2dMatrix.cu
+              )
+target_include_directories(test_fftshift2dMatrix PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_fftshift2dMatrix cuAlgo)
+target_link_libraries(test_fftshift2dMatrix GTest::gtest_main)
+
 # gMatMul
 add_executable( test_gMatMul
                 test_gMatMul.cu
@@ -213,6 +221,7 @@ gtest_discover_tests(test_downsample1dMatrix)
 gtest_discover_tests(test_dshear1dMatrix)
 gtest_discover_tests(test_exclusiveScan1dVector)
 gtest_discover_tests(test_fftshift1dVector)
+gtest_discover_tests(test_fftshift2dMatrix)
 gtest_discover_tests(test_gMatMul)
 gtest_discover_tests(test_gMatVecMul)
 gtest_discover_tests(test_gSpMatVecMulCSRAdaptive)
