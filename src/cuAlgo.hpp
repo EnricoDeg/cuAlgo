@@ -30,6 +30,7 @@
 #define CUALGO_H
 
 #include <cuda.h>
+#include <cuda/std/complex>
 
 #include "internals/checkError.hpp"
 
@@ -1116,6 +1117,8 @@ void padarray2dMatrixFloat(float        *idata        ,
 /**
  * @brief   Pad matrix of doubles
  * 
+ * @details See documentation of padarray2dMatrixFloat
+ * 
  * @ingroup algo
  */
 void padarray2dMatrixDouble(double       *idata        ,
@@ -1126,6 +1129,38 @@ void padarray2dMatrixDouble(double       *idata        ,
                             unsigned int  mCols        ,
                             cudaStream_t  stream = 0   ,
                             bool          async = false);
+
+/**
+ * @brief   Pad matrix of complex floats
+ * 
+ * @details See documentation of padarray2dMatrixFloat
+ * 
+ * @ingroup algo
+ */
+void padarray2dMatrixComplexFloat(cuda::std::complex<float> *idata        ,
+                                  cuda::std::complex<float> *odata        ,
+                                  unsigned int               nRows        ,
+                                  unsigned int               nCols        ,
+                                  unsigned int               mRows        ,
+                                  unsigned int               mCols        ,
+                                  cudaStream_t               stream = 0   ,
+                                  bool                       async = false);
+
+/**
+ * @brief   Pad matrix of complex doubles
+ * 
+ * @details See documentation of padarray2dMatrixFloat
+ * 
+ * @ingroup algo
+ */
+void padarray2dMatrixComplexDouble(cuda::std::complex<double> *idata        ,
+                                   cuda::std::complex<double> *odata        ,
+                                   unsigned int                nRows        ,
+                                   unsigned int                nCols        ,
+                                   unsigned int                mRows        ,
+                                   unsigned int                mCols        ,
+                                   cudaStream_t                stream = 0   ,
+                                   bool                        async = false);
 
 /**
  * @brief   Perform 1D reduction with floats on a 2D array (matrix)
