@@ -1093,6 +1093,41 @@ void normLInfVectorInt(int          *g_idata      ,
                        bool          async = false);
 
 /**
+ * @brief   Pad matrix of floats
+ * 
+ * @param[in]  idata pointer to input matrix
+ * @param[out] odata pointer to output matrix
+ * @param[in]  nRows non-contiguous dimension of odata
+ * @param[in]  nCols contiguous dimension of odata
+ * @param[in]  mRows non-contiguous dimension of idata
+ * @param[in]  mCols contiguous dimension of idata
+ * 
+ * @ingroup algo
+ */
+void padarray2dMatrixFloat(float        *idata        ,
+                           float        *odata        ,
+                           unsigned int  nRows        ,
+                           unsigned int  nCols        ,
+                           unsigned int  mRows        ,
+                           unsigned int  mCols        ,
+                           cudaStream_t  stream = 0   ,
+                           bool          async = false);
+
+/**
+ * @brief   Pad matrix of doubles
+ * 
+ * @ingroup algo
+ */
+void padarray2dMatrixDouble(double       *idata        ,
+                            double       *odata        ,
+                            unsigned int  nRows        ,
+                            unsigned int  nCols        ,
+                            unsigned int  mRows        ,
+                            unsigned int  mCols        ,
+                            cudaStream_t  stream = 0   ,
+                            bool          async = false);
+
+/**
  * @brief   Perform 1D reduction with floats on a 2D array (matrix)
  *          of size {N,K}
  * 

@@ -32,7 +32,8 @@ set(SOURCE_EXE  internals/utils.cu
                 API/dshear1dMatrix.cu
                 API/downsample1dMatrix.cu
                 API/fftshift2dMatrix.cu
-                API/fliplr1dMatrix.cu)
+                API/fliplr1dMatrix.cu
+                API/padarray2dMatrix.cu)
 
 set(HEADER_FILES internals/checkError.hpp
                  internals/cuAlgoInternal.hpp
