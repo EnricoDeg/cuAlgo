@@ -186,6 +186,14 @@ target_include_directories(test_normLInfVector PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries(test_normLInfVector cuAlgo)
 target_link_libraries(test_normLInfVector GTest::gtest_main)
 
+# padarray2dMatrix
+add_executable( test_padarray2dMatrix
+                test_padarray2dMatrix.cu
+              )
+target_include_directories(test_padarray2dMatrix PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_padarray2dMatrix cuAlgo)
+target_link_libraries(test_padarray2dMatrix GTest::gtest_main)
+
 # reduction1dMatrix
 add_executable( test_reduction1dMatrix
                 test_reduction1dMatrix.cu
@@ -241,6 +249,7 @@ gtest_discover_tests(test_normalizeVector)
 gtest_discover_tests(test_normL1Vector)
 gtest_discover_tests(test_normL2Vector)
 gtest_discover_tests(test_normLInfVector)
+gtest_discover_tests(test_padarray2dMatrix)
 gtest_discover_tests(test_reduction1dMatrix)
 gtest_discover_tests(test_reduction1dVector)
 gtest_discover_tests(test_taper1dMatrix)
