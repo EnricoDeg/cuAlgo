@@ -950,6 +950,37 @@ void gSpMatVecMulELLInt(unsigned int *columns         ,
                         bool          async = false   );
 
 /**
+ * @brief   Perform ifftshift on a matrix with floats in place
+ * 
+ * @details The ifftshift operation is performed on both
+ *          dimensions
+ * 
+ * @param[inout] data  pointer to matrix to be shifted
+ * @param[in]    mRows non-contiguous dimension of the matrix
+ * @param[in]    mCols contiguous dimension of the matrix
+ * 
+ * @ingroup algo
+ */
+void ifftshift2dMatrixFloat(float        *data         ,
+                            unsigned int  mRows        ,
+                            unsigned int  mCols        ,
+                            cudaStream_t  stream = 0   ,
+                            bool          async = false);
+
+/**
+ * @brief   Perform ifftshift on a matrix with doubles in place
+ * 
+ * @details See documentation of ifftshift2dMatrixFloat().
+ * 
+ * @ingroup algo
+ */
+void ifftshift2dMatrixDouble(double       *data         ,
+                             unsigned int  mRows        ,
+                             unsigned int  mCols        ,
+                             cudaStream_t  stream = 0   ,
+                             bool          async = false);
+
+/**
  * @brief   Normalize a vector of floats
  * 
  * @details Each element of the vector is divided by the L1 norm
