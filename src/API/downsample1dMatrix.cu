@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -64,44 +64,44 @@ __global__ void downsample1dMatrixDim1(const T            *__restrict__ idata   
 	}
 }
 
-template<typename T>
-void downsample1dMatrix(T            *idata ,
-                        T            *odata ,
-                        unsigned int  dim   ,
-                        unsigned int  stride,
-                        unsigned int  mRows ,
-                        unsigned int  mCols ,
-                        cudaStream_t  stream,
-                        bool          async ) {
-
-	if (dim == 0) {
-
-		unsigned int mRowsDown = 0;
-		for (unsigned int i = 0; i < mRows; i+=stride, ++mRowsDown);
-
-		dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-		dim3 blocksPerGrid(div_ceil(mCols, THREADS_PER_BLOCK_X), div_ceil(mRowsDown, THREADS_PER_BLOCK_Y));
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     downsample1dMatrixDim0<T>,
-		     idata, odata, stride, mRows, mCols, mRowsDown);
-	} else if (dim == 1) {
-
-		unsigned int mColsDown = 0;
-		for (unsigned int i = 0; i < mCols; i+=stride, ++mColsDown);
-
-		dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-		dim3 blocksPerGrid(div_ceil(mColsDown, THREADS_PER_BLOCK_X), div_ceil(mRows, THREADS_PER_BLOCK_Y));
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     downsample1dMatrixDim1<T>,
-		     idata, odata, stride, mRows, mCols, mColsDown);
-	}
-}
-
 namespace cuAlgo {
+
+	template<typename T>
+	void downsample1dMatrix(T            *idata ,
+	                        T            *odata ,
+	                        unsigned int  dim   ,
+	                        unsigned int  stride,
+	                        unsigned int  mRows ,
+	                        unsigned int  mCols ,
+	                        cudaStream_t  stream,
+	                        bool          async ) {
+
+		if (dim == 0) {
+
+			unsigned int mRowsDown = 0;
+			for (unsigned int i = 0; i < mRows; i+=stride, ++mRowsDown);
+
+			dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+			dim3 blocksPerGrid(div_ceil(mCols, THREADS_PER_BLOCK_X), div_ceil(mRowsDown, THREADS_PER_BLOCK_Y));
+			print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+			TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+			     downsample1dMatrixDim0<T>,
+			     idata, odata, stride, mRows, mCols, mRowsDown);
+		} else if (dim == 1) {
+
+			unsigned int mColsDown = 0;
+			for (unsigned int i = 0; i < mCols; i+=stride, ++mColsDown);
+
+			dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+			dim3 blocksPerGrid(div_ceil(mColsDown, THREADS_PER_BLOCK_X), div_ceil(mRows, THREADS_PER_BLOCK_Y));
+			print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+			TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+			     downsample1dMatrixDim1<T>,
+			     idata, odata, stride, mRows, mCols, mColsDown);
+		}
+	}
 
 	void downsample1dMatrixFloat(float        *idata ,
 	                             float        *odata ,
@@ -128,4 +128,21 @@ namespace cuAlgo {
 
 		downsample1dMatrix<double>(idata, odata, dim, stride, mRows, mCols, stream, async);
 	}
+
+	template void downsample1dMatrix(float  *, float  *,
+	                                 unsigned int, unsigned int,
+	                                 unsigned int, unsigned int,
+	                                 cudaStream_t, bool);
+	template void downsample1dMatrix(double *, double *,
+	                                 unsigned int, unsigned int,
+	                                 unsigned int, unsigned int,
+	                                 cudaStream_t, bool);
+	template void downsample1dMatrix(cuda::std::complex<float > *, cuda::std::complex<float > *,
+	                                 unsigned int, unsigned int,
+	                                 unsigned int, unsigned int,
+	                                 cudaStream_t, bool);
+	template void downsample1dMatrix(cuda::std::complex<double> *, cuda::std::complex<double> *,
+	                                 unsigned int, unsigned int,
+	                                 unsigned int, unsigned int,
+	                                 cudaStream_t, bool);
 }

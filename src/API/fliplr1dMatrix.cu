@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -68,40 +68,40 @@ __global__ void fliplrMatrixKernelDim1(T * __restrict__  data ,
 	}
 }
 
-template<typename T>
-void fliplr1dMatrix(T            *data  ,
-                    unsigned int  dim   ,
-                    unsigned int  mRows ,
-                    unsigned int  mCols ,
-                    cudaStream_t  stream,
-                    bool          async ) {
-
-	if (dim == 0) {
-
-		unsigned int mRowsLim = mRows % 2 == 0 ? mRows / 2 : (mRows - 1) / 2;
-
-		dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-		dim3 blocksPerGrid(div_ceil(mCols, THREADS_PER_BLOCK_X), div_ceil(mRowsLim, THREADS_PER_BLOCK_Y));
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     fliplrMatrixKernelDim0<T>,
-		     data, mRows, mCols);
-	} else if (dim == 1) {
-
-		unsigned int mColsLim = mCols % 2 == 0 ? mCols / 2 : (mCols - 1) / 2;
-
-		dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-		dim3 blocksPerGrid(div_ceil(mColsLim, THREADS_PER_BLOCK_X), div_ceil(mRows, THREADS_PER_BLOCK_Y));
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     fliplrMatrixKernelDim1<T>,
-		     data, mRows, mCols);
-	}
-}
-
 namespace cuAlgo {
+
+	template<typename T>
+	void fliplr1dMatrix(T            *data  ,
+	                    unsigned int  dim   ,
+	                    unsigned int  mRows ,
+	                    unsigned int  mCols ,
+	                    cudaStream_t  stream,
+	                    bool          async ) {
+
+		if (dim == 0) {
+
+			unsigned int mRowsLim = mRows % 2 == 0 ? mRows / 2 : (mRows - 1) / 2;
+
+			dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+			dim3 blocksPerGrid(div_ceil(mCols, THREADS_PER_BLOCK_X), div_ceil(mRowsLim, THREADS_PER_BLOCK_Y));
+			print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+			TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+			     fliplrMatrixKernelDim0<T>,
+			     data, mRows, mCols);
+		} else if (dim == 1) {
+
+			unsigned int mColsLim = mCols % 2 == 0 ? mCols / 2 : (mCols - 1) / 2;
+
+			dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+			dim3 blocksPerGrid(div_ceil(mColsLim, THREADS_PER_BLOCK_X), div_ceil(mRows, THREADS_PER_BLOCK_Y));
+			print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+			TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+			     fliplrMatrixKernelDim1<T>,
+			     data, mRows, mCols);
+		}
+	}
 
 	void fliplr1dMatrixFloat(float        *data  ,
 	                         unsigned int  dim   ,
@@ -124,4 +124,17 @@ namespace cuAlgo {
 
 		fliplr1dMatrix<double>(data, dim, mRows, mCols, stream, async);
 	}
+
+	template void fliplr1dMatrix(float  *,
+	                             unsigned int, unsigned int, unsigned int,
+	                             cudaStream_t, bool);
+	template void fliplr1dMatrix(double *,
+	                             unsigned int, unsigned int, unsigned int,
+	                             cudaStream_t, bool);
+	template void fliplr1dMatrix(cuda::std::complex<float > *,
+	                             unsigned int, unsigned int, unsigned int,
+	                             cudaStream_t, bool);
+	template void fliplr1dMatrix(cuda::std::complex<double> *,
+	                             unsigned int, unsigned int, unsigned int,
+	                             cudaStream_t, bool);
 }

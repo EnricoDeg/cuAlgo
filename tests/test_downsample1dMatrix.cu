@@ -29,7 +29,7 @@
 
 #include <iostream>
 #include <cstring>
-#include "src/cuAlgo.hpp"
+#include "src/cuAlgo.h"
 #include <gtest/gtest.h>
 
 void downsample1dMatrix_CPU( float * idata, float * odata,

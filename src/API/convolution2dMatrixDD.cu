@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/templateShMem.hpp"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
@@ -82,42 +82,32 @@ __global__ void convolution2dMatrixDDKernel(      T *__restrict__ odata ,
 	}
 }
 
-template<typename T>
-void convolution2dMatrixDD(T            * odata ,
-                           T            * idata ,
-                           T            * filter,
-                           unsigned int   mRows ,
-                           unsigned int   mCols ,
-                           unsigned int   fRows ,
-                           unsigned int   fCols ,
-                           cudaStream_t   stream,
-                           bool           async ) {
-
-	unsigned int totalRows = mRows + fRows - 1;
-	unsigned int totalCols = mCols + fCols - 1;
-	dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-	dim3 blocksPerGrid(div_ceil(totalCols, THREADS_PER_BLOCK_X), div_ceil(totalRows, THREADS_PER_BLOCK_Y));
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-	unsigned int shmem = fRows*fCols*sizeof(T);
-
-	// // Pad idata and filter
-	// T * idataPad;
-	// check_cuda( cudaMalloc(&idataPad , totalRows*totalCols*sizeof(T)) );
-
-	// T * filterPad;
-	// check_cuda( cudaMalloc(&filterPad, totalRows*totalCols*sizeof(T)));
-
-	// compute convolution using padded data
-	TIME(blocksPerGrid, threadsPerBlock, shmem, stream, async,
-	     convolution2dMatrixDDKernel<T>,
-	     odata, idata, filter, mRows, mCols, fRows, fCols);
-
-	// check_cuda( cudaFree ( idataPad  ) );
-	// check_cuda( cudaFree ( filterPad ) );
-}
-
 namespace cuAlgo {
+
+	template<typename T>
+	void convolution2dMatrixDD(T            * odata ,
+	                           T            * idata ,
+	                           T            * filter,
+	                           unsigned int   mRows ,
+	                           unsigned int   mCols ,
+	                           unsigned int   fRows ,
+	                           unsigned int   fCols ,
+	                           cudaStream_t   stream,
+	                           bool           async ) {
+
+		unsigned int totalRows = mRows + fRows - 1;
+		unsigned int totalCols = mCols + fCols - 1;
+		dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+		dim3 blocksPerGrid(div_ceil(totalCols, THREADS_PER_BLOCK_X), div_ceil(totalRows, THREADS_PER_BLOCK_Y));
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+		unsigned int shmem = fRows*fCols*sizeof(T);
+
+		// compute convolution using padded data
+		TIME(blocksPerGrid, threadsPerBlock, shmem, stream, async,
+		     convolution2dMatrixDDKernel<T>,
+		     odata, idata, filter, mRows, mCols, fRows, fCols);
+	}
 
 	void convolution2dMatrixDDFloat(float        * odata ,
 	                                float        * idata ,
@@ -146,4 +136,13 @@ namespace cuAlgo {
 
 		convolution2dMatrixDD<double>(odata, idata, filter, mRows, mCols, fRows, fCols, stream, async);
 	}
+
+	template void convolution2dMatrixDD(float  *, float  *, float  *,
+	                                    unsigned int, unsigned int,
+	                                    unsigned int, unsigned int,
+	                                    cudaStream_t, bool);
+	template void convolution2dMatrixDD(double *, double *, double *,
+	                                    unsigned int, unsigned int,
+	                                    unsigned int, unsigned int,
+	                                    cudaStream_t, bool);
 }

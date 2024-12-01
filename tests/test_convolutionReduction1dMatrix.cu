@@ -29,7 +29,7 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.hpp"
+#include "src/cuAlgo.h"
 #include <gtest/gtest.h>
 
 TEST(convolutionReduction1dMatrix, default_values) {

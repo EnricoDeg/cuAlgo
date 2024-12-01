@@ -6,6 +6,7 @@ HAVE_DOT = no
 EXTRACT_ALL = yes
 
 FILE_PATTERNS = *.hpp \
+                *.h \
                 *.dox \
                 */tests/*.cu
 

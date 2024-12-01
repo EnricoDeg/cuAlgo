@@ -38,7 +38,6 @@ set(SOURCE_EXE  internals/utils.cu
                 API/ifftshift2dMatrix.cu)
 
 set(HEADER_FILES internals/checkError.hpp
-                 internals/cuAlgoInternal.hpp
                  internals/gOperationAndReduction1dVector.hpp
                  internals/gReduction1dVector.hpp
                  internals/kernelParameters.hpp
@@ -58,5 +57,5 @@ install (
   LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/lib
   ARCHIVE DESTINATION ${PROJECT_SOURCE_DIR}/lib)
 
-set(HEADERS_CU cuAlgo.hpp)
+set(HEADERS_CU cuAlgo.hpp cuAlgo.h)
 install(FILES ${HEADERS_CU} DESTINATION ${PROJECT_SOURCE_DIR}/include)

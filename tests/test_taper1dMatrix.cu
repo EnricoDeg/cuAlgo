@@ -29,7 +29,7 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.hpp"
+#include "src/cuAlgo.h"
 #include <gtest/gtest.h>
 
 TEST(taper1dMatrix, default_value) {

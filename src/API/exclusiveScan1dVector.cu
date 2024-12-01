@@ -27,7 +27,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/templateShMem.hpp"
 #include "internals/kernelParameters.hpp"
@@ -168,66 +168,67 @@ __global__ void add(T *output, unsigned int length, T *n) {
 	output[blockOffset + threadID] += n[blockID];
 }
 
-template<typename T>
-void exclusiveScan1dVector(T            *g_idata,
-                           T            *g_odata,
-                           unsigned int  size   ,
-                           cudaStream_t  stream ,
-                           bool          async  ) {
+namespace cuAlgo {
 
-	unsigned int blocks = size / THREADS_PER_BLOCK;
-	T *d_sums, *d_incr;
-	check_cuda( cudaMalloc(&d_sums, blocks * sizeof(T)) );
-	check_cuda( cudaMalloc(&d_incr, blocks * sizeof(T)) );
+	template<typename T>
+	void exclusiveScan1dVector(T            *g_idata,
+	                           T            *g_odata,
+	                           unsigned int  size   ,
+	                           cudaStream_t  stream ,
+	                           bool          async  ) {
 
-	// Multi blocks
-	{
-		dim3 threadsPerBlock(THREADS_PER_BLOCK / 2);
-		dim3 blocksPerGrid(div_ceil(size, THREADS_PER_BLOCK));
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
+		unsigned int blocks = size / THREADS_PER_BLOCK;
+		T *d_sums, *d_incr;
+		check_cuda( cudaMalloc(&d_sums, blocks * sizeof(T)) );
+		check_cuda( cudaMalloc(&d_incr, blocks * sizeof(T)) );
 
-		unsigned int shmem = THREADS_PER_BLOCK*sizeof(T);
+		// Multi blocks
+		{
 
-		TIME(blocksPerGrid, threadsPerBlock, shmem, stream, async,
-		     exclusiveScan1dKernelMultiBlock<T>,
-		     g_idata, g_odata, d_sums, THREADS_PER_BLOCK);
+			dim3 threadsPerBlock(THREADS_PER_BLOCK / 2);
+			dim3 blocksPerGrid(div_ceil(size, THREADS_PER_BLOCK));
+			print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+			unsigned int shmem = THREADS_PER_BLOCK*sizeof(T);
+
+			TIME(blocksPerGrid, threadsPerBlock, shmem, stream, async,
+			     exclusiveScan1dKernelMultiBlock<T>,
+			     g_idata, g_odata, d_sums, THREADS_PER_BLOCK);
+		}
+
+		// Multi block (recursion) or single block
+		const unsigned int sumsArrThreadsNeeded = (blocks + 1) / 2;
+		if (sumsArrThreadsNeeded > THREADS_PER_BLOCK / 2) {
+
+			exclusiveScan1dVector<T>(d_sums, d_incr, blocks, stream, async);
+		} else {
+
+			dim3 threadsPerBlock((blocks + 1) / 2);
+			dim3 blocksPerGrid(1);
+			print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+			unsigned int shmem = (blocks + 1) / 2 * sizeof(T);
+
+			TIME( blocksPerGrid, threadsPerBlock, shmem, stream, async,
+			      exclusiveScan1dKernelBlock<T>,
+			      d_sums, d_incr, blocks );
+		}
+
+		// Final step
+		{
+
+			dim3 threadsPerBlock(THREADS_PER_BLOCK);
+			dim3 blocksPerGrid(blocks);
+			print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+			TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
+			      add<T>,
+			      g_odata, THREADS_PER_BLOCK, d_incr );
+		}
+
+		check_cuda( cudaFree ( d_sums ) );
+		check_cuda( cudaFree ( d_incr ) );
 	}
-
-	// Multi block (recursion) or single block
-	const unsigned int sumsArrThreadsNeeded = (blocks + 1) / 2;
-	if (sumsArrThreadsNeeded > THREADS_PER_BLOCK / 2) {
-
-		exclusiveScan1dVector<T>(d_sums, d_incr, blocks, stream, async);
-	} else {
-
-		dim3 threadsPerBlock((blocks + 1) / 2);
-		dim3 blocksPerGrid(1);
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-		unsigned int shmem = (blocks + 1) / 2 * sizeof(T);
-
-		TIME( blocksPerGrid, threadsPerBlock, shmem, stream, async,
-		      exclusiveScan1dKernelBlock<T>,
-		      d_sums, d_incr, blocks );
-	}
-
-	// Final step
-	{
-
-		dim3 threadsPerBlock(THREADS_PER_BLOCK);
-		dim3 blocksPerGrid(blocks);
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-		TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
-		      add<T>,
-		      g_odata, THREADS_PER_BLOCK, d_incr );
-	}
-
-	check_cuda( cudaFree ( d_sums ) );
-	check_cuda( cudaFree ( d_incr ) );
-}
-
-namespace cuAlgo{
 
 	void exclusiveScan1dVectorInt(int          *g_idata,
 	                              int          *g_odata,
@@ -259,4 +260,10 @@ namespace cuAlgo{
 		exclusiveScan1dVector<double>(g_idata, g_odata, size, stream , async);
 	}
 
+	template void exclusiveScan1dVector(float  *, float  *,
+	                                    unsigned int,
+	                                    cudaStream_t, bool);
+	template void exclusiveScan1dVector(double *, double *,
+	                                    unsigned int,
+	                                    cudaStream_t, bool);
 }

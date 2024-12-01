@@ -19,8 +19,11 @@ Dense Matrix:
  - \c grad2dMatrix: gradient of a matrix
  - \c fliplr1dMatrix: flip elements in a matrix on one dimension
  - \c fftshift2dMatrix: fftshift operator on a matrix
+ - \c ifftshift2dMatrix: ifftshift operator on a matrix
  - \c dshear1dMatrix: dshear operator in a matrix on one dimension
  - \c downsample1dMatrix: downsample matrix on one dimension given a stride
+ - \c padarray2dMatrix: pad matrix on both dimensions
+ - \c upsample1dMatrix: upsample matrix on one dimension given the ratio of zeros
  - \c convolution1dMatrix: convolution of multiple real signals in a matrix in frequency domain (half complex data layout)
  - \c correlation1dMatrix: correlation of multiple real signals in a matrix in frequency domain (half complex data layout)
  - \c convolutionReduction1dMatrix: convolution of multiple real signals in a matrix in frequency domain (half complex data layout) and 

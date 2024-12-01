@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 
 template <const uint BLOCKSIZE, typename T>
@@ -52,29 +52,29 @@ __global__ void gMatMulKernel(T                      alpha,
 	}
 }
 
-template <typename T>
-void gMatMul(T             alpha ,
-             const T      *A     ,
-             const T      *B     ,
-             T             beta  ,
-             T            *C     ,
-             unsigned int  M     ,
-             unsigned int  N     ,
-             unsigned int  K     ,
-             cudaStream_t  stream,
-             bool          async ) {
-
-	// create as many blocks as necessary to map all of C
-	dim3 blocksPerGrid(div_ceil(M, 32), div_ceil(N, 32));
-	dim3 threadsPerBlock(32 * 32);
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-	TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
-	      gMatMulKernel<32 COMMA T>,
-	      alpha, A, B, beta, C, M, N, K);
-}
-
 namespace cuAlgo {
+
+	template <typename T>
+	void gMatMul(T             alpha ,
+	             const T      *A     ,
+	             const T      *B     ,
+	             T             beta  ,
+	             T            *C     ,
+	             unsigned int  M     ,
+	             unsigned int  N     ,
+	             unsigned int  K     ,
+	             cudaStream_t  stream,
+	             bool          async ) {
+
+		// create as many blocks as necessary to map all of C
+		dim3 blocksPerGrid(div_ceil(M, 32), div_ceil(N, 32));
+		dim3 threadsPerBlock(32 * 32);
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+		TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
+		      gMatMulKernel<32 COMMA T>,
+		      alpha, A, B, beta, C, M, N, K);
+	}
 
 	void gMatMulInt(int           alpha ,
 	                const int    *A     ,
@@ -120,4 +120,13 @@ namespace cuAlgo {
 
 		gMatMul<double>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
 	}
+
+	template void gMatMul(float , const float  *, const float  *,
+	                      float , float  *,
+	                      unsigned int, unsigned int, unsigned int,
+	                      cudaStream_t, bool);
+	template void gMatMul(double, const double *, const double *,
+	                      double, double *,
+	                      unsigned int, unsigned int, unsigned int,
+	                      cudaStream_t, bool);
 }

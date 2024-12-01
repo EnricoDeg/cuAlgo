@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -57,26 +57,26 @@ __global__ void gSpMatVecMulCSRVectorKernel(const unsigned int * __restrict__ co
 		y[row] = sum;
 }
 
-template<typename T>
-void gSpMatVecMulCSRVector(unsigned int *columns,
-                           unsigned int *row_ptr,
-                           T            *values ,
-                           T            *x      ,
-                           T            *y      ,
-                           unsigned int  nrows  ,
-                           cudaStream_t  stream ,
-                           bool          async  ) {
-
-	dim3 threadsPerBlock(THREADS_PER_BLOCK);
-	dim3 blocksPerGrid(div_ceil(nrows, WARPS_PER_BLOCK));
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-	TIME( threadsPerBlock, blocksPerGrid, 0, stream, async,
-	      gSpMatVecMulCSRVectorKernel<T>,
-	      columns, row_ptr, values, x, y, nrows );
-}
-
 namespace cuAlgo {
+
+	template<typename T>
+	void gSpMatVecMulCSRVector(unsigned int *columns,
+	                           unsigned int *row_ptr,
+	                           T            *values ,
+	                           T            *x      ,
+	                           T            *y      ,
+	                           unsigned int  nrows  ,
+	                           cudaStream_t  stream ,
+	                           bool          async  ) {
+
+		dim3 threadsPerBlock(THREADS_PER_BLOCK);
+		dim3 blocksPerGrid(div_ceil(nrows, WARPS_PER_BLOCK));
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+		TIME( threadsPerBlock, blocksPerGrid, 0, stream, async,
+		      gSpMatVecMulCSRVectorKernel<T>,
+		      columns, row_ptr, values, x, y, nrows );
+	}
 
 	void gSpMatVecMulCSRVectorInt(unsigned int *columns,
 	                              unsigned int *row_ptr,
@@ -116,4 +116,13 @@ namespace cuAlgo {
 
 		gSpMatVecMulCSRVector<double>(columns, row_ptr, values , x, y, nrows, stream , async );
 	}
+
+	template void gSpMatVecMulCSRVector(unsigned int *, unsigned int *,
+	                                    float  *, float  *, float  *,
+	                                    unsigned int,
+	                                    cudaStream_t, bool);
+	template void gSpMatVecMulCSRVector(unsigned int *, unsigned int *,
+	                                    double *, double *, double *,
+	                                    unsigned int,
+	                                    cudaStream_t, bool);
 }

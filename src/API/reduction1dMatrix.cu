@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -160,64 +160,64 @@ __global__ void reduction1dMatrixKernel3(const T *__restrict__ B,
 		C[tidx+blockIdx.y*N] = sdata[0][threadIdx.x];
 }
 
-template <typename T>
-void reduction1dMatrix(T            *B     ,
-                    T            *C     ,
-                    unsigned int  N     ,
-                    unsigned int  K     ,
-                    cudaStream_t  stream,
-                    bool          async ) {
-
-	unsigned int chunks = K / COMPUTE_PER_THREAD;
-
-	if (chunks > THREADS_PER_BLOCK_Y) {
-
-		T * d_buffer;
-		check_cuda( cudaMalloc(&d_buffer, N * chunks / 32 *sizeof(T)) );
-
-		dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-		dim3 blocksPerGrid(div_ceil(N, THREADS_PER_BLOCK_X), div_ceil(chunks, THREADS_PER_BLOCK_Y));
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     reduction1dMatrixKernel3<T>,
-		     B, d_buffer, N, K, chunks);
-
-		reduction1dMatrix<T>(d_buffer, C, N, chunks/32, stream, async);
-
-		check_cuda( cudaFree ( d_buffer ) );
-	} else if (chunks < THREADS_PER_BLOCK_Y && chunks > 1) {
-
-		T * d_buffer;
-		check_cuda( cudaMalloc(&d_buffer, N * chunks *sizeof(T)) );
-
-		dim3 threadsPerBlock(THREADS_PER_BLOCK);
-		dim3 blocksPerGrid(div_ceil(N, THREADS_PER_BLOCK)*chunks);
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     reduction1dMatrixKernel<T>,
-		     B, d_buffer, N, K, chunks);
-
-		reduction1dMatrix<T>(d_buffer, C, N, chunks, stream, async);
-
-		check_cuda( cudaFree ( d_buffer ) );
-	} else {
-
-		dim3 threadsPerBlock(THREADS_PER_BLOCK);
-		dim3 blocksPerGrid(div_ceil(N, THREADS_PER_BLOCK));
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     reduction1dMatrixKernel<T>,
-		     B, C, N, K, 1);
-	}
-}
-
 namespace cuAlgo {
 
-	void reduction1dMatrixInt(int *         B     ,
-	                          int *         C     ,
+	template <typename T>
+	void reduction1dMatrix(T            *B     ,
+	                       T            *C     ,
+	                       unsigned int  N     ,
+	                       unsigned int  K     ,
+	                       cudaStream_t  stream,
+	                       bool          async ) {
+
+		unsigned int chunks = K / COMPUTE_PER_THREAD;
+
+		if (chunks > THREADS_PER_BLOCK_Y) {
+
+			T * d_buffer;
+			check_cuda( cudaMalloc(&d_buffer, N * chunks / 32 *sizeof(T)) );
+
+			dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+			dim3 blocksPerGrid(div_ceil(N, THREADS_PER_BLOCK_X), div_ceil(chunks, THREADS_PER_BLOCK_Y));
+			print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+			TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+			     reduction1dMatrixKernel3<T>,
+			     B, d_buffer, N, K, chunks);
+
+			reduction1dMatrix<T>(d_buffer, C, N, chunks/32, stream, async);
+
+			check_cuda( cudaFree ( d_buffer ) );
+		} else if (chunks < THREADS_PER_BLOCK_Y && chunks > 1) {
+
+			T * d_buffer;
+			check_cuda( cudaMalloc(&d_buffer, N * chunks *sizeof(T)) );
+
+			dim3 threadsPerBlock(THREADS_PER_BLOCK);
+			dim3 blocksPerGrid(div_ceil(N, THREADS_PER_BLOCK)*chunks);
+			print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+			TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+			     reduction1dMatrixKernel<T>,
+			     B, d_buffer, N, K, chunks);
+
+			reduction1dMatrix<T>(d_buffer, C, N, chunks, stream, async);
+
+			check_cuda( cudaFree ( d_buffer ) );
+		} else {
+
+			dim3 threadsPerBlock(THREADS_PER_BLOCK);
+			dim3 blocksPerGrid(div_ceil(N, THREADS_PER_BLOCK));
+			print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+			TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+			     reduction1dMatrixKernel<T>,
+			     B, C, N, K, 1);
+		}
+	}
+
+	void reduction1dMatrixInt(int          *B     ,
+	                          int          *C     ,
 	                          unsigned int  N     ,
 	                          unsigned int  K     ,
 	                          cudaStream_t  stream,
@@ -226,8 +226,8 @@ namespace cuAlgo {
 		reduction1dMatrix<int>(B, C, N , K, stream, async);
 	}
 
-	void reduction1dMatrixFloat(float *         B     ,
-	                            float *         C     ,
+	void reduction1dMatrixFloat(float        *B     ,
+	                            float        *C     ,
 	                            unsigned int  N     ,
 	                            unsigned int  K     ,
 	                            cudaStream_t  stream,
@@ -236,8 +236,8 @@ namespace cuAlgo {
 		reduction1dMatrix<float>(B, C, N , K, stream, async);
 	}
 
-	void reduction1dMatrixDouble(double *         B     ,
-	                             double *         C     ,
+	void reduction1dMatrixDouble(double       *B     ,
+	                             double       *C     ,
 	                             unsigned int  N     ,
 	                             unsigned int  K     ,
 	                             cudaStream_t  stream,
@@ -245,4 +245,11 @@ namespace cuAlgo {
 
 		reduction1dMatrix<double>(B, C, N , K, stream, async);
 	}
+
+	template void reduction1dMatrix(float  *, float  *,
+	                                unsigned int, unsigned int,
+	                                cudaStream_t, bool);
+	template void reduction1dMatrix(double *, double *,
+	                                unsigned int, unsigned int,
+	                                cudaStream_t, bool);
 }

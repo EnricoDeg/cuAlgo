@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -62,28 +62,29 @@ __global__ void ifftshiftMatrixKernelEvenEven(T * __restrict__  data ,
 	}
 }
 
-template<typename T>
-void ifftshift2dMatrix(T            *data  ,
-                       unsigned int  mRows ,
-                       unsigned int  mCols ,
-                       cudaStream_t  stream,
-                       bool          async ) {
+namespace cuAlgo {
 
-	if (mRows % 2 == 0 && mCols % 2 == 0) {
+	template<typename T>
+	void ifftshift2dMatrix(T            *data  ,
+	                       unsigned int  mRows ,
+	                       unsigned int  mCols ,
+	                       cudaStream_t  stream,
+	                       bool          async ) {
 
-		{
-			dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-			dim3 blocksPerGrid(div_ceil(mCols / 2, THREADS_PER_BLOCK_X), div_ceil(mRows / 2, THREADS_PER_BLOCK_Y));
-			print_kernel_config(threadsPerBlock, blocksPerGrid);
+		if (mRows % 2 == 0 && mCols % 2 == 0) {
 
-			TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-			     ifftshiftMatrixKernelEvenEven<T>,
-			     data, mRows, mCols);
+			{
+
+				dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+				dim3 blocksPerGrid(div_ceil(mCols / 2, THREADS_PER_BLOCK_X), div_ceil(mRows / 2, THREADS_PER_BLOCK_Y));
+				print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+				TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+				     ifftshiftMatrixKernelEvenEven<T>,
+				     data, mRows, mCols);
+			}
 		}
 	}
-}
-
-namespace cuAlgo {
 
 	void ifftshift2dMatrixFloat(float        *data  ,
 	                            unsigned int  mRows ,
@@ -104,4 +105,17 @@ namespace cuAlgo {
 
 		ifftshift2dMatrix<double>(data, mRows, mCols, stream, async);
 	}
+
+	template void ifftshift2dMatrix(float  *,
+	                                unsigned int, unsigned int,
+	                                cudaStream_t, bool);
+	template void ifftshift2dMatrix(double *,
+	                                unsigned int, unsigned int,
+	                                cudaStream_t, bool);
+	template void ifftshift2dMatrix(cuda::std::complex<float > *,
+	                                unsigned int, unsigned int,
+	                                cudaStream_t, bool);
+	template void ifftshift2dMatrix(cuda::std::complex<double> *,
+	                                unsigned int, unsigned int,
+	                                cudaStream_t, bool);
 }

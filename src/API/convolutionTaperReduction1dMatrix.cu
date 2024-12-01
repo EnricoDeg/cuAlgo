@@ -26,8 +26,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "cuAlgo.h"
 #include "cuAlgo.hpp"
-#include "internals/cuAlgoInternal.hpp"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -74,47 +74,47 @@ __global__ void convolutionTaperReduction1dMatrixKernel(const T *__restrict__ R 
 	C[tidx + N / 2 + N * tidy] = tmp2;
 }
 
-template <typename T>
-void convolutionTaperReduction1dMatrix(T            *R     ,
-                                       T            *V     ,
-                                       T            *Taper ,
-                                       T            *C     ,
-                                       unsigned int  N     ,
-                                       unsigned int  K     ,
-                                       cudaStream_t  stream,
-                                       bool          async ) {
-
-	unsigned int chunks = K / COMPUTE_PER_THREAD;
-
-	if (chunks > 1) {
-
-		T * d_buffer;
-		check_cuda( cudaMalloc(&d_buffer, N * chunks *sizeof(T)) );
-
-		dim3 threadsPerBlock(THREADS_PER_BLOCK);
-		dim3 blocksPerGrid(div_ceil(N / 2 * chunks, THREADS_PER_BLOCK));
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     convolutionTaperReduction1dMatrixKernel<T>,
-		     R, V, Taper, d_buffer, N, K, chunks);
-
-		reduction1dMatrix<T>(d_buffer, C, N, chunks, 0, false);
-
-		check_cuda( cudaFree ( d_buffer ) );
-	} else {
-
-		dim3 threadsPerBlock(THREADS_PER_BLOCK);
-		dim3 blocksPerGrid(div_ceil(N, THREADS_PER_BLOCK));
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     convolutionTaperReduction1dMatrixKernel<T>,
-		     R, V, Taper, C, N, K, chunks);
-	}
-}
-
 namespace cuAlgo {
+
+	template <typename T>
+	void convolutionTaperReduction1dMatrix(T            *R     ,
+	                                       T            *V     ,
+	                                       T            *Taper ,
+	                                       T            *C     ,
+	                                       unsigned int  N     ,
+	                                       unsigned int  K     ,
+	                                       cudaStream_t  stream,
+	                                       bool          async ) {
+
+		unsigned int chunks = K / COMPUTE_PER_THREAD;
+
+		if (chunks > 1) {
+
+			T * d_buffer;
+			check_cuda( cudaMalloc(&d_buffer, N * chunks *sizeof(T)) );
+
+			dim3 threadsPerBlock(THREADS_PER_BLOCK);
+			dim3 blocksPerGrid(div_ceil(N / 2 * chunks, THREADS_PER_BLOCK));
+			print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+			TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+			     convolutionTaperReduction1dMatrixKernel<T>,
+			     R, V, Taper, d_buffer, N, K, chunks);
+
+			reduction1dMatrix<T>(d_buffer, C, N, chunks, 0, false);
+
+			check_cuda( cudaFree ( d_buffer ) );
+		} else {
+
+			dim3 threadsPerBlock(THREADS_PER_BLOCK);
+			dim3 blocksPerGrid(div_ceil(N, THREADS_PER_BLOCK));
+			print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+			TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+			     convolutionTaperReduction1dMatrixKernel<T>,
+			     R, V, Taper, C, N, K, chunks);
+		}
+	}
 
 	void convolutionTaperReduction1dMatrixFloat(float        *R     ,
 	                                            float        *V     ,
@@ -154,4 +154,13 @@ namespace cuAlgo {
 
 		convolutionTaperReduction1dMatrix<int>(R, V, T, C, N, K, stream, async);
 	}
+
+	template void convolutionTaperReduction1dMatrix(float  *, float  *,
+	                                                float  *, float  *,
+	                                                unsigned int, unsigned int,
+	                                                cudaStream_t, bool);
+	template void convolutionTaperReduction1dMatrix(double *, double *,
+	                                                double *, double *,
+	                                                unsigned int, unsigned int,
+	                                                cudaStream_t, bool);
 }

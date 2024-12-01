@@ -27,7 +27,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 
 template<typename T>
@@ -58,25 +58,25 @@ __global__ void gradMatrixKernel(const T            *__restrict__ A ,
 	}
 }
 
-template <typename T>
-void grad2dMatrix(T            *A     ,
-                  T            *Ax    ,
-                  T            *Ay    ,
-                  unsigned int  M     ,
-                  unsigned int  N     ,
-                  cudaStream_t  stream,
-                  bool          async ) {
-
-	dim3 blocksPerGrid(div_ceil(M, 32), div_ceil(N, 32));
-	dim3 threadsPerBlock(32 , 32);
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-	TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
-	      gradMatrixKernel<T>,
-	      A, Ax, Ay, M, N);
-}
-
 namespace cuAlgo {
+
+	template <typename T>
+	void grad2dMatrix(T            *A     ,
+	                  T            *Ax    ,
+	                  T            *Ay    ,
+	                  unsigned int  M     ,
+	                  unsigned int  N     ,
+	                  cudaStream_t  stream,
+	                  bool          async ) {
+
+		dim3 blocksPerGrid(div_ceil(M, 32), div_ceil(N, 32));
+		dim3 threadsPerBlock(32 , 32);
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+		TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
+		      gradMatrixKernel<T>,
+		      A, Ax, Ay, M, N);
+	}
 
 	void grad2dMatrixInt(int          *A     ,
 	                     int          *Ax    ,
@@ -113,4 +113,11 @@ namespace cuAlgo {
 
 		grad2dMatrix<double>(A , Ax, Ay, M, N, stream, async );
 	}
+
+	template void grad2dMatrix(float  *, float  *, float  *,
+	                           unsigned int, unsigned int,
+	                           cudaStream_t, bool);
+	template void grad2dMatrix(double *, double *, double *,
+	                           unsigned int, unsigned int,
+	                           cudaStream_t, bool);
 }

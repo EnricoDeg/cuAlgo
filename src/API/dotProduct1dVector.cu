@@ -26,51 +26,51 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "cuAlgo.h"
 #include "cuAlgo.hpp"
-#include "internals/cuAlgoInternal.hpp"
 #include "internals/gOperationAndReduction1dVector.hpp"
 
-template<typename T>
-void dotProduct1dVector(T            *g_idata1,
-                        T            *g_idata2,
-                        T            *g_odata ,
-                        unsigned int  size    ,
-                        cudaStream_t  stream  ,
-                        bool          async   ) {
-
-	unsigned int threadsPerBlock = size > 1024 ? 1024 : size / 2;
-	unsigned int blocksPerGrid = size / (2*threadsPerBlock) + (size % (2*threadsPerBlock) > 0);
-
-	if (blocksPerGrid == 1) {
-
-		gOperationAndReduction1dVectorFlexible<T, dotProduct_impl>(g_idata1       ,
-		                                                           g_idata2       ,
-		                                                           g_odata        ,
-		                                                           size           ,
-		                                                           stream         ,
-		                                                           async          ,
-		                                                           threadsPerBlock);
-	} else {
-
-		T * d_buffer;
-		check_cuda( cudaMalloc(&d_buffer, blocksPerGrid*sizeof(T)) );
-
-		gOperationAndReduction1dVectorPower2<T, dotProduct_impl>(g_idata1       ,
-		                                                         g_idata2       ,
-		                                                         d_buffer       ,
-		                                                         size           ,
-		                                                         stream         ,
-		                                                         async          ,
-		                                                         threadsPerBlock,
-		                                                         blocksPerGrid  ) ;
-
-		reduction1dVector<T>(d_buffer, g_odata, blocksPerGrid, stream, async);
-
-		check_cuda( cudaFree ( d_buffer ) );
-	}
-}
-
 namespace cuAlgo {
+
+	template<typename T>
+	void dotProduct1dVector(T            *g_idata1,
+	                        T            *g_idata2,
+	                        T            *g_odata ,
+	                        unsigned int  size    ,
+	                        cudaStream_t  stream  ,
+	                        bool          async   ) {
+
+		unsigned int threadsPerBlock = size > 1024 ? 1024 : size / 2;
+		unsigned int blocksPerGrid = size / (2*threadsPerBlock) + (size % (2*threadsPerBlock) > 0);
+
+		if (blocksPerGrid == 1) {
+
+			gOperationAndReduction1dVectorFlexible<T, dotProduct_impl>(g_idata1       ,
+			                                                           g_idata2       ,
+			                                                           g_odata        ,
+			                                                           size           ,
+			                                                           stream         ,
+			                                                           async          ,
+			                                                           threadsPerBlock);
+		} else {
+
+			T * d_buffer;
+			check_cuda( cudaMalloc(&d_buffer, blocksPerGrid*sizeof(T)) );
+
+			gOperationAndReduction1dVectorPower2<T, dotProduct_impl>(g_idata1       ,
+			                                                         g_idata2       ,
+			                                                         d_buffer       ,
+			                                                         size           ,
+			                                                         stream         ,
+			                                                         async          ,
+			                                                         threadsPerBlock,
+			                                                         blocksPerGrid  ) ;
+
+			reduction1dVector<T>(d_buffer, g_odata, blocksPerGrid, stream, async);
+
+			check_cuda( cudaFree ( d_buffer ) );
+		}
+	}
 
 	void dotProduct1dVectorFloat(float        *g_idata1,
 	                             float        *g_idata2,
@@ -104,4 +104,11 @@ namespace cuAlgo {
 
 		dotProduct1dVector<int>(g_idata1, g_idata2, g_odata, size, stream, async);
 	}
+
+	template void dotProduct1dVector(float  *, float  *, float  *,
+	                                 unsigned int,
+	                                 cudaStream_t, bool);
+	template void dotProduct1dVector(double *, double *, double *,
+	                                 unsigned int,
+	                                 cudaStream_t, bool);
 }

@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -175,28 +175,28 @@ __global__ void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * __restrict_
 	}
 }
 
-template <typename T>
-void gSpMatVecMulCSRAdaptive(unsigned int *columns     ,
-                             unsigned int *row_ptr     ,
-                             unsigned int *row_blocks  ,
-                                      T   *values      ,
-                                      T   *x           ,
-                                      T   *y           ,
-                             unsigned int  nrows       ,
-                             unsigned int  blocks_count,
-                             cudaStream_t  stream      ,
-                             bool          async       ) {
-
-	dim3 threadsPerBlock(NNZ_PER_WG);
-	dim3 blocksPerGrid(blocks_count);
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-	TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
-	      gSpMatVecMulCSRAdaptiveKernel<T>,
-	      columns, row_ptr, row_blocks, values, x, y, nrows );
-}
-
 namespace cuAlgo {
+
+	template <typename T>
+	void gSpMatVecMulCSRAdaptive(unsigned int *columns     ,
+	                             unsigned int *row_ptr     ,
+	                             unsigned int *row_blocks  ,
+	                                      T   *values      ,
+	                                      T   *x           ,
+	                                      T   *y           ,
+	                             unsigned int  nrows       ,
+	                             unsigned int  blocks_count,
+	                             cudaStream_t  stream      ,
+	                             bool          async       ) {
+
+		dim3 threadsPerBlock(NNZ_PER_WG);
+		dim3 blocksPerGrid(blocks_count);
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+		TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
+		      gSpMatVecMulCSRAdaptiveKernel<T>,
+		      columns, row_ptr, row_blocks, values, x, y, nrows );
+	}
 
 	void gSpMatVecMulCSRAdaptiveInt(unsigned int *columns     ,
 	                                unsigned int *row_ptr     ,
@@ -245,4 +245,13 @@ namespace cuAlgo {
 		gSpMatVecMulCSRAdaptive<double>(columns, row_ptr, row_blocks , values,
 		                                x, y, nrows, blocks_count, stream, async);
 	}
+
+	template void gSpMatVecMulCSRAdaptive(unsigned int *, unsigned int *, unsigned int *,
+	                                      float  *, float  *, float  *,
+	                                      unsigned int, unsigned int,
+	                                      cudaStream_t, bool);
+	template void gSpMatVecMulCSRAdaptive(unsigned int *, unsigned int *, unsigned int *,
+	                                      double *, double *, double *,
+	                                      unsigned int, unsigned int,
+	                                      cudaStream_t, bool);
 }

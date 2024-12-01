@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -91,34 +91,34 @@ __global__ void dshear1dMatrixDim1(const T            *__restrict__ idata,
 	}
 }
 
-template<typename T>
-void dshear1dMatrix(T            *idata ,
-                    T            *odata ,
-                    long int      k     ,
-                    unsigned int  dim   ,
-                    unsigned int  mRows ,
-                    unsigned int  mCols ,
-                    cudaStream_t  stream,
-                    bool          async ) {
-
-	dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-	dim3 blocksPerGrid(div_ceil(mCols, THREADS_PER_BLOCK_X), div_ceil(mRows, THREADS_PER_BLOCK_Y));
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-	if (dim == 0) {
-
-		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     dshear1dMatrixDim0<T>,
-		     idata, odata, k, mRows, mCols);
-	} else if (dim == 1) {
-
-		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     dshear1dMatrixDim1<T>,
-		     idata, odata, k, mRows, mCols);
-	}
-}
-
 namespace cuAlgo {
+
+	template<typename T>
+	void dshear1dMatrix(T            *idata ,
+	                    T            *odata ,
+	                    long int      k     ,
+	                    unsigned int  dim   ,
+	                    unsigned int  mRows ,
+	                    unsigned int  mCols ,
+	                    cudaStream_t  stream,
+	                    bool          async ) {
+
+		dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+		dim3 blocksPerGrid(div_ceil(mCols, THREADS_PER_BLOCK_X), div_ceil(mRows, THREADS_PER_BLOCK_Y));
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+		if (dim == 0) {
+
+			TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+			     dshear1dMatrixDim0<T>,
+			     idata, odata, k, mRows, mCols);
+		} else if (dim == 1) {
+
+			TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+			     dshear1dMatrixDim1<T>,
+			     idata, odata, k, mRows, mCols);
+		}
+	}
 
 	void dshear1dMatrixFloat(float        *idata ,
 	                         float        *odata ,
@@ -145,4 +145,13 @@ namespace cuAlgo {
 
 		dshear1dMatrix<double>(idata, odata, k, dim, mRows, mCols, stream, async);
 	}
+
+	template void dshear1dMatrix(float  *, float  *,
+	                             long int,
+	                             unsigned int, unsigned int, unsigned int,
+	                             cudaStream_t, bool);
+	template void dshear1dMatrix(double *, double *,
+	                             long int,
+	                             unsigned int, unsigned int, unsigned int,
+	                             cudaStream_t, bool);
 }

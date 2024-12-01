@@ -26,18 +26,20 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef CUALGO_H
-#define CUALGO_H
+#ifndef CUALGO_HPP
+#define CUALGO_HPP
 
 #include <cuda.h>
 #include <cuda/std/complex>
 
 #include "internals/checkError.hpp"
 
+#include "cuAlgoSupport.hpp"
+
 namespace cuAlgo{
 
 /**
- * @brief   Perform 1D convolution with floats on the input matrices.
+ * @brief   Perform 1D convolution on the input matrices.
  * 
  * @details The convolution is done on the fast dimension of the input
  *          matrices R and V. This means that each convolution in the 
@@ -47,53 +49,36 @@ namespace cuAlgo{
  *          The input matrices are expected to have the half complex memory
  *          layout. This means that this is a convolution on real signals.
  * 
- * @param[in]  R pointer to the first input matrix for the convolution.
- *               The signals are assumed to be in the frequency domain already.
- *               The matrix has dimensions {N,K}.
- * @param[in]  V pointer to the second input matrix for the convolution.
- *               The signals are assumed to be in the frequency domain already.
- *               The matrix has dimensions {N,K}.
- * @param[out] C pointer to the output matrix with results of the convolution.
- *               The signals are still in the frequency domain.
- *               The matrix has dimension {N,K}.
- * @param[in]  N contiguous dimension of the input matrix
- * @param[in]  K non-contiguous dimension of the input matrix
+ * @param[in]  R      pointer to the first input matrix for the convolution.
+ *                    The signals are assumed to be in the frequency domain already.
+ *                    The matrix has dimensions {N,K}.
+ * @param[in]  V      pointer to the second input matrix for the convolution.
+ *                    The signals are assumed to be in the frequency domain already.
+ *                    The matrix has dimensions {N,K}.
+ * @param[out] C      pointer to the output matrix with results of the convolution.
+ *                    The signals are still in the frequency domain.
+ *                    The matrix has dimension {N,K}.
+ * @param[in]  N      contiguous dimension of the input matrix
+ * @param[in]  K      non-contiguous dimension of the input matrix
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void convolution1dMatrixFloat(float        *R            ,
-                              float        *V            ,
-                              float        *C            ,
-                              unsigned int  N            ,
-                              unsigned int  K            ,
-                              cudaStream_t  stream = 0   ,
-                              bool          async = false);
+template<typename T>
+void convolution1dMatrix(T            *R            ,
+                         T            *V            ,
+                         T            *C            ,
+                         unsigned int  N            ,
+                         unsigned int  K            ,
+                         cudaStream_t  stream = 0   ,
+                         bool          async = false);
 
 /**
- * @brief   Perform 1D convolution with doubles on the input matrices.
- * 
- * @details See documentation of convolution1dMatrixFloat().
- * 
- * @ingroup algo
- */
-void convolution1dMatrixDouble(double       *R            ,
-                               double       *V            ,
-                               double       *C            ,
-                               unsigned int  N            ,
-                               unsigned int  K            ,
-                               cudaStream_t  stream = 0   ,
-                               bool          async = false);
-
-void convolution1dMatrixInt(int          *R            ,
-                            int          *V            ,
-                            int          *C            ,
-                            unsigned int  N            ,
-                            unsigned int  K            ,
-                            cudaStream_t  stream = 0   ,
-                            bool          async = false);
-
-/**
- * @brief   Perform 1D correlation with floats on the input matrices.
+ * @brief   Perform 1D correlation on the input matrices.
  * 
  * @details The correlation is done on the fast dimension of the input
  *          matrices R and V. This means that each correlation in the 
@@ -114,42 +99,25 @@ void convolution1dMatrixInt(int          *R            ,
  *               The matrix has dimension {N,K}.
  * @param[in]  N contiguous dimension of the input matrix
  * @param[in]  K non-contiguous dimension of the input matrix
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void correlation1dMatrixFloat(float        *R            ,
-                              float        *V            ,
-                              float        *C            ,
-                              unsigned int  N            ,
-                              unsigned int  K            ,
-                              cudaStream_t  stream = 0   ,
-                              bool          async = false);
+template<typename T>
+void correlation1dMatrix(T            *R            ,
+                         T            *V            ,
+                         T            *C            ,
+                         unsigned int  N            ,
+                         unsigned int  K            ,
+                         cudaStream_t  stream = 0   ,
+                         bool          async = false);
 
 /**
- * @brief   Perform 1D correlation with doubles on the input matrices.
- * 
- * @details See documentation of correlation1dMatrixFloat().
- * 
- * @ingroup algo
- */
-void correlation1dMatrixDouble(double       *R            ,
-                               double       *V            ,
-                               double       *C            ,
-                               unsigned int  N            ,
-                               unsigned int  K            ,
-                               cudaStream_t  stream = 0   ,
-                               bool          async = false);
-
-void correlation1dMatrixInt(int          *R            ,
-                            int          *V            ,
-                            int          *C            ,
-                            unsigned int  N            ,
-                            unsigned int  K            ,
-                            cudaStream_t  stream = 0   ,
-                            bool          async = false);
-
-/**
- * @brief   Perform 2D convolution in data domain with floats on the input matrices.
+ * @brief   Perform 2D convolution in data domain on the input matrices.
  * 
  * @details The convolution is done in the data domain without Fourier
  *          Transform.
@@ -164,38 +132,27 @@ void correlation1dMatrixInt(int          *R            ,
  * @param[in]  mCols  contiguous dimension of the input matrix
  * @param[in]  fRows  non-contiguous dimensions of the kernel matrix
  * @param[in]  fCols  contiguous dimension of the kernel matrix
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void convolution2dMatrixDDFloat(float        * odata        ,
-                                float        * idata        ,
-                                float        * filter       ,
-                                unsigned int   mRows        ,
-                                unsigned int   mCols        ,
-                                unsigned int   fRows        ,
-                                unsigned int   fCols        ,
-                                cudaStream_t   stream = 0   ,
-                                bool           async = false);
+template<typename T>
+void convolution2dMatrixDD(T            *odata        ,
+                           T            *idata        ,
+                           T            *filter       ,
+                           unsigned int  mRows        ,
+                           unsigned int  mCols        ,
+                           unsigned int  fRows        ,
+                           unsigned int  fCols        ,
+                           cudaStream_t  stream = 0   ,
+                           bool          async = false);
 
 /**
- * @brief   Perform 2D convolution in data domain with doubles on the input matrices.
- * 
- * @details See documentation of convolution2dMatrixDDFloat().
- * 
- * @ingroup algo
- */
-void convolution2dMatrixDDDouble(double       * odata        ,
-                                 double       * idata        ,
-                                 double       * filter       ,
-                                 unsigned int   mRows        ,
-                                 unsigned int   mCols        ,
-                                 unsigned int   fRows        ,
-                                 unsigned int   fCols        ,
-                                 cudaStream_t   stream = 0   ,
-                                 bool           async = false);
-
-/**
- * @brief   Perform 1D convolution with floats on the input matrices and then a 
+ * @brief   Perform 1D convolution on the input matrices and then a 
  *          1D reduction in the slow dimension.
  * 
  * @details This function combines convolution1dMatrix() and reduction1dMatrix()
@@ -214,44 +171,25 @@ void convolution2dMatrixDDDouble(double       * odata        ,
  *               The vector has dimension {N}.
  * @param[in]  N contiguous dimension of the input matrices
  * @param[in]  K non-contiguous dimension of the input matrices
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void convolutionReduction1dMatrixFloat(float        *R            ,
-                                       float        *V            ,
-                                       float        *C            ,
-                                       unsigned int  N            ,
-                                       unsigned int  K            ,
-                                       cudaStream_t  stream = 0   ,
-                                       bool          async = false);
+template<typename T>
+void convolutionReduction1dMatrix(T            *R            ,
+                                  T            *V            ,
+                                  T            *C            ,
+                                  unsigned int  N            ,
+                                  unsigned int  K            ,
+                                  cudaStream_t  stream = 0   ,
+                                  bool          async = false);
 
 /**
- * @brief   Perform 1D convolution with doubles on the input matrices and then a 
- *          1D reduction in the slow dimension.
- * 
- * @details See documentation of convolutionReduction1dMatrixFloat().
- * 
- * @ingroup algo
- */
-
-void convolutionReduction1dMatrixDouble(double       *R            ,
-                                        double       *V            ,
-                                        double       *C            ,
-                                        unsigned int  N            ,
-                                        unsigned int  K            ,
-                                        cudaStream_t  stream = 0   ,
-                                        bool          async = false);
-
-void convolutionReduction1dMatrixInt(int          *R            ,
-                                     int          *V            ,
-                                     int          *C            ,
-                                     unsigned int  N            ,
-                                     unsigned int  K            ,
-                                     cudaStream_t  stream = 0   ,
-                                     bool          async = false) ;
-
-/**
- * @brief   Perform 1D convolution with floats on the input matrices, then apply a taper
+ * @brief   Perform 1D convolution on the input matrices, then apply a taper
  *          on the slow dimension and finally perform a 1D reduction in the
  *          slow dimension.
  * 
@@ -259,62 +197,41 @@ void convolutionReduction1dMatrixInt(int          *R            ,
  *          taper defined in the slow dimension is applied before the 1D
  *          reduction.
  * 
- * @param[in]  R pointer to the first input matrix for the convolution.
- *               The signals are assumed to be in the frequency domain already.
- *               The matrix has dimensions {N,K}.
- * @param[in]  V pointer to the second input matrix for the convolution.
- *               The signals are assumed to be in the frequency domain already.
- *               The matrix has dimensions {N,K}.
- * @param[in]  T pointer to the input vector with the taper values.
- *               The vector is defined in the slow dimension of the input
- *               matrices so it has dimension {K}.
- * @param[out] C pointer to the the output vector with the result of the
- *               convolution and the reduction.
- *               The signals are still in the frequency domain already.
- *               The vector has dimension {N}.
- * @param[in]  N contiguous dimension of the input matrices
- * @param[in]  K non-contiguous dimension of the input matrices
+ * @param[in]  R     pointer to the first input matrix for the convolution.
+ *                   The signals are assumed to be in the frequency domain already.
+ *                   The matrix has dimensions {N,K}.
+ * @param[in]  V     pointer to the second input matrix for the convolution.
+ *                   The signals are assumed to be in the frequency domain already.
+ *                   The matrix has dimensions {N,K}.
+ * @param[in]  Taper pointer to the input vector with the taper values.
+ *                   The vector is defined in the slow dimension of the input
+ *                   matrices so it has dimension {K}.
+ * @param[out] C     pointer to the the output vector with the result of the
+ *                   convolution and the reduction.
+ *                   The signals are still in the frequency domain already.
+ *                   The vector has dimension {N}.
+ * @param[in]  N     contiguous dimension of the input matrices
+ * @param[in]  K     non-contiguous dimension of the input matrices
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void convolutionTaperReduction1dMatrixFloat(float        *R            ,
-                                            float        *V            ,
-                                            float        *T            ,
-                                            float        *C            ,
-                                            unsigned int  N            ,
-                                            unsigned int  K            ,
-                                            cudaStream_t  stream = 0   ,
-                                            bool          async = false);
+template<typename T>
+void convolutionTaperReduction1dMatrix(T            *R            ,
+                                       T            *V            ,
+                                       T            *Taper        ,
+                                       T            *C            ,
+                                       unsigned int  N            ,
+                                       unsigned int  K            ,
+                                       cudaStream_t  stream = 0   ,
+                                       bool          async = false);
 
 /**
- * @brief   Perform 1D convolution with doubles on the input matrices, then apply a taper
- *          on the slow dimension and finally perform a 1D reduction in the
- *          slow dimension.
- * 
- * @details See documentation of convolutionTaperReduction1dMatrixFloat().
- * 
- * @ingroup algo
- */
-void convolutionTaperReduction1dMatrixDouble(double       *R            ,
-                                             double       *V            ,
-                                             double       *T            ,
-                                             double       *C            ,
-                                             unsigned int  N            ,
-                                             unsigned int  K            ,
-                                             cudaStream_t  stream = 0   ,
-                                             bool          async = false);
-
-void convolutionTaperReduction1dMatrixInt(int          *R            ,
-                                          int          *V            ,
-                                          int          *T            ,
-                                          int          *C            ,
-                                          unsigned int  N            ,
-                                          unsigned int  K            ,
-                                          cudaStream_t  stream = 0   ,
-                                          bool          async = false);
-
-/**
- * @brief   Compute dot product of two vectors of floats
+ * @brief   Compute dot product of two vectors
  * 
  * @details Sum product of elements of the input vectors and
  *          return a pointer to a scalar
@@ -323,39 +240,24 @@ void convolutionTaperReduction1dMatrixInt(int          *R            ,
  * @param[in]  g_idata2 pointer to input vector
  * @param[out] g_odata pointer to output scalar with result of the L1 norm
  * @param[in]  size  size of the input vector
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void dotProduct1dVectorFloat(float        *g_idata1     ,
-                             float        *g_idata2     ,
-                             float        *g_odata      ,
-                             unsigned int  size         ,
-                             cudaStream_t  stream = 0   ,
-                             bool          async = false);
+template<typename T>
+void dotProduct1dVector(T            *g_idata1     ,
+                        T            *g_idata2     ,
+                        T            *g_odata      ,
+                        unsigned int  size         ,
+                        cudaStream_t  stream = 0   ,
+                        bool          async = false);
 
 /**
- * @brief   Compute dot product of two vectors of double
- * 
- * @details See documentation of dotProductVectorFloat().
- * 
- * @ingroup algo
- */
-void dotProduct1dVectorDouble(double       *g_idata1     ,
-                              double       *g_idata2     ,
-                              double       *g_odata      ,
-                              unsigned int  size         ,
-                              cudaStream_t  stream = 0   ,
-                              bool          async = false);
-
-void dotProduct1dVectorInt(int          *g_idata1     ,
-                           int          *g_idata2     ,
-                           int          *g_odata      ,
-                           unsigned int  size         ,
-                           cudaStream_t  stream = 0   ,
-                           bool          async = false);
-
-/**
- * @brief   downsample operator in 1d on matrix of floats
+ * @brief   downsample operator in 1d on matrix
  * 
  * @details The operation can be applied on both direction
  * 
@@ -366,36 +268,26 @@ void dotProduct1dVectorInt(int          *g_idata1     ,
  * @param[in]  stride downsample stride on dimension `dim`
  * @param[in]  mRows non-contiguous dimension of the input matrix
  * @param[in]  mCols contiguous dimension of the input matrix
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void downsample1dMatrixFloat(float        *idata        ,
-                             float        *odata        ,
-                             unsigned int  dim          ,
-                             unsigned int  stride       ,
-                             unsigned int  mRows        ,
-                             unsigned int  mCols        ,
-                             cudaStream_t  stream = 0   ,
-                             bool          async = false);
+template<typename T>
+void downsample1dMatrix(T            *idata        ,
+                        T            *odata        ,
+                        unsigned int  dim          ,
+                        unsigned int  stride       ,
+                        unsigned int  mRows        ,
+                        unsigned int  mCols        ,
+                        cudaStream_t  stream = 0   ,
+                        bool          async = false);
 
 /**
- * @brief   downsample operator in 1d on matrix of doubles
- * 
- * @details See documentation of downsample1dMatrixFloat().
- * 
- * @ingroup algo
- */
-void downsample1dMatrixDouble(double       *idata        ,
-                              double       *odata        ,
-                              unsigned int  dim          ,
-                              unsigned int  stride       ,
-                              unsigned int  mRows        ,
-                              unsigned int  mCols        ,
-                              cudaStream_t  stream = 0   ,
-                              bool          async = false);
-
-/**
- * @brief   dshear operator in 1d on matrix of floats
+ * @brief   dshear operator in 1d on matrix
  * 
  * @details The operation can be applied on both direction
  * 
@@ -406,37 +298,26 @@ void downsample1dMatrixDouble(double       *idata        ,
  *             0 for rows and 1 for columns.
  * @param[in]  mRows non-contiguous dimension of the input and output matrices
  * @param[in]  mCols contiguous dimension of the input and output matrices
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void dshear1dMatrixFloat(float        *idata        ,
-                         float        *odata        ,
-                         long int      k            ,
-                         unsigned int  dim          ,
-                         unsigned int  mRows        ,
-                         unsigned int  mCols        ,
-                         cudaStream_t  stream = 0   ,
-                         bool          async = false);
+template<typename T>
+void dshear1dMatrix(T            *idata        ,
+                    T            *odata        ,
+                    long int      k            ,
+                    unsigned int  dim          ,
+                    unsigned int  mRows        ,
+                    unsigned int  mCols        ,
+                    cudaStream_t  stream = 0   ,
+                    bool          async = false);
 
 /**
- * @brief   dshear operator in 1d on matrix of doubles
- * 
- * @details See documentation of dshear1dMatrixDouble().
- * 
- * @ingroup algo
- */
-void dshear1dMatrixDouble(double       *idata        ,
-                          double       *odata        ,
-                          long int      k            ,
-                          unsigned int  dim          ,
-                          unsigned int  mRows        ,
-                          unsigned int  mCols        ,
-                          cudaStream_t  stream = 0   ,
-                          bool          async = false);
-
-/**
- * @brief   Perform exclusive scan or prefix sum on a vector using
- *          floats.
+ * @brief   Perform exclusive scan or prefix sum on a vector
  * 
  * @details The input and output arrays are expected to be multiple of 
  *          1024. If not, they should be padded before calling the 
@@ -445,41 +326,23 @@ void dshear1dMatrixDouble(double       *idata        ,
  * @param[in]  g_idata input array of size {size}
  * @param[out] g_odata output array of size {size}
  * @param[in]  size size of input and output arrays
- * @param[in]  stream CUDA stream were the kernel is launched.
- *                    Default is 0.
- * @param[in]  async boolean defining if the kernel should be
- *                   asynchronous. Default is false.
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void exclusiveScan1dVectorFloat(float        *g_idata      ,
-                                float        *g_odata      ,
-                                unsigned int  size         ,
-                                cudaStream_t  stream = 0   ,
-                                bool          async = false);
+template<typename T>
+void exclusiveScan1dVector(T            *g_idata      ,
+                           T            *g_odata      ,
+                           unsigned int  size         ,
+                           cudaStream_t  stream = 0   ,
+                           bool          async = false);
 
 /**
- * @brief   Perform exclusive scan or prefix sum on a vector using
- *          doubles.
- * 
- * @details See documentation of exclusiveScan1dVectorFloat().
- * 
- * @ingroup algo
- */
-void exclusiveScan1dVectorDouble(double       *g_idata      ,
-                                 double       *g_odata      ,
-                                 unsigned int  size         ,
-                                 cudaStream_t  stream = 0   ,
-                                 bool          async = false);
-
-void exclusiveScan1dVectorInt(int          *g_idata      ,
-                              int          *g_odata      ,
-                              unsigned int  size         ,
-                              cudaStream_t  stream = 0   ,
-                              bool          async = false);
-
-/**
- * @brief   Perform fftshift on a vector with floats
+ * @brief   Perform fftshift on a vector
  * 
  * @details The input vector has dimension {size} and 
  *          the output vector has dimension {size}
@@ -487,36 +350,23 @@ void exclusiveScan1dVectorInt(int          *g_idata      ,
  * @param[in]  idata pointer to input vector to be shifted
  * @param[out] odata pointer to output vector with result of the fftshift
  * @param[in]  size  contiguous dimension of the input and output vectors
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void fftshift1dVectorFloat(float        *idata        ,
-                           float        *odata        ,
-                           unsigned int  size         ,
-                           cudaStream_t  stream = 0   ,
-                           bool          async = false);
+template<typename T>
+void fftshift1dVector(T            *idata        ,
+                      T            *odata        ,
+                      unsigned int  size         ,
+                      cudaStream_t  stream = 0   ,
+                      bool          async = false);
 
 /**
- * @brief   Perform fftshift on a vector with doubles
- * 
- * @details See documentation of fftshift1dVectorFloat()
- * 
- * @ingroup algo
- */
-void fftshift1dVectorDouble(double       *idata        ,
-                            double       *odata        ,
-                            unsigned int  size         ,
-                            cudaStream_t  stream = 0   ,
-                            bool          async = false);
-
-void fftshift1dVectorInt(int          *idata        ,
-                         int          *odata        ,
-                         unsigned int  size         ,
-                         cudaStream_t  stream = 0   ,
-                         bool          async = false);
-
-/**
- * @brief   Perform fftshift on a matrix with floats in place
+ * @brief   Perform fftshift on a matrix in place
  * 
  * @details The fftshift operation is performed on both
  *          dimensions
@@ -524,30 +374,23 @@ void fftshift1dVectorInt(int          *idata        ,
  * @param[inout] data  pointer to matrix to be shifted
  * @param[in]    mRows non-contiguous dimension of the matrix
  * @param[in]    mCols contiguous dimension of the matrix
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void fftshift2dMatrixFloat(float        *data         ,
+template<typename T>
+void fftshift2dMatrixFloat(T            *data         ,
                            unsigned int  mRows        ,
                            unsigned int  mCols        ,
                            cudaStream_t  stream = 0   ,
                            bool          async = false);
 
 /**
- * @brief   Perform fftshift on a matrix with doubles in place
- * 
- * @details See documentation of fftshift2dMatrixFloat()
- * 
- * @ingroup algo
- */
-void fftshift2dMatrixDouble(double       *data         ,
-                            unsigned int  mRows        ,
-                            unsigned int  mCols        ,
-                            cudaStream_t  stream = 0   ,
-                            bool          async = false);
-
-/**
- * @brief   Flip rows or columns of a matrix of floats in place
+ * @brief   Flip rows or columns of a matrix in place
  * 
  * @details The `dim` argument defines if rows or columns 
  *          should be flipped.
@@ -556,53 +399,24 @@ void fftshift2dMatrixDouble(double       *data         ,
  * @param[in]    dim   dimension to flip
  * @param[in]    mRows non-contiguous dimension of the matrix
  * @param[in]    mCols contiguous dimension of the matrix
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void fliplr1dMatrixFloat(float        *data         ,
-                         unsigned int  dim          ,
-                         unsigned int  mRows        ,
-                         unsigned int  mCols        ,
-                         cudaStream_t  stream = 0   ,
-                         bool          async = false);
+template<typename T>
+void fliplr1dMatrix(T            *data         ,
+                    unsigned int  dim          ,
+                    unsigned int  mRows        ,
+                    unsigned int  mCols        ,
+                    cudaStream_t  stream = 0   ,
+                    bool          async = false);
 
 /**
- * @brief   Flip rows or columns of a matrix of doubles in place
- * 
- * @details See documentation of fliplr1dMatrixFloat()
- * 
- * @ingroup algo
- */
-void fliplr1dMatrixDouble(double       *data         ,
-                          unsigned int  dim          ,
-                          unsigned int  mRows        ,
-                          unsigned int  mCols        ,
-                          cudaStream_t  stream = 0   ,
-                          bool          async = false);
-
-/**
- * @brief   Compute and return the row block array given the 
- *          row_ptr array of a matrix in CSR format.
- * 
- * @details The returned array is allocated on the device and 
- *          it can be used to call gSpMatVecMulCSRAdaptive
- * 
- * @param[in]  row_ptr      Array of locations in the columns array
- *                          where a new row starts.
- * @param[in]  nrows        Number of rows in the matrix.
- * @param[out] blocks_count Return the size of the returned array - 1
- * 
- * @return  Pointer to the device array with the number of rows
- *          for each block.
- * 
- * @ingroup algo
- */
-unsigned int * getRowBlocks( const unsigned int * row_ptr     ,
-                                   unsigned int   nrows       ,
-                                   unsigned int * blocks_count);
-
-/**
- * @brief   Perform general matrix-matrix multiplication with floats.
+ * @brief   Perform general matrix-matrix multiplication
  * 
  * @details The following operation is performed
  *          C = alpha * A * B + beta * C
@@ -619,51 +433,28 @@ unsigned int * getRowBlocks( const unsigned int * row_ptr     ,
  *                     non-contiguous dimension of the B matrix
  * @param[in]    alpha scalar parameter to apply to A * B
  * @param[in]    beta  scalar parameter to apply to C
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void gMatMulFloat(float         alpha        ,
-                  const float  *A            ,
-                  const float  *B            ,
-                  float         beta         ,
-                  float        *C            ,
-                  unsigned int  M            ,
-                  unsigned int  N            ,
-                  unsigned int  K            ,
-                  cudaStream_t  stream = 0   ,
-                  bool          async = false);
+template<typename T>
+void gMatMul(T             alpha        ,
+             const T      *A            ,
+             const T      *B            ,
+             T             beta         ,
+             T            *C            ,
+             unsigned int  M            ,
+             unsigned int  N            ,
+             unsigned int  K            ,
+             cudaStream_t  stream = 0   ,
+             bool          async = false);
 
 /**
- * @brief   Perform general matrix-matrix multiplication with doubles.
- * 
- * @details See documentation of gMatMulFloat().
- * 
- * @ingroup algo
- */
-void gMatMulDouble(double        alpha        ,
-                   const double *A            ,
-                   const double *B            ,
-                   double        beta         ,
-                   double       *C            ,
-                   unsigned int  M            ,
-                   unsigned int  N            ,
-                   unsigned int  K            ,
-                   cudaStream_t  stream = 0   ,
-                   bool          async = false);
-
-void gMatMulInt(int           alpha        ,
-                const int    *A            ,
-                const int    *B            ,
-                int           beta         ,
-                int          *C            ,
-                unsigned int  M            ,
-                unsigned int  N            ,
-                unsigned int  K            ,
-                cudaStream_t  stream = 0   ,
-                bool          async = false);
-
-/**
- * @brief   Perform matrix-vector multiplication with floats.
+ * @brief   Perform matrix-vector multiplication.
  * 
  * @details The vector A is multiplied with matrix B and the result is stored 
  *          in vector C.
@@ -677,42 +468,25 @@ void gMatMulInt(int           alpha        ,
  *               The vector has dimensions {N}.
  * @param[in]  N contiguous dimension of the input matrix
  * @param[in]  K non-contiguous dimension of the input matrix
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void gMatVecMulFloat(const float        *A            ,
-                     const float        *B            ,
-                           float        *C            ,
+template<typename T>
+void gMatVecMul(const T        *A            ,
+                     const T        *B            ,
+                           T        *C            ,
                            unsigned int  N            ,
                            unsigned int  K            ,
                            cudaStream_t  stream = 0   ,
                            bool          async = false);
 
 /**
- * @brief   Perform matrix-vector multiplication with doubles.
- * 
- * @details See documentation of gMatVecMulFloat().
- * 
- * @ingroup algo
- */
-void gMatVecMulDouble(const double       *A            ,
-                      const double       *B            ,
-                            double       *C            ,
-                            unsigned int  N            ,
-                            unsigned int  K            ,
-                            cudaStream_t  stream = 0   ,
-                            bool          async = false);
-
-void gMatVecMulInt(const int          *A            ,
-                   const int          *B            ,
-                         int          *C            ,
-                         unsigned int  N            ,
-                         unsigned int  K            ,
-                         cudaStream_t  stream = 0   ,
-                         bool          async = false);
-
-/**
- * @brief   Compute the matrix gradient using floats.
+ * @brief   Compute the matrix gradient
  * 
  * @details The gradient is computed using first order
  *          accuracy.
@@ -724,47 +498,26 @@ void gMatVecMulInt(const int          *A            ,
  *             The matrix has the same size of A.
  * @param[in]  M size of contiguous dimension
  * @param[in]  N size of non-contiguous dimension
- * @param[in]  stream CUDA stream were the kernel is launched.
- *                    Default is 0.
- * @param[in]  async boolean defining if the kernel should be
- *                   asynchronous. Default is false.
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void grad2dMatrixFloat(float        *A            ,
-                       float        *Ax           ,
-                       float        *Ay           ,
+template<typename T>
+void grad2dMatrix(T        *A            ,
+                  T        *Ax           ,
+                  T        *Ay           ,
                        unsigned int  M            ,
                        unsigned int  N            ,
                        cudaStream_t  stream = 0   ,
                        bool          async = false);
 
 /**
- * @brief   Compute the matrix gradient using doubles.
- * 
- * @details See documentation of gradMatrixFloat().
- * 
- * @ingroup algo
- */
-void grad2dMatrixDouble(double       *A            ,
-                        double       *Ax           ,
-                        double       *Ay           ,
-                        unsigned int  M            ,
-                        unsigned int  N            ,
-                        cudaStream_t  stream = 0   ,
-                        bool          async = false);
-
-void grad2dMatrixInt(int          *A            ,
-                     int          *Ax           ,
-                     int          *Ay           ,
-                     unsigned int  M            ,
-                     unsigned int  N            ,
-                     cudaStream_t  stream = 0   ,
-                     bool          async = false);
-
-/**
  * @brief   Perform sparse matrix-vector multiplication with an 
- *          adaptive methodn using floats.
+ *          adaptive method.
  * 
  * @details The sparse matrix vector multiplication assumes that
  *          the matrix is provided in CSR format.
@@ -788,53 +541,29 @@ void grad2dMatrixInt(int          *A            ,
  * @param[in]  x          The vector array that multiplies the matrix.
  * @param[out] y          The vector array result of the multiplication.
  * @param[in]  nrows      Number of rows in the matrix.
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void gSpMatVecMulCSRAdaptiveFloat(unsigned int   *columns      ,
-                                  unsigned int   *row_ptr      ,
-                                  unsigned int   *row_blocks   ,
-                                           float *values       ,
-                                           float *x            ,
-                                           float *y            ,
-                                  unsigned int    nrows        ,
-                                  unsigned int    blocks_count ,
-                                  cudaStream_t    stream = 0   ,
-                                  bool            async = false);
-
-/**
- * @brief   Perform sparse matrix-vector multiplication with an 
- *          adaptive methodn using doubles.
- * 
- * @details See documentation of gSpMatVecMulCSRAdaptiveFloat().
- * 
- * @ingroup algo
- */
-void gSpMatVecMulCSRAdaptiveDouble(unsigned int    *columns      ,
-                                   unsigned int    *row_ptr      ,
-                                   unsigned int    *row_blocks   ,
-                                            double *values       ,
-                                            double *x            ,
-                                            double *y            ,
-                                   unsigned int     nrows        ,
-                                   unsigned int     blocks_count ,
-                                   cudaStream_t     stream = 0   ,
-                                   bool             async = false);
-
-void gSpMatVecMulCSRAdaptiveInt(unsigned int *columns      ,
-                                unsigned int *row_ptr      ,
-                                unsigned int *row_blocks   ,
-                                         int *values       ,
-                                         int *x            ,
-                                         int *y            ,
-                                unsigned int  nrows        ,
-                                unsigned int  blocks_count ,
-                                cudaStream_t  stream = 0   ,
-                                bool          async = false);
+template<typename T>
+void gSpMatVecMulCSRAdaptive(unsigned int   *columns      ,
+                             unsigned int   *row_ptr      ,
+                             unsigned int   *row_blocks   ,
+                             T              *values       ,
+                             T              *x            ,
+                             T              *y            ,
+                             unsigned int    nrows        ,
+                             unsigned int    blocks_count ,
+                             cudaStream_t    stream = 0   ,
+                             bool            async = false);
 
 /**
  * @brief   Perform sparse matrix-vector multiplication with CSR 
- *          format using floats.
+ *          format.
  * 
  * @details The sparse matrix vector multiplication assumes that
  *          the matrix is provided in CSR format.
@@ -849,47 +578,27 @@ void gSpMatVecMulCSRAdaptiveInt(unsigned int *columns      ,
  * @param[in]  x       The vector array that multiplies the matrix.
  * @param[out] y       The vector array result of the multiplication.
  * @param[in]  nrows   Number of rows in the matrix.
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void gSpMatVecMulCSRVectorFloat(unsigned int *columns      ,
-                                unsigned int *row_ptr      ,
-                                float        *values       ,
-                                float        *x            ,
-                                float        *y            ,
-                                unsigned int  nrows        ,
-                                cudaStream_t  stream = 0   ,
-                                bool          async = false);
-
-/**
- * @brief   Perform sparse matrix-vector multiplication with CSR 
- *          format using doubles.
- * 
- * @details See documentation of gSpMatVecMulCSRVectorFloat().
- * 
- * @ingroup algo
- */
-void gSpMatVecMulCSRVectorDouble(unsigned int *columns      ,
-                                 unsigned int *row_ptr      ,
-                                 double       *values       ,
-                                 double       *x            ,
-                                 double       *y            ,
-                                 unsigned int  nrows        ,
-                                 cudaStream_t  stream = 0   ,
-                                 bool          async = false);
-
-void gSpMatVecMulCSRVectorInt(unsigned int *columns      ,
-                              unsigned int *row_ptr      ,
-                              int          *values       ,
-                              int          *x            ,
-                              int          *y            ,
-                              unsigned int  nrows        ,
-                              cudaStream_t  stream = 0   ,
-                              bool          async = false);
+template<typename T>
+void gSpMatVecMulCSRVector(unsigned int *columns      ,
+                           unsigned int *row_ptr      ,
+                           T            *values       ,
+                           T            *x            ,
+                           T            *y            ,
+                           unsigned int  nrows        ,
+                           cudaStream_t  stream = 0   ,
+                           bool          async = false);
 
 /**
  * @brief   Perform sparse matrix-vector multiplication with
- *          ELL format using floats.
+ *          ELL format.
  * 
  * @details The sparse matrix vector multiplication assumes that
  *          the matrix is provided in ELL format.
@@ -911,46 +620,26 @@ void gSpMatVecMulCSRVectorInt(unsigned int *columns      ,
  * @param[out] y                The vector array result of the multiplication.
  * @param[in]  nrows            Number of rows in the matrix.
  * @param[in]  elements_in_rows max number of non zero elements.
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void gSpMatVecMulELLFloat(unsigned int *columns         ,
-                          float        *values          ,
-                          float        *x               ,
-                          float        *y               ,
-                          unsigned int  nrows           ,
-                          unsigned int  elements_in_rows,
-                          cudaStream_t  stream = 0      ,
-                          bool          async = false   );
+template<typename T>
+void gSpMatVecMulELL(unsigned int *columns         ,
+                     T            *values          ,
+                     T            *x               ,
+                     T            *y               ,
+                     unsigned int  nrows           ,
+                     unsigned int  elements_in_rows,
+                     cudaStream_t  stream = 0      ,
+                     bool          async = false   );
 
 /**
- * @brief   Perform sparse matrix-vector multiplication with
- *          ELL format using doubles.
- * 
- * @details See documentation of gSpMatVecMulELLFloat().
- * 
- * @ingroup algo
- */
-void gSpMatVecMulELLDouble(unsigned int *columns         ,
-                           double       *values          ,
-                           double       *x               ,
-                           double       *y               ,
-                           unsigned int  nrows           ,
-                           unsigned int  elements_in_rows,
-                           cudaStream_t  stream = 0      ,
-                           bool          async = false   );
-
-void gSpMatVecMulELLInt(unsigned int *columns         ,
-                        int          *values          ,
-                        int          *x               ,
-                        int          *y               ,
-                        unsigned int  nrows           ,
-                        unsigned int  elements_in_rows,
-                        cudaStream_t  stream = 0      ,
-                        bool          async = false   );
-
-/**
- * @brief   Perform ifftshift on a matrix with floats in place
+ * @brief   Perform ifftshift on a matrix in place
  * 
  * @details The ifftshift operation is performed on both
  *          dimensions
@@ -958,63 +647,45 @@ void gSpMatVecMulELLInt(unsigned int *columns         ,
  * @param[inout] data  pointer to matrix to be shifted
  * @param[in]    mRows non-contiguous dimension of the matrix
  * @param[in]    mCols contiguous dimension of the matrix
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void ifftshift2dMatrixFloat(float        *data         ,
-                            unsigned int  mRows        ,
-                            unsigned int  mCols        ,
-                            cudaStream_t  stream = 0   ,
-                            bool          async = false);
+template<typename T>
+void ifftshift2dMatrix(T            *data         ,
+                       unsigned int  mRows        ,
+                       unsigned int  mCols        ,
+                       cudaStream_t  stream = 0   ,
+                       bool          async = false);
 
 /**
- * @brief   Perform ifftshift on a matrix with doubles in place
- * 
- * @details See documentation of ifftshift2dMatrixFloat().
- * 
- * @ingroup algo
- */
-void ifftshift2dMatrixDouble(double       *data         ,
-                             unsigned int  mRows        ,
-                             unsigned int  mCols        ,
-                             cudaStream_t  stream = 0   ,
-                             bool          async = false);
-
-/**
- * @brief   Normalize a vector of floats
+ * @brief   Normalize a vector
  * 
  * @details Each element of the vector is divided by the L1 norm
  *          of the vector
  * 
  * @param[inout]  idata pointer to input vector which will be normalized
  * @param[in]     size  size of the input vector
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void normalizeVectorFloat(float        *g_idata      ,
-                          unsigned int  size         ,
-                          cudaStream_t  stream = 0   ,
-                          bool          async = false);
+template<typename T>
+void normalizeVector(T            *g_idata      ,
+                     unsigned int  size         ,
+                     cudaStream_t  stream = 0   ,
+                     bool          async = false);
 
 /**
- * @brief   Normalize a vector of doubles
- * 
- * @details See documentation of normalizeVectorFloat().
- * 
- * @ingroup algo
- */
-void normalizeVectorDouble(double       *g_idata      ,
-                           unsigned int  size         ,
-                           cudaStream_t  stream = 0   ,
-                           bool          async = false);
-
-void normalizeVectorInt(int          *g_idata      ,
-                        unsigned int  size         ,
-                        cudaStream_t  stream = 0   ,
-                        bool          async = false);
-
-/**
- * @brief   Compute L1 norm on a vector of floats
+ * @brief   Compute L1 norm on a vector
  * 
  * @details Sum absolute value of elements of the input vector and
  *          return a pointer to a scalar
@@ -1022,36 +693,23 @@ void normalizeVectorInt(int          *g_idata      ,
  * @param[in]  idata pointer to input vector
  * @param[out] odata pointer to output scalar with result of the L1 norm
  * @param[in]  size  size of the input vector
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void normL1VectorFloat(float        *g_idata      ,
-                       float        *g_odata      ,
-                       unsigned int  size         ,
-                       cudaStream_t  stream = 0   ,
-                       bool          async = false);
+template<typename T>
+void normL1Vector(T            *g_idata      ,
+                  T            *g_odata      ,
+                  unsigned int  size         ,
+                  cudaStream_t  stream = 0   ,
+                  bool          async = false);
 
 /**
- * @brief   Compute L1 norm on a vector of doubles
- * 
- * @details See documentation of normL1VectorFloat().
- * 
- * @ingroup algo
- */
-void normL1VectorDouble(double       *g_idata      ,
-                        double       *g_odata      ,
-                        unsigned int  size         ,
-                        cudaStream_t  stream = 0   ,
-                        bool          async = false);
-
-void normL1VectorInt(int          *g_idata      ,
-                     int          *g_odata      ,
-                     unsigned int  size         ,
-                     cudaStream_t  stream = 0   ,
-                     bool          async = false);
-
-/**
- * @brief   Compute squared L2 norm on a vector of floats
+ * @brief   Compute squared L2 norm on a vector
  * 
  * @details Sum squared value of elements of the input vector and
  *          return a pointer to a scalar
@@ -1059,36 +717,23 @@ void normL1VectorInt(int          *g_idata      ,
  * @param[in]  idata pointer to input vector
  * @param[out] odata pointer to output scalar with result of the squared L2 norm
  * @param[in]  size  size of the input vector
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void normL2VectorFloat(float        *g_idata      ,
-                       float        *g_odata      ,
-                       unsigned int  size         ,
-                       cudaStream_t  stream = 0   ,
-                       bool          async = false);
+template<typename T>
+void normL2Vector(T            *g_idata      ,
+                  T            *g_odata      ,
+                  unsigned int  size         ,
+                  cudaStream_t  stream = 0   ,
+                  bool          async = false);
 
 /**
- * @brief   Compute L2 norm on a vector of doubles
- * 
- * @details See documentation of normL2VectorFloat().
- * 
- * @ingroup algo
- */
-void normL2VectorDouble(double       *g_idata      ,
-                        double       *g_odata      ,
-                        unsigned int  size         ,
-                        cudaStream_t  stream = 0   ,
-                        bool          async = false);
-
-void normL2VectorInt(int          *g_idata      ,
-                     int          *g_odata      ,
-                     unsigned int  size         ,
-                     cudaStream_t  stream = 0   ,
-                     bool          async = false);
-
-/**
- * @brief   Compute LInfinity norm on a vector of floats
+ * @brief   Compute LInfinity norm on a vector
  * 
  * @details Max of absolute value of elements of the input vector and
  *          return a pointer to a scalar
@@ -1096,36 +741,23 @@ void normL2VectorInt(int          *g_idata      ,
  * @param[in]  idata pointer to input vector
  * @param[out] odata pointer to output scalar with result of the L infinity norm
  * @param[in]  size  size of the input vector
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void normLInfVectorFloat(float        *g_idata      ,
-                         float        *g_odata      ,
-                         unsigned int  size         ,
-                         cudaStream_t  stream = 0   ,
-                         bool          async = false);
+template<typename T>
+void normLInfVector(T            *g_idata      ,
+                    T            *g_odata      ,
+                    unsigned int  size         ,
+                    cudaStream_t  stream = 0   ,
+                    bool          async = false);
 
 /**
- * @brief   Compute LInfinity norm on a vector of doubles
- * 
- * @details See documentation of normLInfVectorFloat().
- * 
- * @ingroup algo
- */
-void normLInfVectorDouble(double       *g_idata      ,
-                          double       *g_odata      ,
-                          unsigned int  size         ,
-                          cudaStream_t  stream = 0   ,
-                          bool          async = false);
-
-void normLInfVectorInt(int          *g_idata      ,
-                       int          *g_odata      ,
-                       unsigned int  size         ,
-                       cudaStream_t  stream = 0   ,
-                       bool          async = false);
-
-/**
- * @brief   Pad matrix of floats
+ * @brief   Pad matrix
  * 
  * @param[in]  idata pointer to input matrix
  * @param[out] odata pointer to output matrix
@@ -1133,68 +765,26 @@ void normLInfVectorInt(int          *g_idata      ,
  * @param[in]  nCols contiguous dimension of odata
  * @param[in]  mRows non-contiguous dimension of idata
  * @param[in]  mCols contiguous dimension of idata
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void padarray2dMatrixFloat(float        *idata        ,
-                           float        *odata        ,
-                           unsigned int  nRows        ,
-                           unsigned int  nCols        ,
-                           unsigned int  mRows        ,
-                           unsigned int  mCols        ,
-                           cudaStream_t  stream = 0   ,
-                           bool          async = false);
+template<typename T>
+void padarray2dMatrix(T        *idata        ,
+                      T        *odata        ,
+                      unsigned int  nRows        ,
+                      unsigned int  nCols        ,
+                      unsigned int  mRows        ,
+                      unsigned int  mCols        ,
+                      cudaStream_t  stream = 0   ,
+                      bool          async = false);
 
 /**
- * @brief   Pad matrix of doubles
- * 
- * @details See documentation of padarray2dMatrixFloat
- * 
- * @ingroup algo
- */
-void padarray2dMatrixDouble(double       *idata        ,
-                            double       *odata        ,
-                            unsigned int  nRows        ,
-                            unsigned int  nCols        ,
-                            unsigned int  mRows        ,
-                            unsigned int  mCols        ,
-                            cudaStream_t  stream = 0   ,
-                            bool          async = false);
-
-/**
- * @brief   Pad matrix of complex floats
- * 
- * @details See documentation of padarray2dMatrixFloat
- * 
- * @ingroup algo
- */
-void padarray2dMatrixComplexFloat(cuda::std::complex<float> *idata        ,
-                                  cuda::std::complex<float> *odata        ,
-                                  unsigned int               nRows        ,
-                                  unsigned int               nCols        ,
-                                  unsigned int               mRows        ,
-                                  unsigned int               mCols        ,
-                                  cudaStream_t               stream = 0   ,
-                                  bool                       async = false);
-
-/**
- * @brief   Pad matrix of complex doubles
- * 
- * @details See documentation of padarray2dMatrixFloat
- * 
- * @ingroup algo
- */
-void padarray2dMatrixComplexDouble(cuda::std::complex<double> *idata        ,
-                                   cuda::std::complex<double> *odata        ,
-                                   unsigned int                nRows        ,
-                                   unsigned int                nCols        ,
-                                   unsigned int                mRows        ,
-                                   unsigned int                mCols        ,
-                                   cudaStream_t                stream = 0   ,
-                                   bool                        async = false);
-
-/**
- * @brief   Perform 1D reduction with floats on a 2D array (matrix)
+ * @brief   Perform 1D reduction on a 2D array (matrix)
  *          of size {N,K}
  * 
  * @details The reduction is done on the slow dimension, so the output
@@ -1204,77 +794,47 @@ void padarray2dMatrixComplexDouble(cuda::std::complex<double> *idata        ,
  * @param[out] C pointer to output vector with result of the reduction
  * @param[in]  N contiguous dimension of the input matrix
  * @param[in]  K non-contiguous dimension of the input matrix
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void reduction1dMatrixFloat(float        *B            ,
-                            float        *C            ,
-                            unsigned int  N            ,
-                            unsigned int  K            ,
-                            cudaStream_t  stream = 0   ,
-                            bool          async = false);
+template <typename T>
+void reduction1dMatrix(T            *B     ,
+                      T            *C     ,
+                      unsigned int  N     ,
+                      unsigned int  K     ,
+                      cudaStream_t  stream = 0,
+                      bool          async = false);
 
 /**
- * @brief   Perform 1D reduction with doubles on a 2D array (matrix)
- *          of size {N,K}
- * 
- * @details See documentation of reduction1dMatrixFloat()
- * 
- * @ingroup algo
- */
-
-void reduction1dMatrixDouble(double       *B            ,
-                             double       *C            ,
-                             unsigned int  N            ,
-                             unsigned int  K            ,
-                             cudaStream_t  stream = 0   ,
-                             bool          async = false);
-
-void reduction1dMatrixInt(int          *B            ,
-                          int          *C            ,
-                          unsigned int  N            ,
-                          unsigned int  K            ,
-                          cudaStream_t  stream = 0   ,
-                          bool          async = false);
-
-/**
- * @brief   Perform reduction on a vector of floats
+ * @brief   Perform reduction on a vector
  * 
  * @details Sum elements of the input vector and return a pointer to a scalar
  * 
  * @param[in]  idata pointer to input vector
  * @param[out] odata pointer to output scalar with result of the reduction
  * @param[in]  size  size of the input vector
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void reduction1dVectorFloat(float        *g_idata      ,
-                            float        *g_odata      ,
-                            unsigned int  size         ,
-                            cudaStream_t  stream = 0   ,
-                            bool          async = false);
+template<typename T>
+void reduction1dVector(T            *g_idata,
+                       T            *g_odata,
+                       unsigned int  size   ,
+                       cudaStream_t  stream = 0,
+                       bool          async = false );
 
 /**
- * @brief   Perform reduction on a vector of doubles
- * 
- * @details See documentation of reduction1dVectorFloat().
- * 
- * @ingroup algo
- */
-void reduction1dVectorDouble(double       *g_idata      ,
-                             double       *g_odata      ,
-                             unsigned int  size         ,
-                             cudaStream_t  stream = 0   ,
-                             bool          async = false);
-
-void reduction1dVectorInt(int          *g_idata      ,
-                          int          *g_odata      ,
-                          unsigned int  size         ,
-                          cudaStream_t  stream = 0   ,
-                          bool          async = false);
-
-/**
- * @brief   Apply 1d taper to matrix using floats.
+ * @brief   Apply 1d taper to matrix.
  * 
  * @details The taper is applied on the fastest 
  *          dimension. Each row of the matrix is associated
@@ -1295,52 +855,27 @@ void reduction1dVectorInt(int          *g_idata      ,
  * @param[in]     M            size of contiguous dimension.
  * @param[in]     N            size of non-contiguous dimension.
  * @param[in]     taperLength  size of taper array.
- * @param[in]     stream       CUDA stream were the kernel is launched.
- *                             Default is 0.
- * @param[in]     async        boolean defining if the kernel should be
- *                             asynchronous. Default is false.
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void taper1dMatrixFloat(float        *A            ,
-                        float        *taper        ,
-                        unsigned int *startIndices ,
-                        unsigned int *endIndices   ,
-                        unsigned int  M            ,
-                        unsigned int  N            ,
-                        unsigned int  taperLength  ,
-                        cudaStream_t  stream = 0   ,
-                        bool          async = false);
+template<typename T>
+void taper1dMatrix(T            *A            ,
+                   T            *taper        ,
+                   unsigned int *startIndices ,
+                   unsigned int *endIndices   ,
+                   unsigned int  M            ,
+                   unsigned int  N            ,
+                   unsigned int  taperLength  ,
+                   cudaStream_t  stream = 0   ,
+                   bool          async = false);
 
 /**
- * @brief   Apply 1d taper to matrix using doubles.
- * 
- * @details See documentation of taper1dMatrixFloat().
- * 
- * @ingroup algo
- */
-void taper1dMatrixDouble(double       *A            ,
-                         double       *taper        ,
-                         unsigned int *startIndices ,
-                         unsigned int *endIndices   ,
-                         unsigned int  M            ,
-                         unsigned int  N            ,
-                         unsigned int  taperLength  ,
-                         cudaStream_t  stream = 0   ,
-                         bool          async = false);
-
-void taper1dMatrixInt(int          *A            ,
-                      int          *taper        ,
-                      unsigned int *startIndices ,
-                      unsigned int *endIndices   ,
-                      unsigned int  M            ,
-                      unsigned int  N            ,
-                      unsigned int  taperLength  ,
-                      cudaStream_t  stream = 0   ,
-                      bool          async = false);
-
-/**
- * @brief   Perform matrix transposition with floats
+ * @brief   Perform matrix transposition
  * 
  * @details The input matrix has dimensions {size_x, size_y} and 
  *          the output matrix has dimensions {size_y, size_x}
@@ -1349,39 +884,24 @@ void taper1dMatrixInt(int          *A            ,
  * @param[out] odata pointer to output matrix with result of the transposition
  * @param[in]  size_x contiguous dimension of the input matrix
  * @param[in]  size_y non-contiguous dimension of the input matrix
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void transposeMatrixFloat(float        *idata        ,
-                          float        *odata        ,
-                          unsigned int  size_x       ,
-                          unsigned int  size_y       ,
-                          cudaStream_t  stream = 0   ,
-                          bool          async = false);
+template<typename T>
+void transposeMatrix(T            *idata        ,
+                     T            *odata        ,
+                     unsigned int  size_x       ,
+                     unsigned int  size_y       ,
+                     cudaStream_t  stream = 0   ,
+                     bool          async = false);
 
 /**
- * @brief   Perform matrix transposition with doubles
- * 
- * @details See documentation of transposeMatrixFloat()
- * 
- * @ingroup algo
- */
-void transposeMatrixDouble(double       *idata        ,
-                           double       *odata        ,
-                           unsigned int  size_x       ,
-                           unsigned int  size_y       ,
-                           cudaStream_t  stream = 0   ,
-                           bool          async = false);
-
-void transposeMatrixInt(int          *idata        ,
-                        int          *odata        ,
-                        unsigned int  size_x       ,
-                        unsigned int  size_y       ,
-                        cudaStream_t  stream = 0   ,
-                        bool          async = false);
-
-/**
- * @brief   upsample operator in 1d on matrix of floats
+ * @brief   upsample operator in 1d on matrix
  * 
  * @details The operation can be applied on both direction
  * 
@@ -1393,33 +913,23 @@ void transposeMatrixInt(int          *idata        ,
  *                    one element of the input matrix
  * @param[in]  mRows  non-contiguous dimension of the input matrix
  * @param[in]  mCols  contiguous dimension of the input matrix
+ * @param[in]  stream CUDA stream where the kernels are launched.
+ *                    Default is stream 0 (default stream)
+ * @param[in]  async  bool to define if kernels are launched asynchronously
+ *                    (without synchronization).
+ *                    Default is false (device is synchronized after each kernel launched)
  * 
  * @ingroup algo
  */
-void upsample1dMatrixFloat(float        *idata        ,
-                           float        *odata        ,
-                           unsigned int  dim          ,
-                           unsigned int  nzeros       ,
-                           unsigned int  mRows        ,
-                           unsigned int  mCols        ,
-                           cudaStream_t  stream = 0   ,
-                           bool          async = false);
-
-/**
- * @brief   upsample operator in 1d on matrix of doubles
- * 
- * @details See documentation of upsample1dMatrixFloat()
- * 
- * @ingroup algo
- */
-void upsample1dMatrixDouble(double       *idata        ,
-                            double       *odata        ,
-                            unsigned int  dim          ,
-                            unsigned int  nzeros       ,
-                            unsigned int  mRows        ,
-                            unsigned int  mCols        ,
-                            cudaStream_t  stream = 0   ,
-                            bool          async = false);
+template<typename T>
+void upsample1dMatrix(T            *idata        ,
+                      T            *odata        ,
+                      unsigned int  dim          ,
+                      unsigned int  nzeros       ,
+                      unsigned int  mRows        ,
+                      unsigned int  mCols        ,
+                      cudaStream_t  stream = 0   ,
+                      bool          async = false);
 
 }
 #endif

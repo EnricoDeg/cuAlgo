@@ -29,7 +29,7 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.hpp"
+#include "src/cuAlgo.h"
 #include <gtest/gtest.h>
 
 void convolution2DMatrixCC_CPU(float * result, float * data, float * filter,

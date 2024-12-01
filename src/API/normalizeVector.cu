@@ -26,8 +26,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "cuAlgo.h"
 #include "cuAlgo.hpp"
-#include "internals/cuAlgoInternal.hpp"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -44,29 +44,29 @@ __global__ void normalizeKernel(T            * __restrict__ data,
 	}
 }
 
-template<typename T>
-void normalizeVector(T            *g_idata,
-                     unsigned int  size   ,
-                     cudaStream_t  stream ,
-                     bool          async  ) {
-
-	T * g_odata;
-	check_cuda( cudaMalloc(&g_odata, sizeof(T)) );
-
-	normL1Vector<T>(g_idata, g_odata, size, stream, async);
-
-	dim3 threadsPerBlock(THREADS_PER_BLOCK);
-	dim3 blocksPerGrid(div_ceil(size, THREADS_PER_BLOCK));
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-	TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-	     normalizeKernel<T>,
-	     g_idata, g_odata, size);
-
-	check_cuda( cudaFree ( g_odata ) );
-}
-
 namespace cuAlgo {
+
+	template<typename T>
+	void normalizeVector(T            *g_idata,
+	                     unsigned int  size   ,
+	                     cudaStream_t  stream ,
+	                     bool          async  ) {
+
+		T * g_odata;
+		check_cuda( cudaMalloc(&g_odata, sizeof(T)) );
+
+		normL1Vector<T>(g_idata, g_odata, size, stream, async);
+
+		dim3 threadsPerBlock(THREADS_PER_BLOCK);
+		dim3 blocksPerGrid(div_ceil(size, THREADS_PER_BLOCK));
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+		     normalizeKernel<T>,
+		     g_idata, g_odata, size);
+
+		check_cuda( cudaFree ( g_odata ) );
+	}
 
 	void normalizeVectorFloat(float        *g_idata,
 	                          unsigned int  size   ,
@@ -94,4 +94,11 @@ namespace cuAlgo {
 
 		normalizeVector<int>(g_idata, size, stream, async);
 	}
+
+	template void normalizeVector(float  *,
+	                              unsigned int,
+	                              cudaStream_t, bool);
+	template void normalizeVector(double *,
+	                              unsigned int,
+	                              cudaStream_t, bool);
 }

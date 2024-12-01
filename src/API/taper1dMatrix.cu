@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/templateShMem.hpp"
 
@@ -64,29 +64,29 @@ __global__ void taper1dMatrixKernel(      T            *__restrict__ A          
 		A[x + y * M] *= sdata[taperLength - 1 - ( x - ( endIndices[y] - taperLength + 1 ) )];
 }
 
-template<typename T>
-void taper1dMatrix(T            *A           ,
-                   T            *taper       ,
-                   unsigned int *startIndices,
-                   unsigned int *endIndices  ,
-                   unsigned int  M           ,
-                   unsigned int  N           ,
-                   unsigned int  taperLength ,
-                   cudaStream_t  stream      ,
-                   bool          async       ) {
-
-	dim3 blocksPerGrid(div_ceil(M, 32), div_ceil(N, 32));
-	dim3 threadsPerBlock(32 , 32);
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-	unsigned int shmem = taperLength*sizeof(T);
-
-	TIME( blocksPerGrid, threadsPerBlock, shmem, stream, async,
-	      taper1dMatrixKernel<T>,
-	      A, taper, startIndices, endIndices, M, N, taperLength);
-}
-
 namespace cuAlgo {
+
+	template<typename T>
+	void taper1dMatrix(T            *A           ,
+	                   T            *taper       ,
+	                   unsigned int *startIndices,
+	                   unsigned int *endIndices  ,
+	                   unsigned int  M           ,
+	                   unsigned int  N           ,
+	                   unsigned int  taperLength ,
+	                   cudaStream_t  stream      ,
+	                   bool          async       ) {
+
+		dim3 blocksPerGrid(div_ceil(M, 32), div_ceil(N, 32));
+		dim3 threadsPerBlock(32 , 32);
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+		unsigned int shmem = taperLength*sizeof(T);
+
+		TIME( blocksPerGrid, threadsPerBlock, shmem, stream, async,
+		      taper1dMatrixKernel<T>,
+		      A, taper, startIndices, endIndices, M, N, taperLength);
+	}
 
 	void taper1dMatrixInt(int          *A           ,
 	                      int          *taper       ,
@@ -118,8 +118,8 @@ namespace cuAlgo {
 		                     M, N, taperLength, stream, async);
 	}
 
-	void taper1dMatrixDouble(double          *A           ,
-	                         double          *taper       ,
+	void taper1dMatrixDouble(double       *A           ,
+	                         double       *taper       ,
 	                         unsigned int *startIndices,
 	                         unsigned int *endIndices  ,
 	                         unsigned int  M           ,
@@ -132,4 +132,15 @@ namespace cuAlgo {
 		taper1dMatrix<double>(A, taper, startIndices, endIndices, 
 		                      M, N, taperLength, stream, async);
 	}
+
+	template void taper1dMatrix(float  *, float  *,
+	                            unsigned int *, unsigned int *,
+	                            unsigned int  , unsigned int  ,
+	                            unsigned int  ,
+	                            cudaStream_t, bool);
+	template void taper1dMatrix(double *, double *,
+	                            unsigned int *, unsigned int *,
+	                            unsigned int  , unsigned int  ,
+	                            unsigned int  ,
+	                            cudaStream_t, bool);
 }

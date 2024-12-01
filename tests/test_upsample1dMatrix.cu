@@ -31,7 +31,7 @@
 #include <cstring>
 #include <stdlib.h>
 #include <chrono>
-#include "src/cuAlgo.hpp"
+#include "src/cuAlgo.h"
 #include <gtest/gtest.h>
 
 using namespace std::chrono;

@@ -26,24 +26,24 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 #include "internals/gConvolutionCorrelation1dMatrix.hpp"
 
-template<typename T>
-void convolution1dMatrix(T            *R     ,
-                         T            *V     ,
-                         T            *C     ,
-                         unsigned int  N     ,
-                         unsigned int  K     ,
-                         cudaStream_t  stream,
-                         bool          async ) {
-
-	gConvolutionCorrelation1dMatrix<T, convolution_impl>(R, V, C, N, K, stream, async);
-}
-
 namespace cuAlgo {
+
+	template<typename T>
+	void convolution1dMatrix(T            *R     ,
+	                         T            *V     ,
+	                         T            *C     ,
+	                         unsigned int  N     ,
+	                         unsigned int  K     ,
+	                         cudaStream_t  stream,
+	                         bool          async ) {
+
+		gConvolutionCorrelation1dMatrix<T, convolution_impl>(R, V, C, N, K, stream, async);
+	}
 
 	void convolution1dMatrixFloat(float        *R     ,
 	                              float        *V     ,
@@ -80,4 +80,11 @@ namespace cuAlgo {
 
 		convolution1dMatrix<int>(R, V, C, N, K, stream, async);
 	}
+
+	template void convolution1dMatrix(float  *, float  *, float  *,
+	                                  unsigned int, unsigned int,
+	                                  cudaStream_t, bool);
+	template void convolution1dMatrix(double *, double *, double *,
+	                                  unsigned int, unsigned int,
+	                                  cudaStream_t, bool);
 }

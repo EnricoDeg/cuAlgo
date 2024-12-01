@@ -26,48 +26,47 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "cuAlgo.h"
 #include "cuAlgo.hpp"
-#include "internals/cuAlgoInternal.hpp"
 #include "internals/gReduction1dVector.hpp"
 
-template<typename T>
-void normL2Vector(T            *g_idata,
-                  T            *g_odata,
-                  unsigned int  size   ,
-                  cudaStream_t  stream ,
-                  bool          async  ) {
-
-	unsigned int threadsPerBlock = size > 1024 ? 1024 : size / 2;
-	unsigned int blocksPerGrid = size / (2*threadsPerBlock) + (size % (2*threadsPerBlock) > 0);
-
-	if (blocksPerGrid == 1) {
-
-		gReduction1dVectorFlexible<T, normL2_impl>(g_idata        ,
-		                                           g_odata        ,
-		                                           size           ,
-		                                           stream         ,
-		                                           async          ,
-		                                           threadsPerBlock);
-
-	} else {
-
-		T * d_buffer;
-		check_cuda( cudaMalloc(&d_buffer, blocksPerGrid*sizeof(T)) );
-
-		gReduction1dVectorPower2<T, normL2_impl>(g_idata,
-		                                         d_buffer,
-		                                         size   ,
-		                                         stream ,
-		                                         async  ,
-		                                         threadsPerBlock,
-		                                         blocksPerGrid) ;
-
-		reduction1dVector<T>(d_buffer, g_odata, blocksPerGrid, stream, async);
-		check_cuda( cudaFree ( d_buffer ) );
-	}
-}
-
 namespace cuAlgo {
+
+	template<typename T>
+	void normL2Vector(T            *g_idata,
+	                  T            *g_odata,
+	                  unsigned int  size   ,
+	                  cudaStream_t  stream ,
+	                  bool          async  ) {
+
+		unsigned int threadsPerBlock = size > 1024 ? 1024 : size / 2;
+		unsigned int blocksPerGrid = size / (2*threadsPerBlock) + (size % (2*threadsPerBlock) > 0);
+
+		if (blocksPerGrid == 1) {
+
+			gReduction1dVectorFlexible<T, normL2_impl>(g_idata        ,
+			                                           g_odata        ,
+			                                           size           ,
+			                                           stream         ,
+			                                           async          ,
+			                                           threadsPerBlock);
+		} else {
+
+			T * d_buffer;
+			check_cuda( cudaMalloc(&d_buffer, blocksPerGrid*sizeof(T)) );
+
+			gReduction1dVectorPower2<T, normL2_impl>(g_idata,
+			                                         d_buffer,
+			                                         size   ,
+			                                         stream ,
+			                                         async  ,
+			                                         threadsPerBlock,
+			                                         blocksPerGrid) ;
+
+			reduction1dVector<T>(d_buffer, g_odata, blocksPerGrid, stream, async);
+			check_cuda( cudaFree ( d_buffer ) );
+		}
+	}
 
 	void normL2VectorFloat(float        *g_idata,
 	                       float        *g_odata,
@@ -98,4 +97,11 @@ namespace cuAlgo {
 
 		normL2Vector<int>(g_idata, g_odata, size, stream, async);
 	}
+
+	template void  normL2Vector(float  *, float  *,
+	                            unsigned int ,
+	                            cudaStream_t , bool);
+	template void  normL2Vector(double *, double *,
+	                            unsigned int ,
+	                            cudaStream_t , bool );
 }

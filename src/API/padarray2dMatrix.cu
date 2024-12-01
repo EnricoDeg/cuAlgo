@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -57,26 +57,26 @@ __global__ void padarrayMatrixKernel(T * __restrict__ idata ,
 	}
 }
 
-template<typename T>
-void padarray2dMatrix(T            *idata ,
-                      T            *odata ,
-                      unsigned int  nRows ,
-                      unsigned int  nCols ,
-                      unsigned int  mRows ,
-                      unsigned int  mCols ,
-                      cudaStream_t  stream,
-                      bool          async ) {
-
-	dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-	dim3 blocksPerGrid(div_ceil(nCols, THREADS_PER_BLOCK_X), div_ceil(nRows, THREADS_PER_BLOCK_Y));
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-	TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-	     padarrayMatrixKernel<T>,
-	     idata, odata, nRows, nCols, mRows, mCols);
-}
-
 namespace cuAlgo {
+
+	template<typename T>
+	void padarray2dMatrix(T            *idata ,
+	                      T            *odata ,
+	                      unsigned int  nRows ,
+	                      unsigned int  nCols ,
+	                      unsigned int  mRows ,
+	                      unsigned int  mCols ,
+	                      cudaStream_t  stream,
+	                      bool          async ) {
+
+		dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
+		dim3 blocksPerGrid(div_ceil(nCols, THREADS_PER_BLOCK_X), div_ceil(nRows, THREADS_PER_BLOCK_Y));
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+		     padarrayMatrixKernel<T>,
+		     idata, odata, nRows, nCols, mRows, mCols);
+	}
 
 	void padarray2dMatrixFloat(float        *idata ,
 	                           float        *odata ,
@@ -127,4 +127,21 @@ namespace cuAlgo {
 
 		padarray2dMatrix<cuda::std::complex<double>>(idata, odata, nRows, nCols, mRows, mCols, stream, async);
 	}
+
+	template void padarray2dMatrix(float  *, float  *,
+	                               unsigned int, unsigned int,
+	                               unsigned int, unsigned int,
+	                               cudaStream_t, bool);
+	template void padarray2dMatrix(double *, double *,
+	                               unsigned int, unsigned int,
+	                               unsigned int, unsigned int,
+	                               cudaStream_t, bool);
+	template void padarray2dMatrix(cuda::std::complex<float > *, cuda::std::complex<float > *,
+	                               unsigned int, unsigned int,
+	                               unsigned int, unsigned int,
+	                               cudaStream_t, bool);
+	template void padarray2dMatrix(cuda::std::complex<double> *, cuda::std::complex<double> *,
+	                               unsigned int, unsigned int,
+	                               unsigned int, unsigned int,
+	                               cudaStream_t, bool);
 }

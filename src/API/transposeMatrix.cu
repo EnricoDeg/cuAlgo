@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -64,25 +64,25 @@ __global__ void transposeMatrixKernel(T *idata, T *odata,
 	}
 }
 
-template <typename T>
-void transposeMatrix(T            *idata ,
-                     T            *odata ,
-                     unsigned int  size_x,
-                     unsigned int  size_y,
-                     cudaStream_t  stream,
-                     bool          async ) {
-
-	dim3 blocksPerGrid3(size_x / TILE_DIM, size_y / TILE_DIM, 1);
-	dim3 threadsPerBlock3(TILE_DIM, BLOCK_ROWS, 1);
-
-	print_kernel_config(threadsPerBlock3, blocksPerGrid3) ;
-
-	TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
-	     transposeMatrixKernel<T>,
-	     idata, odata, size_x, size_y);
-}
-
 namespace cuAlgo {
+
+	template <typename T>
+	void transposeMatrix(T            *idata ,
+	                     T            *odata ,
+	                     unsigned int  size_x,
+	                     unsigned int  size_y,
+	                     cudaStream_t  stream,
+	                     bool          async ) {
+
+		dim3 blocksPerGrid3(size_x / TILE_DIM, size_y / TILE_DIM, 1);
+		dim3 threadsPerBlock3(TILE_DIM, BLOCK_ROWS, 1);
+
+		print_kernel_config(threadsPerBlock3, blocksPerGrid3) ;
+
+		TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
+		     transposeMatrixKernel<T>,
+		     idata, odata, size_x, size_y);
+	}
 
 	void transposeMatrixFloat(float        *idata ,
 	                          float        *odata ,
@@ -113,4 +113,17 @@ namespace cuAlgo {
 
 		transposeMatrix<int>(idata, odata, size_x, size_y, stream, async);
 	}
+
+	template void transposeMatrix(float  *, float  *,
+	                              unsigned int, unsigned int,
+	                              cudaStream_t, bool);
+	template void transposeMatrix(double *, double *,
+	                              unsigned int, unsigned int,
+	                              cudaStream_t, bool);
+	template void transposeMatrix(cuda::std::complex<float > *, cuda::std::complex<float > *,
+	                              unsigned int, unsigned int,
+	                              cudaStream_t, bool);
+	template void transposeMatrix(cuda::std::complex<double> *, cuda::std::complex<double> *,
+	                              unsigned int, unsigned int,
+	                              cudaStream_t, bool);
 }

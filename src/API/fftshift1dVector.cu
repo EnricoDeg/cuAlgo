@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -62,57 +62,72 @@ __global__ void fftshiftVectorKernelOdd(T * __restrict__ idata ,
 	}
 }
 
-template <typename T>
-void fftshift1dVector(T            *idata ,
-                    T            *odata ,
-                    unsigned int  size,
-                    cudaStream_t  stream,
-                    bool          async ) {
-
-	dim3 blocksPerGrid3(size / THREADS_PER_BLOCK, 1, 1);
-	dim3 threadsPerBlock3(THREADS_PER_BLOCK, 1, 1);
-
-	print_kernel_config(threadsPerBlock3, blocksPerGrid3) ;
-
-	if (size % 2 == 0) {
-
-		TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
-		     fftshiftVectorKernelEven<T>,
-		     idata, odata, size);
-	} else {
-
-		TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
-		     fftshiftVectorKernelOdd<T>,
-		     idata, odata, size);
-	}
-}
-
 namespace cuAlgo {
 
+	template <typename T>
+	void fftshift1dVector(T            *idata ,
+	                    T            *odata ,
+	                    unsigned int  size,
+	                    cudaStream_t  stream,
+	                    bool          async ) {
+
+		dim3 blocksPerGrid3(size / THREADS_PER_BLOCK, 1, 1);
+		dim3 threadsPerBlock3(THREADS_PER_BLOCK, 1, 1);
+
+		print_kernel_config(threadsPerBlock3, blocksPerGrid3) ;
+
+		if (size % 2 == 0) {
+
+			TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
+			     fftshiftVectorKernelEven<T>,
+			     idata, odata, size);
+		} else {
+
+			TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
+			     fftshiftVectorKernelOdd<T>,
+			     idata, odata, size);
+		}
+	}
+
 	void fftshift1dVectorFloat(float        *idata ,
-	                         float        *odata ,
-	                         unsigned int  size  ,
-	                         cudaStream_t  stream,
-	                         bool          async ) {
+	                           float        *odata ,
+	                           unsigned int  size  ,
+	                           cudaStream_t  stream,
+	                           bool          async ) {
 
 		fftshift1dVector<float>(idata, odata, size, stream, async);
 	}
 
 	void fftshift1dVectorDouble(double       *idata ,
-	                          double       *odata ,
-	                          unsigned int  size  ,
-	                          cudaStream_t  stream,
-	                          bool          async ) {
+	                            double       *odata ,
+	                            unsigned int  size  ,
+	                            cudaStream_t  stream,
+	                            bool          async ) {
 
 		fftshift1dVector<double>(idata, odata, size, stream, async);
 	}
 
 	void fftshift1dVectorInt(int          *idata ,
-	                       int          *odata ,
-	                       unsigned int  size  ,
-	                       cudaStream_t  stream,
-	                       bool          async ) {
+	                         int          *odata ,
+	                         unsigned int  size  ,
+	                         cudaStream_t  stream,
+	                         bool          async ) {
 
 		fftshift1dVector<int>(idata, odata, size, stream, async);
 	}
+
+	template void fftshift1dVector(float *, float *,
+	                               unsigned int,
+	                               cudaStream_t, bool);
+	template void fftshift1dVector(double *, double *,
+	                               unsigned int,
+	                               cudaStream_t, bool);
+	template void fftshift1dVector(cuda::std::complex<float > *,
+	                               cuda::std::complex<float > *,
+	                               unsigned int,
+	                               cudaStream_t, bool);
+	template void fftshift1dVector(cuda::std::complex<double> *,
+	                               cuda::std::complex<double> *,
+	                               unsigned int,
+	                               cudaStream_t, bool);
 }

@@ -11,6 +11,9 @@ Enrico Degregori
 - @ref API
 
 @defgroup algo
-          API functions
-
+          C++ API functions (templated)
+@defgroup algoC
+          C   API functions
+@defgroup algoSupport
+          Support API functions
 */

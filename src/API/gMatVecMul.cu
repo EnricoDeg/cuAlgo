@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/templateShMem.hpp"
 #include "internals/kernelParameters.hpp"
@@ -129,26 +129,26 @@ __global__ void gMatVecMulKernel1(const T          * __restrict__ A,
 		C[group_col] = tmp;
 }
 
-template <typename T>
-void gMatVecMul(const T            *A     ,
-                const T            *B     ,
-                      T            *C     ,
-                      unsigned int  N     ,
-                      unsigned int  K     ,
-                      cudaStream_t  stream,
-                      bool          async ) {
-
-	dim3 threadsPerBlock(THREADS_PER_BLOCK);
-	dim3 blocksPerGrid(div_ceil(N, WARPS_PER_BLOCK));
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
-	unsigned int smem = getSmem<T>(K);
-
-	TIME( blocksPerGrid, threadsPerBlock, smem, stream, async, 
-	      gMatVecMulKernel1,
-	      A, B, C, N, K );
-}
-
 namespace cuAlgo {
+
+	template <typename T>
+	void gMatVecMul(const T            *A     ,
+	                const T            *B     ,
+	                      T            *C     ,
+	                      unsigned int  N     ,
+	                      unsigned int  K     ,
+	                      cudaStream_t  stream,
+	                      bool          async ) {
+
+		dim3 threadsPerBlock(THREADS_PER_BLOCK);
+		dim3 blocksPerGrid(div_ceil(N, WARPS_PER_BLOCK));
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
+		unsigned int smem = getSmem<T>(K);
+
+		TIME( blocksPerGrid, threadsPerBlock, smem, stream, async, 
+		      gMatVecMulKernel1,
+		      A, B, C, N, K );
+	}
 
 	void gMatVecMulInt(const int          *A     ,
 	                   const int          *B     ,
@@ -185,4 +185,11 @@ namespace cuAlgo {
 
 		gMatVecMul<double>(A, B, C, N, K, stream, async);
 	}
+
+	template void gMatVecMul(const float  *, const float  *, float  *,
+	                         unsigned int, unsigned int,
+	                         cudaStream_t, bool);
+	template void gMatVecMul(const double *, const double *, double *,
+	                         unsigned int, unsigned int,
+	                         cudaStream_t, bool);
 }

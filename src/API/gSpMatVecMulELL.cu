@@ -26,7 +26,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
@@ -53,27 +53,26 @@ __global__ void gSpMatVecMulELLKernel( const unsigned int * __restrict__ columns
 	}
 }
 
-template <typename T>
-void gSpMatVecMulELL(unsigned int *columns         ,
-                     T            *values          ,
-                     T            *x               ,
-                     T            *y               ,
-                     unsigned int  nrows           ,
-                     unsigned int  elements_in_rows,
-                     cudaStream_t  stream          ,
-                     bool          async           ) {
-
-	dim3 threadsPerBlock(THREADS_PER_BLOCK);
-	dim3 blocksPerGrid(div_ceil(nrows, THREADS_PER_BLOCK));
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-	TIME( threadsPerBlock, blocksPerGrid, 0, stream, async,
-	      gSpMatVecMulELLKernel<T>,
-	      columns, values, x, y, nrows, elements_in_rows );
-
-}
-
 namespace cuAlgo {
+
+	template <typename T>
+	void gSpMatVecMulELL(unsigned int *columns         ,
+	                     T            *values          ,
+	                     T            *x               ,
+	                     T            *y               ,
+	                     unsigned int  nrows           ,
+	                     unsigned int  elements_in_rows,
+	                     cudaStream_t  stream          ,
+	                     bool          async           ) {
+
+		dim3 threadsPerBlock(THREADS_PER_BLOCK);
+		dim3 blocksPerGrid(div_ceil(nrows, THREADS_PER_BLOCK));
+		print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+		TIME( threadsPerBlock, blocksPerGrid, 0, stream, async,
+		      gSpMatVecMulELLKernel<T>,
+		      columns, values, x, y, nrows, elements_in_rows );
+	}
 
 	void gSpMatVecMulELLInt(unsigned int *columns         ,
 	                        int          *values          ,
@@ -113,4 +112,13 @@ namespace cuAlgo {
 
 		gSpMatVecMulELL<double>(columns, values, x, y, nrows, elements_in_rows, stream, async);
 	}
+
+	template void gSpMatVecMulELL(unsigned int *,
+	                              float  *, float  *, float  *,
+	                              unsigned int, unsigned int,
+	                              cudaStream_t, bool);
+	template void gSpMatVecMulELL(unsigned int *,
+	                              double *, double *, double *,
+	                              unsigned int, unsigned int,
+	                              cudaStream_t, bool);
 }

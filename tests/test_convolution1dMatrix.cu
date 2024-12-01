@@ -30,6 +30,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include <chrono>
+#include "src/cuAlgo.h"
 #include "src/cuAlgo.hpp"
 #include <gtest/gtest.h>
 

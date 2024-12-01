@@ -1,5 +1,5 @@
 /*
- * @file cuAlgoInternal.hpp
+ * @file cuAlgoSupport.hpp
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -26,31 +26,32 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#ifndef CUALGOSUPPORT_HPP
+#define CUALGOSUPPORT_HPP
 
-#ifndef CUALGO_INTERNAL_H
-#define CUALGO_INTERNAL_H
+namespace cuAlgo{
 
-#include <cuda.h>
+/**
+ * @brief   Compute and return the row block array given the 
+ *          row_ptr array of a matrix in CSR format.
+ * 
+ * @details The returned array is allocated on the device and 
+ *          it can be used to call gSpMatVecMulCSRAdaptive
+ * 
+ * @param[in]  row_ptr      Array of locations in the columns array
+ *                          where a new row starts.
+ * @param[in]  nrows        Number of rows in the matrix.
+ * @param[out] blocks_count Return the size of the returned array - 1
+ * 
+ * @return  Pointer to the device array with the number of rows
+ *          for each block.
+ * 
+ * @ingroup algoSupport
+ */
+unsigned int * getRowBlocks( const unsigned int * row_ptr     ,
+                                   unsigned int   nrows       ,
+                                   unsigned int * blocks_count);
 
-template <typename T>
-void reduction1dMatrix(T            *B     ,
-                      T            *C     ,
-                      unsigned int  N     ,
-                      unsigned int  K     ,
-                      cudaStream_t  stream,
-                      bool          async );
+}
 
-template<typename T>
-void reduction1dVector(T            *g_idata,
-                       T            *g_odata,
-                       unsigned int  size   ,
-                       cudaStream_t  stream ,
-                       bool          async  );
-
-template<typename T>
-void normL1Vector(T            *g_idata,
-                  T            *g_odata,
-                  unsigned int  size   ,
-                  cudaStream_t  stream ,
-                  bool          async  );
 #endif

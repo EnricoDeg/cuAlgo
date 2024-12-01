@@ -28,7 +28,7 @@
  */
 #include <iostream>
 #include <chrono>
-#include "cuAlgo.hpp"
+#include "cuAlgo.h"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
 
