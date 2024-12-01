@@ -154,6 +154,14 @@ target_include_directories(test_grad2dMatrix PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries(test_grad2dMatrix cuAlgo)
 target_link_libraries(test_grad2dMatrix GTest::gtest_main)
 
+# ifftshift2dMatrix
+add_executable( test_ifftshift2dMatrix
+                test_ifftshift2dMatrix.cu
+              )
+target_include_directories(test_ifftshift2dMatrix PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries(test_ifftshift2dMatrix cuAlgo)
+target_link_libraries(test_ifftshift2dMatrix GTest::gtest_main)
+
 # normalizeVector
 add_executable( test_normalizeVector
                 test_normalizeVector.cu
@@ -253,6 +261,7 @@ gtest_discover_tests(test_gSpMatVecMulCSRAdaptive)
 gtest_discover_tests(test_gSpMatVecMulCSRVector)
 gtest_discover_tests(test_gSpMatVecMulELL)
 gtest_discover_tests(test_grad2dMatrix)
+gtest_discover_tests(test_ifftshift2dMatrix)
 gtest_discover_tests(test_normalizeVector)
 gtest_discover_tests(test_normL1Vector)
 gtest_discover_tests(test_normL2Vector)
