@@ -35,7 +35,8 @@
 
 using namespace std::chrono;
 
-void padarray_CPU(float * idata, float * odata,
+template <class T>
+void padarray_CPU(T * idata, T * odata,
                   unsigned int nrows, unsigned int ncols,
                   unsigned int mRows, unsigned int mCols) {
 
@@ -43,13 +44,13 @@ void padarray_CPU(float * idata, float * odata,
 	unsigned int offsetCols = ( ncols - mCols ) / 2 + ( ncols - mCols ) % 2;
 	for (size_t i = offsetRows; i < offsetRows + mRows; ++i) {
 
-		float * __restrict in  = idata  + (i - offsetRows) * mCols ;
-		float * __restrict out = odata + i*ncols;
-		memcpy(out + offsetCols, in, mCols * sizeof(float));
+		T * __restrict in  = idata  + (i - offsetRows) * mCols ;
+		T * __restrict out = odata + i*ncols;
+		memcpy(out + offsetCols, in, mCols * sizeof(T));
 	}
 }
 
-TEST(padarray2dMatrix, default) {
+TEST(padarray2dMatrix, default_float) {
 
 	unsigned int nRows = 1024;
 	unsigned int nCols = 1024;
@@ -74,13 +75,55 @@ TEST(padarray2dMatrix, default) {
 
 	cuAlgo::padarray2dMatrixFloat(d_input, d_output, nRows, nCols, mRows, mCols);
 
-	padarray_CPU(input, solution, nRows, nCols, mRows, mCols);
+	padarray_CPU<float>(input, solution, nRows, nCols, mRows, mCols);
 
 	check_cuda( cudaMemcpy ( output, d_output, nRows * nCols * sizeof(float), cudaMemcpyDeviceToHost ) );
 
 	for(unsigned int i = 0; i < nRows; ++i)
 		for (unsigned int j = 0; j < nCols ; ++j)
 			ASSERT_EQ( output[j + i * nCols] , solution[j + i * nCols] );
+
+	check_cuda( cudaFree(d_input ) );
+	check_cuda( cudaFree(d_output) );
+	free(input   );
+	free(output  );
+	free(solution);
+}
+
+TEST(padarray2dMatrix, default_complex_float) {
+
+	unsigned int nRows = 1024;
+	unsigned int nCols = 1024;
+	unsigned int mRows =  512;
+	unsigned int mCols =  512;
+
+	cuda::std::complex<float> * input    = (cuda::std::complex<float> *)malloc(mRows * mCols * sizeof(cuda::std::complex<float>));
+	cuda::std::complex<float> * output   = (cuda::std::complex<float> *)malloc(nRows * nCols * sizeof(cuda::std::complex<float>));
+	cuda::std::complex<float> * solution = (cuda::std::complex<float> *)malloc(nRows * nCols * sizeof(cuda::std::complex<float>));
+
+	for(unsigned int i = 0; i < mRows; ++i)
+		for (unsigned int j = 0; j < mCols ; ++j)
+		input[j + i*mCols] = {(float)(i) * j + 1, (float)(i) + j + 1};
+
+	cuda::std::complex<float> *d_input;
+	check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(cuda::std::complex<float>)) );
+
+	cuda::std::complex<float> *d_output;
+	check_cuda( cudaMalloc(&d_output , nRows * nCols * sizeof(cuda::std::complex<float>)) );
+
+	check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(cuda::std::complex<float>), cudaMemcpyHostToDevice ) );
+
+	cuAlgo::padarray2dMatrixComplexFloat(d_input, d_output, nRows, nCols, mRows, mCols);
+
+	padarray_CPU<cuda::std::complex<float>>(input, solution, nRows, nCols, mRows, mCols);
+
+	check_cuda( cudaMemcpy ( output, d_output, nRows * nCols * sizeof(cuda::std::complex<float>), cudaMemcpyDeviceToHost ) );
+
+	for(unsigned int i = 0; i < nRows; ++i)
+		for (unsigned int j = 0; j < nCols ; ++j) {
+			ASSERT_EQ( output[j + i * nCols].real() , solution[j + i * nCols].real() );
+			ASSERT_EQ( output[j + i * nCols].imag() , solution[j + i * nCols].imag() );
+		}
 
 	check_cuda( cudaFree(d_input ) );
 	check_cuda( cudaFree(d_output) );
