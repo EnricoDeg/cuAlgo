@@ -226,6 +226,14 @@ target_include_directories(test_transposeMatrix PRIVATE ${PROJECT_SOURCE_DIR})
 target_link_libraries (test_transposeMatrix cuAlgo)
 target_link_libraries(test_transposeMatrix GTest::gtest_main)
 
+# upsample1dMatrix
+add_executable( test_upsample1dMatrix
+                test_upsample1dMatrix.cu
+              )
+target_include_directories(test_upsample1dMatrix PRIVATE ${PROJECT_SOURCE_DIR})
+target_link_libraries (test_upsample1dMatrix cuAlgo)
+target_link_libraries(test_upsample1dMatrix GTest::gtest_main)
+
 # Add all tests to GoogleTest
 include(GoogleTest)
 gtest_discover_tests(test_convolution1dMatrix)
@@ -254,3 +262,4 @@ gtest_discover_tests(test_reduction1dMatrix)
 gtest_discover_tests(test_reduction1dVector)
 gtest_discover_tests(test_taper1dMatrix)
 gtest_discover_tests(test_transposeMatrix)
+gtest_discover_tests(test_upsample1dMatrix)
