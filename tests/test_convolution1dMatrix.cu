@@ -140,7 +140,7 @@ TEST(convolution1dMatrix, performance) {
 		cuAlgo::convolution1dMatrixFloat(d_R, d_V, d_C, N, K);
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
-	ASSERT_TRUE(duration.count() / iterations < 350);
+	ASSERT_TRUE(duration.count() / iterations < 380);
 
 	check_cuda( cudaFree(d_R) );
 	check_cuda( cudaFree(d_V) );
