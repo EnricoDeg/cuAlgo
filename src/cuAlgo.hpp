@@ -1348,5 +1348,47 @@ void transposeMatrixInt(int          *idata        ,
                         unsigned int  size_y       ,
                         cudaStream_t  stream = 0   ,
                         bool          async = false);
+
+/**
+ * @brief   upsample operator in 1d on matrix of floats
+ * 
+ * @details The operation can be applied on both direction
+ * 
+ * @param[in]  idata  pointer to input matrix
+ * @param[out] odata  pointer to output matrix
+ * @param[in]  dim    dimension where to apply the dshear operation.
+ *                    0 for rows and 1 for columns.
+ * @param[in]  nzeros number of zeros on dimension `dim` before copying 
+ *                    one element of the input matrix
+ * @param[in]  mRows  non-contiguous dimension of the input matrix
+ * @param[in]  mCols  contiguous dimension of the input matrix
+ * 
+ * @ingroup algo
+ */
+void upsample1dMatrixFloat(float        *idata        ,
+                           float        *odata        ,
+                           unsigned int  dim          ,
+                           unsigned int  nzeros       ,
+                           unsigned int  mRows        ,
+                           unsigned int  mCols        ,
+                           cudaStream_t  stream = 0   ,
+                           bool          async = false);
+
+/**
+ * @brief   upsample operator in 1d on matrix of doubles
+ * 
+ * @details See documentation of upsample1dMatrixFloat()
+ * 
+ * @ingroup algo
+ */
+void upsample1dMatrixDouble(double       *idata        ,
+                            double       *odata        ,
+                            unsigned int  dim          ,
+                            unsigned int  nzeros       ,
+                            unsigned int  mRows        ,
+                            unsigned int  mCols        ,
+                            cudaStream_t  stream = 0   ,
+                            bool          async = false);
+
 }
 #endif
