@@ -382,11 +382,11 @@ void fftshift1dVector(T            *idata        ,
  * @ingroup algo
  */
 template<typename T>
-void fftshift2dMatrixFloat(T            *data         ,
-                           unsigned int  mRows        ,
-                           unsigned int  mCols        ,
-                           cudaStream_t  stream = 0   ,
-                           bool          async = false);
+void fftshift2dMatrix(T            *data         ,
+                      unsigned int  mRows        ,
+                      unsigned int  mCols        ,
+                      cudaStream_t  stream = 0   ,
+                      bool          async = false);
 
 /**
  * @brief   Flip rows or columns of a matrix in place
