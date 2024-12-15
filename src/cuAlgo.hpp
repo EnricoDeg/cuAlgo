@@ -30,7 +30,6 @@
 #define CUALGO_HPP
 
 #include <cuda.h>
-#include <cuda/std/complex>
 
 #include "internals/checkError.hpp"
 

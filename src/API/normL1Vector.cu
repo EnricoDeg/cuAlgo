@@ -78,6 +78,16 @@ namespace cuAlgo {
 		normL1Vector<float>(g_idata, g_odata, size, stream, async);
 	}
 
+	void normL1VectorComplexFloat(thrust::complex<float> *g_idata,
+	                              thrust::complex<float> *g_odata,
+	                              unsigned int            size   ,
+	                              cudaStream_t            stream ,
+	                              bool                    async  )
+	{
+
+		normL1Vector<thrust::complex<float>>(g_idata, g_odata, size, stream, async);
+	}
+
 	void normL1VectorDouble(double       *g_idata,
 	                        double       *g_odata,
 	                        unsigned int  size   ,
@@ -86,6 +96,16 @@ namespace cuAlgo {
 	{
 
 		normL1Vector<double>(g_idata, g_odata, size, stream, async);
+	}
+
+	void normL1VectorComplexDouble(thrust::complex<double> *g_idata,
+	                               thrust::complex<double> *g_odata,
+	                               unsigned int             size   ,
+	                               cudaStream_t             stream ,
+	                               bool                     async  )
+	{
+
+		normL1Vector<thrust::complex<double>>(g_idata, g_odata, size, stream, async);
 	}
 
 	void normL1VectorInt(int          *g_idata,
@@ -105,6 +125,12 @@ namespace cuAlgo {
 	                            unsigned int ,
 	                            cudaStream_t , bool);
 	template void  normL1Vector(int    *, int    *,
+	                            unsigned int,
+	                            cudaStream_t, bool);
+	template void  normL1Vector(thrust::complex<float> *, thrust::complex<float> *,
+	                            unsigned int,
+	                            cudaStream_t, bool);
+	template void  normL1Vector(thrust::complex<double> *, thrust::complex<double> *,
 	                            unsigned int,
 	                            cudaStream_t, bool);
 }

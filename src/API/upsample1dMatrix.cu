@@ -122,6 +122,19 @@ namespace cuAlgo {
 		upsample1dMatrix<float>(idata, odata, dim, nzeros, mRows, mCols, stream, async);
 	}
 
+	void upsample1dMatrixComplexFloat(thrust::complex<float> *idata ,
+	                                  thrust::complex<float> *odata ,
+	                                  unsigned int            dim   ,
+	                                  unsigned int            nzeros,
+	                                  unsigned int            mRows ,
+	                                  unsigned int            mCols ,
+	                                  cudaStream_t            stream,
+	                                  bool                    async )
+	{
+
+		upsample1dMatrix<thrust::complex<float>>(idata, odata, dim, nzeros, mRows, mCols, stream, async);
+	}
+
 	void upsample1dMatrixDouble(double       *idata ,
 	                            double       *odata ,
 	                            unsigned int  dim   ,
@@ -135,6 +148,19 @@ namespace cuAlgo {
 		upsample1dMatrix<double>(idata, odata, dim, nzeros, mRows, mCols, stream, async);
 	}
 
+	void upsample1dMatrixComplexDouble(thrust::complex<double> *idata ,
+	                                   thrust::complex<double> *odata ,
+	                                   unsigned int             dim   ,
+	                                   unsigned int             nzeros,
+	                                   unsigned int             mRows ,
+	                                   unsigned int             mCols ,
+	                                   cudaStream_t             stream,
+	                                   bool                     async )
+	{
+
+		upsample1dMatrix<thrust::complex<double>>(idata, odata, dim, nzeros, mRows, mCols, stream, async);
+	}
+
 	template void upsample1dMatrix(float  *, float  *,
 	                               unsigned int, unsigned int,
 	                               unsigned int, unsigned int,
@@ -143,11 +169,11 @@ namespace cuAlgo {
 	                               unsigned int, unsigned int,
 	                               unsigned int, unsigned int,
 	                               cudaStream_t, bool);
-	template void upsample1dMatrix(cuda::std::complex<float > *, cuda::std::complex<float > *,
+	template void upsample1dMatrix(thrust::complex<float > *, thrust::complex<float > *,
 	                               unsigned int, unsigned int,
 	                               unsigned int, unsigned int,
 	                               cudaStream_t, bool);
-	template void upsample1dMatrix(cuda::std::complex<double> *, cuda::std::complex<double> *,
+	template void upsample1dMatrix(thrust::complex<double> *, thrust::complex<double> *,
 	                               unsigned int, unsigned int,
 	                               unsigned int, unsigned int,
 	                               cudaStream_t, bool);

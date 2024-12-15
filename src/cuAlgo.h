@@ -30,6 +30,7 @@
 #define CUALGO_H
 
 #include <cuda.h>
+#include "thrust/complex.h"
 #include <cuda/std/complex>
 
 #include "internals/checkError.hpp"
@@ -415,6 +416,15 @@ void downsample1dMatrixFloat(float        *idata        ,
                              cudaStream_t  stream = 0   ,
                              bool          async = false);
 
+void downsample1dMatrixComplexFloat(thrust::complex<float>        *idata        ,
+                             thrust::complex<float>        *odata        ,
+                             unsigned int  dim          ,
+                             unsigned int  stride       ,
+                             unsigned int  mRows        ,
+                             unsigned int  mCols        ,
+                             cudaStream_t  stream = 0   ,
+                             bool          async = false);
+
 /**
  * @brief   downsample operator in 1d on matrix of doubles
  * 
@@ -618,6 +628,13 @@ void fftshift2dMatrixDouble(double       *data         ,
  * @ingroup algoC
  */
 void fliplr1dMatrixFloat(float        *data         ,
+                         unsigned int  dim          ,
+                         unsigned int  mRows        ,
+                         unsigned int  mCols        ,
+                         cudaStream_t  stream = 0   ,
+                         bool          async = false);
+
+void fliplr1dMatrixComplexFloat(thrust::complex<float>        *data         ,
                          unsigned int  dim          ,
                          unsigned int  mRows        ,
                          unsigned int  mCols        ,
@@ -1069,6 +1086,11 @@ void normalizeVectorFloat(float        *g_idata      ,
                           cudaStream_t  stream = 0   ,
                           bool          async = false);
 
+void normalizeVectorComplexFloat(thrust::complex<float> *g_idata,
+                          unsigned int  size   ,
+                          cudaStream_t  stream = 0 ,
+                          bool          async  = false);
+
 /**
  * @brief   Normalize a vector of doubles
  * 
@@ -1080,6 +1102,11 @@ void normalizeVectorDouble(double       *g_idata      ,
                            unsigned int  size         ,
                            cudaStream_t  stream = 0   ,
                            bool          async = false);
+
+void normalizeVectorComplexDouble(thrust::complex<double> *g_idata,
+                                  unsigned int  size   ,
+                                  cudaStream_t  stream = 0 ,
+                                  bool          async  = false);
 
 void normalizeVectorInt(int          *g_idata      ,
                         unsigned int  size         ,
@@ -1109,6 +1136,12 @@ void normL1VectorFloat(float        *g_idata      ,
                        cudaStream_t  stream = 0   ,
                        bool          async = false);
 
+void normL1VectorComplexFloat(thrust::complex<float> *g_idata       ,
+                              thrust::complex<float> *g_odata       ,
+                              unsigned int            size          ,
+                              cudaStream_t            stream = 0    ,
+                              bool                    async = false );
+
 /**
  * @brief   Compute L1 norm on a vector of doubles
  * 
@@ -1121,6 +1154,12 @@ void normL1VectorDouble(double       *g_idata      ,
                         unsigned int  size         ,
                         cudaStream_t  stream = 0   ,
                         bool          async = false);
+
+void normL1VectorComplexDouble(thrust::complex<double> *g_idata       ,
+                               thrust::complex<double> *g_odata       ,
+                               unsigned int             size          ,
+                               cudaStream_t             stream = 0    ,
+                               bool                     async = false );
 
 void normL1VectorInt(int          *g_idata      ,
                      int          *g_odata      ,
@@ -1357,6 +1396,12 @@ void reduction1dVectorFloat(float        *g_idata      ,
                             cudaStream_t  stream = 0   ,
                             bool          async = false);
 
+void reduction1dVectorComplexFloat(thrust::complex<float> *g_idata     ,
+                                   thrust::complex<float> *g_odata     ,
+                                   unsigned int            size        ,
+                                   cudaStream_t            stream = 0  ,
+                                   bool                    async =false);
+
 /**
  * @brief   Perform reduction on a vector of doubles
  * 
@@ -1369,6 +1414,12 @@ void reduction1dVectorDouble(double       *g_idata      ,
                              unsigned int  size         ,
                              cudaStream_t  stream = 0   ,
                              bool          async = false);
+
+void reduction1dVectorComplexDouble(thrust::complex<double> *g_idata     ,
+                                    thrust::complex<double> *g_odata     ,
+                                    unsigned int            size        ,
+                                    cudaStream_t            stream = 0  ,
+                                    bool                    async =false);
 
 void reduction1dVectorInt(int          *g_idata      ,
                           int          *g_odata      ,
@@ -1519,6 +1570,15 @@ void upsample1dMatrixFloat(float        *idata        ,
                            cudaStream_t  stream = 0   ,
                            bool          async = false);
 
+void upsample1dMatrixComplexFloat(thrust::complex<float> *idata        ,
+                                  thrust::complex<float> *odata        ,
+                                  unsigned int            dim          ,
+                                  unsigned int            nzeros       ,
+                                  unsigned int            mRows        ,
+                                  unsigned int            mCols        ,
+                                  cudaStream_t            stream = 0   ,
+                                  bool                    async = false);
+
 /**
  * @brief   upsample operator in 1d on matrix of doubles
  * 
@@ -1534,6 +1594,15 @@ void upsample1dMatrixDouble(double       *idata        ,
                             unsigned int  mCols        ,
                             cudaStream_t  stream = 0   ,
                             bool          async = false);
+
+void upsample1dMatrixComplexDouble(thrust::complex<double> *idata        ,
+                                   thrust::complex<double> *odata        ,
+                                   unsigned int             dim          ,
+                                   unsigned int             nzeros       ,
+                                   unsigned int             mRows        ,
+                                   unsigned int             mCols        ,
+                                   cudaStream_t             stream = 0   ,
+                                   bool                     async = false);
 
 }
 #endif

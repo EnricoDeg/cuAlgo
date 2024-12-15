@@ -59,7 +59,7 @@ void fliplrMatrix_CPU(float *idata, float *odata, unsigned int dim,
 	}
 }
 
-TEST(fftshift2dMatrix, default_dim0_even) {
+TEST(fliplr1dMatrix, default_dim0_even) {
 
 	unsigned int mRows = 1024;
 	unsigned int mCols = 1024;
@@ -91,7 +91,7 @@ TEST(fftshift2dMatrix, default_dim0_even) {
 	free(solution);
 }
 
-TEST(fftshift2dMatrix, default_dim0_odd) {
+TEST(fliplr1dMatrix, default_dim0_odd) {
 
 	unsigned int mRows = 1025;
 	unsigned int mCols = 1024;
@@ -123,7 +123,7 @@ TEST(fftshift2dMatrix, default_dim0_odd) {
 	free(solution);
 }
 
-TEST(fftshift2dMatrix, default_dim1_even) {
+TEST(fliplr1dMatrix, default_dim1_even) {
 
 	unsigned int mRows = 1024;
 	unsigned int mCols = 1024;
@@ -155,7 +155,7 @@ TEST(fftshift2dMatrix, default_dim1_even) {
 	free(solution);
 }
 
-TEST(fftshift2dMatrix, default_dim1_odd) {
+TEST(fliplr1dMatrix, default_dim1_odd) {
 
 	unsigned int mRows = 1024;
 	unsigned int mCols = 1025;
@@ -187,7 +187,7 @@ TEST(fftshift2dMatrix, default_dim1_odd) {
 	free(solution);
 }
 
-TEST(fftshift2dMatrix, performance_dim0_even) {
+TEST(fliplr1dMatrix, performance_dim0_even) {
 
 	unsigned int mRows = 1024;
 	unsigned int mCols = 1024;
@@ -219,7 +219,7 @@ TEST(fftshift2dMatrix, performance_dim0_even) {
 	free(input);
 }
 
-TEST(fftshift2dMatrix, performance_dim1_even) {
+TEST(fliplr1dMatrix, performance_dim1_even) {
 
 	unsigned int mRows = 1024;
 	unsigned int mCols = 1024;

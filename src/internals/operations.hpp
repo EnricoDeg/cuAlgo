@@ -39,10 +39,10 @@ class reductionSum_impl {
 	__device__ inline T globalMemory(T * __restrict__ a, T * __restrict__ b ) {
 		return *a + *b;
 	}
-	__device__ inline void loadSharedMemory(volatile T * result, T * __restrict__ a) {
+	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
 		*result += *a;
 	}
-	__device__ inline void sharedMemory(volatile T * result, volatile T * data) {
+	__device__ inline void sharedMemory(T * result, T * data) {
 		*result += *data;
 	}
 };
@@ -54,10 +54,10 @@ class reductionProd_impl {
 	__device__ inline T globalMemory(T * __restrict__ a, T * __restrict__ b ) {
 		return *a * *b;
 	}
-	__device__ inline void loadSharedMemory(volatile T * result, T * __restrict__ a) {
+	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
 		*result *= *a;
 	}
-	__device__ inline void sharedMemory(volatile T * result, volatile T * data) {
+	__device__ inline void sharedMemory(T * result, T * data) {
 		*result *= *data;
 	}
 };
@@ -69,10 +69,10 @@ class normL1_impl {
 	__device__ inline T globalMemory(T * __restrict__ a, T * __restrict__ b ) {
 		return abs(*a) + abs(*b);
 	}
-	__device__ inline void loadSharedMemory(volatile T * result, T * __restrict__ a) {
+	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
 		*result += *a;
 	}
-	__device__ inline void sharedMemory(volatile T * result, volatile T * data) {
+	__device__ inline void sharedMemory(T * result, T * data) {
 		*result += *data;
 	}
 };
@@ -84,10 +84,10 @@ class normL2_impl {
 	__device__ inline T globalMemory(T * __restrict__ a, T * __restrict__ b ) {
 		return (*a) * (*a) + (*b) * (*b);
 	}
-	__device__ inline void loadSharedMemory(volatile T * result, T * __restrict__ a) {
+	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
 		*result += *a;
 	}
-	__device__ inline void sharedMemory(volatile T * result, volatile T * data) {
+	__device__ inline void sharedMemory(T * result, T * data) {
 		*result += *data;
 	}
 };
@@ -99,10 +99,10 @@ class normLInf_impl {
 	__device__ inline T globalMemory(T * __restrict__ a, T * __restrict__ b ) {
 		return max(abs(*a), abs(*b));
 	}
-	__device__ inline void loadSharedMemory(volatile T * result, T * __restrict__ a) {
+	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
 		*result = max(*result, *a);
 	}
-	__device__ inline void sharedMemory(volatile T * result, volatile T * data) {
+	__device__ inline void sharedMemory(T * result, T * data) {
 		*result = max(*result, *data);
 	}
 };
@@ -115,10 +115,10 @@ class dotProduct_impl {
 	                                 T * __restrict__ b1, T * __restrict__ b2 ) {
 		return (*a1) * (*a2) + (*b1) * (*b2);
 	}
-	__device__ inline void loadSharedMemory(volatile T * result, T * __restrict__ a) {
+	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
 		*result += *a;
 	}
-	__device__ inline void sharedMemory(volatile T * result, volatile T * data) {
+	__device__ inline void sharedMemory(T * result, T * data) {
 		*result += *data;
 	}
 };

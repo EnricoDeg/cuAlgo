@@ -34,17 +34,36 @@
 #include "internals/operations.hpp"
 
 template <unsigned int blockSize, typename T, template<typename> class op_t>
-__device__ void warpReduceShMem(volatile T* sdata, unsigned int tid, op_t<T> &Op) {
-	if (blockSize >= 64) Op.sharedMemory(&sdata[tid], &sdata[tid + 32]);
-	if (blockSize >= 32) Op.sharedMemory(&sdata[tid], &sdata[tid + 16]);
-	if (blockSize >= 16) Op.sharedMemory(&sdata[tid], &sdata[tid +  8]);
-	if (blockSize >= 8)  Op.sharedMemory(&sdata[tid], &sdata[tid +  4]);
-	if (blockSize >= 4)  Op.sharedMemory(&sdata[tid], &sdata[tid +  2]);
-	if (blockSize >= 2)  Op.sharedMemory(&sdata[tid], &sdata[tid +  1]);
+__device__ void warpReduceShMem(T* sdata, unsigned int tid, op_t<T> &Op) {
+
+	if (blockSize >= 64) {
+		Op.sharedMemory(&sdata[tid], &sdata[tid + 32]);
+		__syncwarp();
+	}
+	if (blockSize >= 32) {
+		Op.sharedMemory(&sdata[tid], &sdata[tid + 16]);
+		__syncwarp();
+	}
+	if (blockSize >= 16) {
+		Op.sharedMemory(&sdata[tid], &sdata[tid +  8]);
+		__syncwarp();
+	}
+	if (blockSize >= 8) {
+		Op.sharedMemory(&sdata[tid], &sdata[tid +  4]);
+		__syncwarp();
+	}
+	if (blockSize >= 4) {
+		Op.sharedMemory(&sdata[tid], &sdata[tid +  2]);
+		__syncwarp();
+	}
+	if (blockSize >= 2) {
+		Op.sharedMemory(&sdata[tid], &sdata[tid +  1]);
+		__syncwarp();
+	}
 };
 
 template <unsigned int blockSize, typename T, template<typename> class op_t>
-__device__ void blockReduceShMemUnroll(volatile T* sdata, unsigned int tid, op_t<T> &Op) {
+__device__ void blockReduceShMemUnroll(T* sdata, unsigned int tid, op_t<T> &Op) {
 
 	if (blockSize >= 1024) {
 		if (tid < 512) Op.sharedMemory(&sdata[tid], &sdata[tid + 512]);
@@ -67,7 +86,7 @@ __device__ void blockReduceShMemUnroll(volatile T* sdata, unsigned int tid, op_t
 }
 
 template <typename T, template<typename> class op_t>
-__device__ void blockReduceShMem(volatile T* sdata, unsigned int tid, op_t<T> &Op) {
+__device__ void blockReduceShMem(T* sdata, unsigned int tid, op_t<T> &Op) {
 
 	for (unsigned int s=blockDim.x/2; s>0; s>>=1) {
 		if (tid < s) {

@@ -78,6 +78,16 @@ namespace cuAlgo {
 		reduction1dVector<float>(g_idata, g_odata, size, stream, async);
 	}
 
+	void reduction1dVectorComplexFloat(thrust::complex<float> *g_idata,
+	                                   thrust::complex<float> *g_odata,
+	                                   unsigned int            size   ,
+	                                   cudaStream_t            stream ,
+	                                   bool                    async  )
+	{
+
+		reduction1dVector<thrust::complex<float>>(g_idata, g_odata, size, stream, async);
+	}
+
 	void reduction1dVectorDouble(double       *g_idata,
 	                             double       *g_odata,
 	                             unsigned int  size   ,
@@ -86,6 +96,16 @@ namespace cuAlgo {
 	{
 
 		reduction1dVector<double>(g_idata, g_odata, size, stream, async);
+	}
+
+	void reduction1dVectorComplexDouble(thrust::complex<double> *g_idata,
+	                                    thrust::complex<double> *g_odata,
+	                                    unsigned int            size   ,
+	                                    cudaStream_t            stream ,
+	                                    bool                    async  )
+	{
+
+		reduction1dVector<thrust::complex<double>>(g_idata, g_odata, size, stream, async);
 	}
 
 	void reduction1dVectorInt(int          *g_idata,
@@ -102,6 +122,12 @@ namespace cuAlgo {
 	                                unsigned int,
 	                                cudaStream_t, bool);
 	template void reduction1dVector(double *, double *,
+	                                unsigned int,
+	                                cudaStream_t, bool);
+	template void reduction1dVector(thrust::complex<float> *, thrust::complex<float> *,
+	                                unsigned int,
+	                                cudaStream_t, bool);
+	template void reduction1dVector(thrust::complex<double> *, thrust::complex<double> *,
 	                                unsigned int,
 	                                cudaStream_t, bool);
 }

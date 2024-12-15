@@ -114,6 +114,17 @@ namespace cuAlgo {
 		fliplr1dMatrix<float>(data, dim, mRows, mCols, stream, async);
 	}
 
+	void fliplr1dMatrixComplexFloat(thrust::complex<float> *data  ,
+	                                unsigned int            dim   ,
+	                                unsigned int            mRows ,
+	                                unsigned int            mCols ,
+	                                cudaStream_t            stream,
+	                                bool                    async )
+	{
+
+		fliplr1dMatrix<thrust::complex<float>>(data, dim, mRows, mCols, stream, async);
+	}
+
 	void fliplr1dMatrixDouble(double       *data  ,
 	                          unsigned int  dim   ,
 	                          unsigned int  mRows ,
@@ -125,16 +136,27 @@ namespace cuAlgo {
 		fliplr1dMatrix<double>(data, dim, mRows, mCols, stream, async);
 	}
 
+	void fliplr1dMatrixComplexDouble(thrust::complex<double> *data  ,
+	                                 unsigned int             dim   ,
+	                                 unsigned int             mRows ,
+	                                 unsigned int             mCols ,
+	                                 cudaStream_t             stream,
+	                                 bool                     async )
+	{
+
+		fliplr1dMatrix<thrust::complex<double>>(data, dim, mRows, mCols, stream, async);
+	}
+
 	template void fliplr1dMatrix(float  *,
 	                             unsigned int, unsigned int, unsigned int,
 	                             cudaStream_t, bool);
 	template void fliplr1dMatrix(double *,
 	                             unsigned int, unsigned int, unsigned int,
 	                             cudaStream_t, bool);
-	template void fliplr1dMatrix(cuda::std::complex<float > *,
+	template void fliplr1dMatrix(thrust::complex<float > *,
 	                             unsigned int, unsigned int, unsigned int,
 	                             cudaStream_t, bool);
-	template void fliplr1dMatrix(cuda::std::complex<double> *,
+	template void fliplr1dMatrix(thrust::complex<double> *,
 	                             unsigned int, unsigned int, unsigned int,
 	                             cudaStream_t, bool);
 }

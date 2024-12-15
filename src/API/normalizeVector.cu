@@ -77,6 +77,15 @@ namespace cuAlgo {
 		normalizeVector<float>(g_idata, size, stream, async);
 	}
 
+	void normalizeVectorComplexFloat(thrust::complex<float> *g_idata,
+	                                 unsigned int            size   ,
+	                                 cudaStream_t            stream ,
+	                                 bool                    async  )
+	{
+
+		normalizeVector<thrust::complex<float>>(g_idata, size, stream, async);
+	}
+
 	void normalizeVectorDouble(double       *g_idata,
 	                           unsigned int  size   ,
 	                           cudaStream_t  stream ,
@@ -84,6 +93,15 @@ namespace cuAlgo {
 	{
 
 		normalizeVector<double>(g_idata, size, stream, async);
+	}
+
+	void normalizeVectorComplexDouble(thrust::complex<double> *g_idata,
+	                                  unsigned int             size   ,
+	                                  cudaStream_t             stream ,
+	                                  bool                     async  )
+	{
+
+		normalizeVector<thrust::complex<double>>(g_idata, size, stream, async);
 	}
 
 	void normalizeVectorInt(int          *g_idata,
@@ -99,6 +117,12 @@ namespace cuAlgo {
 	                              unsigned int,
 	                              cudaStream_t, bool);
 	template void normalizeVector(double *,
+	                              unsigned int,
+	                              cudaStream_t, bool);
+	template void normalizeVector(thrust::complex<float> *,
+	                              unsigned int,
+	                              cudaStream_t, bool);
+	template void normalizeVector(thrust::complex<double> *,
 	                              unsigned int,
 	                              cudaStream_t, bool);
 }

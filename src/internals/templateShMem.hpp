@@ -31,6 +31,7 @@
 #define TEMPLATESHMEM_HPP
 
 #include <cuda.h>
+#include "thrust/complex.h"
 
 /** @brief Wrapper class for templatized dynamic shared memory arrays.
   * 
@@ -125,6 +126,16 @@ struct SharedMemory <double> {
 template <>
 struct SharedMemory <uchar4> {
 	__device__ uchar4* getPointer() { extern __shared__ uchar4 s_uchar4[]; return s_uchar4; }    
+};
+
+template <>
+struct SharedMemory <thrust::complex<float>> {
+	__device__ thrust::complex<float>* getPointer() { extern __shared__ thrust::complex<float> s_complex_float[]; return s_complex_float; }      
+};
+
+template <>
+struct SharedMemory <thrust::complex<double>> {
+	__device__ thrust::complex<double>* getPointer() { extern __shared__ thrust::complex<double> s_complex_double[]; return s_complex_double; }      
 };
 
 #endif
