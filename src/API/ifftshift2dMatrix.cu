@@ -96,6 +96,16 @@ namespace cuAlgo {
 		ifftshift2dMatrix<float>(data, mRows, mCols, stream, async);
 	}
 
+	void ifftshift2dMatrixComplexFloat(thrust::complex<float> *data  ,
+	                                   unsigned int            mRows ,
+	                                   unsigned int            mCols ,
+	                                   cudaStream_t            stream,
+	                                   bool                    async )
+	{
+
+		ifftshift2dMatrix<thrust::complex<float>>(data, mRows, mCols, stream, async);
+	}
+
 	void ifftshift2dMatrixDouble(double       *data  ,
 	                             unsigned int  mRows ,
 	                             unsigned int  mCols ,
@@ -106,16 +116,26 @@ namespace cuAlgo {
 		ifftshift2dMatrix<double>(data, mRows, mCols, stream, async);
 	}
 
+	void ifftshift2dMatrixComplexDouble(thrust::complex<double> *data  ,
+	                                    unsigned int             mRows ,
+	                                    unsigned int             mCols ,
+	                                    cudaStream_t             stream,
+	                                    bool                     async )
+	{
+
+		ifftshift2dMatrix<thrust::complex<double>>(data, mRows, mCols, stream, async);
+	}
+
 	template void ifftshift2dMatrix(float  *,
 	                                unsigned int, unsigned int,
 	                                cudaStream_t, bool);
 	template void ifftshift2dMatrix(double *,
 	                                unsigned int, unsigned int,
 	                                cudaStream_t, bool);
-	template void ifftshift2dMatrix(cuda::std::complex<float > *,
+	template void ifftshift2dMatrix(thrust::complex<float > *,
 	                                unsigned int, unsigned int,
 	                                cudaStream_t, bool);
-	template void ifftshift2dMatrix(cuda::std::complex<double> *,
+	template void ifftshift2dMatrix(thrust::complex<double> *,
 	                                unsigned int, unsigned int,
 	                                cudaStream_t, bool);
 }

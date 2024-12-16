@@ -596,6 +596,12 @@ void fftshift2dMatrixFloat(float        *data         ,
                            cudaStream_t  stream = 0   ,
                            bool          async = false);
 
+void fftshift2dMatrixComplexFloat(thrust::complex<float> *data         ,
+                                  unsigned int            mRows        ,
+                                  unsigned int            mCols        ,
+                                  cudaStream_t            stream = 0   ,
+                                  bool                    async = false);
+
 /**
  * @brief   Perform fftshift on a matrix with doubles in place
  * 
@@ -608,6 +614,12 @@ void fftshift2dMatrixDouble(double       *data         ,
                             unsigned int  mCols        ,
                             cudaStream_t  stream = 0   ,
                             bool          async = false);
+
+void fftshift2dMatrixComplexDouble(thrust::complex<double> *data         ,
+                                   unsigned int             mRows        ,
+                                   unsigned int             mCols        ,
+                                   cudaStream_t             stream = 0   ,
+                                   bool                     async = false);
 
 /**
  * @brief   Flip rows or columns of a matrix of floats in place
@@ -1052,6 +1064,12 @@ void ifftshift2dMatrixFloat(float        *data         ,
                             cudaStream_t  stream = 0   ,
                             bool          async = false);
 
+void ifftshift2dMatrixComplexFloat(thrust::complex<float> *data         ,
+                                   unsigned int            mRows        ,
+                                   unsigned int            mCols        ,
+                                   cudaStream_t            stream = 0   ,
+                                   bool                    async = false);
+
 /**
  * @brief   Perform ifftshift on a matrix with doubles in place
  * 
@@ -1064,6 +1082,12 @@ void ifftshift2dMatrixDouble(double       *data         ,
                              unsigned int  mCols        ,
                              cudaStream_t  stream = 0   ,
                              bool          async = false);
+
+void ifftshift2dMatrixComplexDouble(thrust::complex<double> *data         ,
+                                    unsigned int             mRows        ,
+                                    unsigned int             mCols        ,
+                                    cudaStream_t             stream = 0   ,
+                                    bool                     async = false);
 
 /**
  * @brief   Normalize a vector of floats

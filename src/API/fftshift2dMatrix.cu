@@ -238,6 +238,16 @@ namespace cuAlgo {
 		fftshift2dMatrix<float>(data, mRows, mCols, stream, async);
 	}
 
+	void fftshift2dMatrixComplexFloat(thrust::complex<float> *data  ,
+	                                  unsigned int            mRows ,
+	                                  unsigned int            mCols ,
+	                                  cudaStream_t            stream,
+	                                  bool                    async )
+	{
+
+		fftshift2dMatrix<thrust::complex<float>>(data, mRows, mCols, stream, async);
+	}
+
 	void fftshift2dMatrixDouble(double       *data  ,
 	                            unsigned int  mRows ,
 	                            unsigned int  mCols ,
@@ -248,16 +258,26 @@ namespace cuAlgo {
 		fftshift2dMatrix<double>(data, mRows, mCols, stream, async);
 	}
 
+	void fftshift2dMatrixComplexDouble(thrust::complex<double> *data  ,
+	                                   unsigned int             mRows ,
+	                                   unsigned int             mCols ,
+	                                   cudaStream_t             stream,
+	                                   bool                     async )
+	{
+
+		fftshift2dMatrix<thrust::complex<double>>(data, mRows, mCols, stream, async);
+	}
+
 	template void fftshift2dMatrix(float  *,
 	                               unsigned int, unsigned int,
 	                               cudaStream_t, bool);
 	template void fftshift2dMatrix(double *,
 	                               unsigned int, unsigned int,
 	                               cudaStream_t, bool);
-	template void fftshift2dMatrix(cuda::std::complex<float >*,
+	template void fftshift2dMatrix(thrust::complex<float >*,
 	                               unsigned int, unsigned int,
 	                               cudaStream_t, bool);
-	template void fftshift2dMatrix(cuda::std::complex<double>*,
+	template void fftshift2dMatrix(thrust::complex<double>*,
 	                               unsigned int, unsigned int,
 	                               cudaStream_t, bool);
 }
