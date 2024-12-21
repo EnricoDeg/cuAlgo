@@ -1247,6 +1247,19 @@ void normL2VectorFloat(float        *g_idata      ,
                        bool          async = false);
 
 /**
+ * @brief   Compute L2 norm on a vector of complex floats
+ * 
+ * @details See documentation of normL2VectorFloat().
+ * 
+ * @ingroup algoC
+ */
+void normL2VectorFloat(thrust::complex<float> *g_idata      ,
+                       thrust::complex<float> *g_odata      ,
+                       unsigned int            size         ,
+                       cudaStream_t            stream = 0   ,
+                       bool                    async = false);
+
+/**
  * @brief   Compute L2 norm on a vector of doubles
  * 
  * @details See documentation of normL2VectorFloat().
@@ -1258,6 +1271,19 @@ void normL2VectorDouble(double       *g_idata      ,
                         unsigned int  size         ,
                         cudaStream_t  stream = 0   ,
                         bool          async = false);
+
+/**
+ * @brief   Compute L2 norm on a vector of complex doubles
+ * 
+ * @details See documentation of normL2VectorFloat().
+ * 
+ * @ingroup algoC
+ */
+void normL2VectorFloat(thrust::complex<double> *g_idata      ,
+                       thrust::complex<double> *g_odata      ,
+                       unsigned int             size         ,
+                       cudaStream_t             stream = 0   ,
+                       bool                     async = false);
 
 void normL2VectorInt(int          *g_idata      ,
                      int          *g_odata      ,
