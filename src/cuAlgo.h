@@ -1324,14 +1324,14 @@ void padarray2dMatrixDouble(double       *idata        ,
  * 
  * @ingroup algoC
  */
-void padarray2dMatrixComplexFloat(cuda::std::complex<float> *idata        ,
-                                  cuda::std::complex<float> *odata        ,
-                                  unsigned int               nRows        ,
-                                  unsigned int               nCols        ,
-                                  unsigned int               mRows        ,
-                                  unsigned int               mCols        ,
-                                  cudaStream_t               stream = 0   ,
-                                  bool                       async = false);
+void padarray2dMatrixComplexFloat(thrust::complex<float> *idata        ,
+                                  thrust::complex<float> *odata        ,
+                                  unsigned int            nRows        ,
+                                  unsigned int            nCols        ,
+                                  unsigned int            mRows        ,
+                                  unsigned int            mCols        ,
+                                  cudaStream_t            stream = 0   ,
+                                  bool                    async = false);
 
 /**
  * @brief   Pad matrix of complex doubles
@@ -1340,14 +1340,14 @@ void padarray2dMatrixComplexFloat(cuda::std::complex<float> *idata        ,
  * 
  * @ingroup algoC
  */
-void padarray2dMatrixComplexDouble(cuda::std::complex<double> *idata        ,
-                                   cuda::std::complex<double> *odata        ,
-                                   unsigned int                nRows        ,
-                                   unsigned int                nCols        ,
-                                   unsigned int                mRows        ,
-                                   unsigned int                mCols        ,
-                                   cudaStream_t                stream = 0   ,
-                                   bool                        async = false);
+void padarray2dMatrixComplexDouble(thrust::complex<double> *idata        ,
+                                   thrust::complex<double> *odata        ,
+                                   unsigned int             nRows        ,
+                                   unsigned int             nCols        ,
+                                   unsigned int             mRows        ,
+                                   unsigned int             mCols        ,
+                                   cudaStream_t             stream = 0   ,
+                                   bool                     async = false);
 
 /**
  * @brief   Perform 1D reduction with floats on a 2D array (matrix)

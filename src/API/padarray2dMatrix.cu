@@ -104,28 +104,28 @@ namespace cuAlgo {
 		padarray2dMatrix<double>(idata, odata, nRows, nCols, mRows, mCols, stream, async);
 	}
 
-	void padarray2dMatrixComplexFloat(cuda::std::complex<float> *idata ,
-	                                  cuda::std::complex<float> *odata ,
-	                                  unsigned int               nRows ,
-	                                  unsigned int               nCols ,
-	                                  unsigned int               mRows ,
-	                                  unsigned int               mCols ,
-	                                  cudaStream_t               stream,
-	                                  bool                       async ) {
+	void padarray2dMatrixComplexFloat(thrust::complex<float> *idata ,
+	                                  thrust::complex<float> *odata ,
+	                                  unsigned int            nRows ,
+	                                  unsigned int            nCols ,
+	                                  unsigned int            mRows ,
+	                                  unsigned int            mCols ,
+	                                  cudaStream_t            stream,
+	                                  bool                    async ) {
 
-		padarray2dMatrix<cuda::std::complex<float>>(idata, odata, nRows, nCols, mRows, mCols, stream, async);
+		padarray2dMatrix<thrust::complex<float>>(idata, odata, nRows, nCols, mRows, mCols, stream, async);
 	}
 
-	void padarray2dMatrixComplexDouble(cuda::std::complex<double> *idata ,
-	                                   cuda::std::complex<double> *odata ,
-	                                   unsigned int                nRows ,
-	                                   unsigned int                nCols ,
-	                                   unsigned int                mRows ,
-	                                   unsigned int                mCols ,
-	                                   cudaStream_t                stream,
-	                                   bool                        async ) {
+	void padarray2dMatrixComplexDouble(thrust::complex<double> *idata ,
+	                                   thrust::complex<double> *odata ,
+	                                   unsigned int             nRows ,
+	                                   unsigned int             nCols ,
+	                                   unsigned int             mRows ,
+	                                   unsigned int             mCols ,
+	                                   cudaStream_t             stream,
+	                                   bool                     async ) {
 
-		padarray2dMatrix<cuda::std::complex<double>>(idata, odata, nRows, nCols, mRows, mCols, stream, async);
+		padarray2dMatrix<thrust::complex<double>>(idata, odata, nRows, nCols, mRows, mCols, stream, async);
 	}
 
 	template void padarray2dMatrix(float  *, float  *,
@@ -136,11 +136,11 @@ namespace cuAlgo {
 	                               unsigned int, unsigned int,
 	                               unsigned int, unsigned int,
 	                               cudaStream_t, bool);
-	template void padarray2dMatrix(cuda::std::complex<float > *, cuda::std::complex<float > *,
+	template void padarray2dMatrix(thrust::complex<float > *, thrust::complex<float > *,
 	                               unsigned int, unsigned int,
 	                               unsigned int, unsigned int,
 	                               cudaStream_t, bool);
-	template void padarray2dMatrix(cuda::std::complex<double> *, cuda::std::complex<double> *,
+	template void padarray2dMatrix(thrust::complex<double> *, thrust::complex<double> *,
 	                               unsigned int, unsigned int,
 	                               unsigned int, unsigned int,
 	                               cudaStream_t, bool);

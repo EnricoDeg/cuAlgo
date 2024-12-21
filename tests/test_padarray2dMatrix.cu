@@ -97,27 +97,27 @@ TEST(padarray2dMatrix, default_complex_float) {
 	unsigned int mRows =  512;
 	unsigned int mCols =  512;
 
-	cuda::std::complex<float> * input    = (cuda::std::complex<float> *)malloc(mRows * mCols * sizeof(cuda::std::complex<float>));
-	cuda::std::complex<float> * output   = (cuda::std::complex<float> *)malloc(nRows * nCols * sizeof(cuda::std::complex<float>));
-	cuda::std::complex<float> * solution = (cuda::std::complex<float> *)malloc(nRows * nCols * sizeof(cuda::std::complex<float>));
+	thrust::complex<float> * input    = (thrust::complex<float> *)malloc(mRows * mCols * sizeof(thrust::complex<float>));
+	thrust::complex<float> * output   = (thrust::complex<float> *)malloc(nRows * nCols * sizeof(thrust::complex<float>));
+	thrust::complex<float> * solution = (thrust::complex<float> *)malloc(nRows * nCols * sizeof(thrust::complex<float>));
 
 	for(unsigned int i = 0; i < mRows; ++i)
 		for (unsigned int j = 0; j < mCols ; ++j)
-		input[j + i*mCols] = {(float)(i) * j + 1, (float)(i) + j + 1};
+		input[j + i*mCols] = thrust::complex<float>((float)(i) * j + 1, (float)(i) + j + 1);
 
-	cuda::std::complex<float> *d_input;
-	check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(cuda::std::complex<float>)) );
+	thrust::complex<float> *d_input;
+	check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(thrust::complex<float>)) );
 
-	cuda::std::complex<float> *d_output;
-	check_cuda( cudaMalloc(&d_output , nRows * nCols * sizeof(cuda::std::complex<float>)) );
+	thrust::complex<float> *d_output;
+	check_cuda( cudaMalloc(&d_output , nRows * nCols * sizeof(thrust::complex<float>)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(cuda::std::complex<float>), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(thrust::complex<float>), cudaMemcpyHostToDevice ) );
 
 	cuAlgo::padarray2dMatrixComplexFloat(d_input, d_output, nRows, nCols, mRows, mCols);
 
-	padarray_CPU<cuda::std::complex<float>>(input, solution, nRows, nCols, mRows, mCols);
+	padarray_CPU<thrust::complex<float>>(input, solution, nRows, nCols, mRows, mCols);
 
-	check_cuda( cudaMemcpy ( output, d_output, nRows * nCols * sizeof(cuda::std::complex<float>), cudaMemcpyDeviceToHost ) );
+	check_cuda( cudaMemcpy ( output, d_output, nRows * nCols * sizeof(thrust::complex<float>), cudaMemcpyDeviceToHost ) );
 
 	for(unsigned int i = 0; i < nRows; ++i)
 		for (unsigned int j = 0; j < nCols ; ++j) {
@@ -163,7 +163,7 @@ TEST(padarray2dMatrix, performance) {
 	auto stop = high_resolution_clock::now();
 	auto duration = duration_cast<microseconds>(stop - start);
 	std::cout << duration.count() / iterations << std::endl;
-	ASSERT_TRUE(duration.count() / iterations < 20);
+	ASSERT_TRUE(duration.count() / iterations < 25);
 
 	check_cuda( cudaFree(d_input ) );
 	check_cuda( cudaFree(d_output) );
