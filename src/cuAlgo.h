@@ -471,9 +471,25 @@ void dshear1dMatrixFloat(float        *idata        ,
                          bool          async = false);
 
 /**
+ * @brief   dshear operator in 1d on matrix of complex floats
+ * 
+ * @details See documentation of dshear1dMatrixFloat().
+ * 
+ * @ingroup algoC
+ */
+void dshear1dMatrixComplexFloat(thrust::complex<float> *idata        ,
+                                thrust::complex<float> *odata        ,
+                                long int                k            ,
+                                unsigned int            dim          ,
+                                unsigned int            mRows        ,
+                                unsigned int            mCols        ,
+                                cudaStream_t            stream = 0   ,
+                                bool                    async = false);
+
+/**
  * @brief   dshear operator in 1d on matrix of doubles
  * 
- * @details See documentation of dshear1dMatrixDouble().
+ * @details See documentation of dshear1dMatrixFloat().
  * 
  * @ingroup algoC
  */
@@ -485,6 +501,22 @@ void dshear1dMatrixDouble(double       *idata        ,
                           unsigned int  mCols        ,
                           cudaStream_t  stream = 0   ,
                           bool          async = false);
+
+/**
+ * @brief   dshear operator in 1d on matrix of complex doubles
+ * 
+ * @details See documentation of dshear1dMatrixFloat().
+ * 
+ * @ingroup algoC
+ */
+void dshear1dMatrixComplexDouble(thrust::complex<double> *idata        ,
+                                 thrust::complex<double> *odata        ,
+                                 long int                 k            ,
+                                 unsigned int             dim          ,
+                                 unsigned int             mRows        ,
+                                 unsigned int             mCols        ,
+                                 cudaStream_t             stream = 0   ,
+                                 bool                     async = false);
 
 /**
  * @brief   Perform exclusive scan or prefix sum on a vector using

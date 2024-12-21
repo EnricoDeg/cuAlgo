@@ -133,6 +133,19 @@ namespace cuAlgo {
 		dshear1dMatrix<float>(idata, odata, k, dim, mRows, mCols, stream, async);
 	}
 
+	void dshear1dMatrixComplexFloat(thrust::complex<float> *idata ,
+	                                thrust::complex<float> *odata ,
+	                                long int                k     ,
+	                                unsigned int            dim   ,
+	                                unsigned int            mRows ,
+	                                unsigned int            mCols ,
+	                                cudaStream_t            stream,
+	                                bool                    async )
+	{
+
+		dshear1dMatrix<thrust::complex<float>>(idata, odata, k, dim, mRows, mCols, stream, async);
+	}
+
 	void dshear1dMatrixDouble(double       *idata ,
 	                          double       *odata ,
 	                          long int      k     ,
@@ -146,11 +159,32 @@ namespace cuAlgo {
 		dshear1dMatrix<double>(idata, odata, k, dim, mRows, mCols, stream, async);
 	}
 
+	void dshear1dMatrixComplexDouble(thrust::complex<double> *idata ,
+	                                 thrust::complex<double> *odata ,
+	                                 long int                 k     ,
+	                                 unsigned int             dim   ,
+	                                 unsigned int             mRows ,
+	                                 unsigned int             mCols ,
+	                                 cudaStream_t             stream,
+	                                 bool                     async )
+	{
+
+		dshear1dMatrix<thrust::complex<double>>(idata, odata, k, dim, mRows, mCols, stream, async);
+	}
+
 	template void dshear1dMatrix(float  *, float  *,
 	                             long int,
 	                             unsigned int, unsigned int, unsigned int,
 	                             cudaStream_t, bool);
 	template void dshear1dMatrix(double *, double *,
+	                             long int,
+	                             unsigned int, unsigned int, unsigned int,
+	                             cudaStream_t, bool);
+	template void dshear1dMatrix(thrust::complex<float> *, thrust::complex<float> *,
+	                             long int,
+	                             unsigned int, unsigned int, unsigned int,
+	                             cudaStream_t, bool);
+	template void dshear1dMatrix(thrust::complex<double> *, thrust::complex<double> *,
 	                             long int,
 	                             unsigned int, unsigned int, unsigned int,
 	                             cudaStream_t, bool);
