@@ -1576,6 +1576,20 @@ void transposeMatrixFloat(float        *idata        ,
                           bool          async = false);
 
 /**
+ * @brief   Perform matrix transposition with complex floats
+ * 
+ * @details See documentation of transposeMatrixFloat()
+ * 
+ * @ingroup algoC
+ */
+void transposeMatrixComplexFloat(thrust::complex<float> *idata        ,
+                                 thrust::complex<float> *odata        ,
+                                 unsigned int            size_x       ,
+                                 unsigned int            size_y       ,
+                                 cudaStream_t            stream = 0   ,
+                                 bool                    async = false);
+
+/**
  * @brief   Perform matrix transposition with doubles
  * 
  * @details See documentation of transposeMatrixFloat()
@@ -1588,6 +1602,20 @@ void transposeMatrixDouble(double       *idata        ,
                            unsigned int  size_y       ,
                            cudaStream_t  stream = 0   ,
                            bool          async = false);
+
+/**
+ * @brief   Perform matrix transposition with complex doubles
+ * 
+ * @details See documentation of transposeMatrixFloat()
+ * 
+ * @ingroup algoC
+ */
+void transposeMatrixComplexDouble(thrust::complex<double> *idata        ,
+                                  thrust::complex<double> *odata        ,
+                                  unsigned int             size_x       ,
+                                  unsigned int             size_y       ,
+                                  cudaStream_t             stream = 0   ,
+                                  bool                     async = false);
 
 void transposeMatrixInt(int          *idata        ,
                         int          *odata        ,

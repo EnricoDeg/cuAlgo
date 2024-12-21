@@ -94,6 +94,16 @@ namespace cuAlgo {
 		transposeMatrix<float>(idata, odata, size_x, size_y, stream, async);
 	}
 
+	void transposeMatrixComplexFloat(thrust::complex<float> *idata ,
+	                                 thrust::complex<float> *odata ,
+	                                 unsigned int            size_x,
+	                                 unsigned int            size_y,
+	                                 cudaStream_t            stream,
+	                                 bool                    async ) {
+
+		transposeMatrix<thrust::complex<float>>(idata, odata, size_x, size_y, stream, async);
+	}
+
 	void transposeMatrixDouble(double        *idata ,
 	                           double        *odata ,
 	                           unsigned int  size_x,
@@ -102,6 +112,16 @@ namespace cuAlgo {
 	                           bool          async ) {
 
 		transposeMatrix<double>(idata, odata, size_x, size_y, stream, async);
+	}
+
+	void transposeMatrixComplexDouble(thrust::complex<double> *idata ,
+	                                  thrust::complex<double> *odata ,
+	                                  unsigned int             size_x,
+	                                  unsigned int             size_y,
+	                                  cudaStream_t             stream,
+	                                  bool                     async ) {
+
+		transposeMatrix<thrust::complex<double>>(idata, odata, size_x, size_y, stream, async);
 	}
 
 	void transposeMatrixInt(int          *idata ,
@@ -120,10 +140,10 @@ namespace cuAlgo {
 	template void transposeMatrix(double *, double *,
 	                              unsigned int, unsigned int,
 	                              cudaStream_t, bool);
-	template void transposeMatrix(cuda::std::complex<float > *, cuda::std::complex<float > *,
+	template void transposeMatrix(thrust::complex<float > *, thrust::complex<float > *,
 	                              unsigned int, unsigned int,
 	                              cudaStream_t, bool);
-	template void transposeMatrix(cuda::std::complex<double> *, cuda::std::complex<double> *,
+	template void transposeMatrix(thrust::complex<double> *, thrust::complex<double> *,
 	                              unsigned int, unsigned int,
 	                              cudaStream_t, bool);
 }
