@@ -637,6 +637,13 @@ void gSpMatVecMulELL(unsigned int *columns         ,
                      cudaStream_t  stream = 0      ,
                      bool          async = false   );
 
+template<typename T, unsigned int BinSize>
+void histogram(T *data,
+               unsigned int size,
+               unsigned int *histo,
+               cudaStream_t  stream = 0,
+               bool          async = false);
+
 /**
  * @brief   Perform ifftshift on a matrix in place
  * 

@@ -25,6 +25,7 @@ set(SOURCE_EXE  internals/utils.cu
                 API/gSpMatVecMulCSRAdaptive.cu
                 API/gSpMatVecMulELL.cu
                 API/grad2dMatrix.cu
+                API/histogram.cu
                 API/taper1dMatrix.cu
                 API/fftshift1dVector.cu
                 API/normL2Vector.cu
@@ -32,7 +33,6 @@ set(SOURCE_EXE  internals/utils.cu
                 API/dotProduct1dVector.cu
                 API/normalizeVector.cu
                 API/convolution2dMatrixDD.cu
-                API/dshear1dMatrix.cu
                 API/downsample1dMatrix.cu
                 API/fftshift2dMatrix.cu
                 API/fliplr1dMatrix.cu
