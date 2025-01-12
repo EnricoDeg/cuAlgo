@@ -286,36 +286,6 @@ void downsample1dMatrix(T            *idata        ,
                         bool          async = false);
 
 /**
- * @brief   dshear operator in 1d on matrix
- * 
- * @details The operation can be applied on both direction
- * 
- * @param[in]  idata pointer to input matrix
- * @param[out] odata pointer to output matrix
- * @param[in]  k  long int to define the shift
- * @param[in]  dim dimension where to apply the dshear operation.
- *             0 for rows and 1 for columns.
- * @param[in]  mRows non-contiguous dimension of the input and output matrices
- * @param[in]  mCols contiguous dimension of the input and output matrices
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void dshear1dMatrix(T            *idata        ,
-                    T            *odata        ,
-                    long int      k            ,
-                    unsigned int  dim          ,
-                    unsigned int  mRows        ,
-                    unsigned int  mCols        ,
-                    cudaStream_t  stream = 0   ,
-                    bool          async = false);
-
-/**
  * @brief   Perform exclusive scan or prefix sum on a vector
  * 
  * @details The input and output arrays are expected to be multiple of 
