@@ -39,6 +39,12 @@ using namespace std::chrono;
 
 #define FULL_WARP_MASK 0xffffffff
 
+#define CUALGO_GLOBAL __global__
+#define CUALGO_UNROLL _Pragma("unroll")
+#define CUALGO_NO_UNROLL _Pragma("nounroll")
+
+#define CUALGO_KERNEL_NAME(...) __VA_ARGS__
+
 __device__ __host__ int div_ceil(int numerator, int denominator) ;
 
 template <typename T>

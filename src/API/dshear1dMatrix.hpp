@@ -29,65 +29,79 @@
 #include "internals/utils.hpp"
 #include "config/dshear1dMatrix_config.hpp"
 
-template <typename T>
-__global__ void dshear1dMatrixDim0(const T            *__restrict__ idata,
-                                         T            *__restrict__ odata,
-                                         long int                       k,
-                                         unsigned int               mRows,
-                                         unsigned int               mCols) {
+template <typename T, typename DshearConfig>
+CUALGO_GLOBAL
+void dshear1dMatrixDim0(const T            *__restrict__ idata,
+                              T            *__restrict__ odata,
+                              long int                       k,
+                              unsigned int               mRows,
+                              unsigned int               mCols) {
 
     unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int row = blockIdx.y * blockDim.y + threadIdx.y;
 
-    while (col < mCols && row < mRows) {
+    constexpr dshear_config_params params = device_params<DshearConfig>();
 
-        long int shift = -k*((long int)mCols / 2 - (long int)col);
-        if (abs(shift) > mRows - 1)
-            printf("%ld\n", shift);
-        if (shift < 0) {
+    constexpr unsigned int items_per_thread = params.dshear_kernel_config.items_per_thread;
 
-            if (row < mRows+shift)
-                odata[row * mCols + col] = idata[(row-shift) * mCols + col];
-            else
-                odata[row * mCols + col] = idata[(row-(mRows+shift)) * mCols + col];
-        } else {
+    CUALGO_UNROLL
+    for (unsigned int item = 0; item < items_per_thread; ++item) {
+        while (col < mCols && row < mRows) {
 
-            if (row < shift)
-                odata[row * mCols + col] = idata[(mRows-shift+row) * mCols + col];
-            else
-                odata[row * mCols + col] = idata[(row-shift) * mCols + col];
+            long int shift = -k*((long int)mCols / 2 - (long int)col);
+            if (shift < 0) {
+
+                if (row < mRows+shift)
+                    odata[row * mCols + col] = idata[(row-shift) * mCols + col];
+                else
+                    odata[row * mCols + col] = idata[(row-(mRows+shift)) * mCols + col];
+            } else {
+
+                if (row < shift)
+                    odata[row * mCols + col] = idata[(mRows-shift+row) * mCols + col];
+                else
+                    odata[row * mCols + col] = idata[(row-shift) * mCols + col];
+            }
+            col += blockDim.x * gridDim.x;
         }
-        col += blockDim.x * gridDim.x;
     }
 }
 
-template <typename T>
-__global__ void dshear1dMatrixDim1(const T            *__restrict__ idata,
-                                         T            *__restrict__ odata,
-                                         long int                       k,
-                                         unsigned int               mRows,
-                                         unsigned int               mCols) {
+template <typename T, typename DshearConfig>
+CUALGO_GLOBAL
+void dshear1dMatrixDim1(const T            *__restrict__ idata,
+                              T            *__restrict__ odata,
+                              long int                       k,
+                              unsigned int               mRows,
+                              unsigned int               mCols) {
+
+    constexpr dshear_config_params params = device_params<DshearConfig>();
+
+    constexpr unsigned int items_per_thread = params.dshear_kernel_config.items_per_thread;
 
     unsigned int col = blockIdx.x * blockDim.x + threadIdx.x;
     const unsigned int row = blockIdx.y * blockDim.y + threadIdx.y;
 
-    while (col < mCols && row < mRows) {
+    CUALGO_UNROLL
+    for (unsigned int item = 0; item < items_per_thread; ++item) {
+        if (col < mCols && row < mRows) {
 
-        long int shift = -k * ((long int)mRows / 2 - (long int)row);
-        if (shift < 0) {
+            long int shift = -k * ((long int)mRows / 2 - (long int)row);
+            if (shift < 0) {
 
-            if (col < mCols+shift)
-                odata[row * mCols + col] = idata[row * mCols + (col-shift)];
-            else
-                odata[row * mCols + col] = idata[row * mCols + (col - (mCols + shift))];
-        } else {
+                if (col < mCols+shift)
+                    odata[row * mCols + col] = idata[row * mCols + (col-shift)];
+                else
+                    odata[row * mCols + col] = idata[row * mCols + (col - (mCols + shift))];
+            } else {
 
-            if (col < shift)
-                odata[row * mCols + col] = idata[row * mCols + (mCols-shift+col)];
-            else
-                odata[row * mCols + col] = idata[row * mCols + (col-shift)];
+                if (col < shift)
+                    odata[row * mCols + col] = idata[row * mCols + (mCols-shift+col)];
+                else
+                    odata[row * mCols + col] = idata[row * mCols + (col-shift)];
+            }
+            col += blockDim.x * gridDim.x;
         }
-        col += blockDim.x * gridDim.x;
     }
 }
 
@@ -138,11 +152,11 @@ namespace cuAlgo {
 
         if (dim == 0) {
             TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-                 dshear1dMatrixDim0<T>,
+                 CUALGO_KERNEL_NAME(dshear1dMatrixDim0<T, config>),
                  idata, odata, k, mRows, mCols);
         } else if (dim == 1) {
             TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-                 dshear1dMatrixDim1<T>,
+                 CUALGO_KERNEL_NAME(dshear1dMatrixDim1<T, config>),
                  idata, odata, k, mRows, mCols);
         }
     }

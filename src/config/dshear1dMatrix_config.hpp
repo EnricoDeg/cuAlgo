@@ -55,6 +55,27 @@ auto dispatch_target_arch(const unsigned int target_arch)
     return Config::template architecture_config<0>::params;
 }
 
+
+template<class Config>
+__device__
+constexpr auto device_params()
+{
+#ifdef __CUDA_ARCH__
+#ifdef __CUDA_ARCH__
+#if __CUDA_ARCH__ == 890
+#warning "sm89"
+    return Config::template architecture_config<89>::params;
+#elif __CUDA_ARCH__ == 800
+    return Config::template architecture_config<80>::params;
+#else
+#warning "missing cuda arch"
+#endif
+#endif
+#else
+    return Config::template architecture_config<0>::params;
+#endif
+}
+
 struct kernel_config_params
 {
     unsigned int block_sizeX = 32;
@@ -87,7 +108,7 @@ struct default_dshear_config_base
     using type = dshear_config<
         32u,
         32u,
-        1u>;
+        2u>;
 };
 
 template<unsigned int arch, class value_type, class enable = void>
@@ -102,7 +123,7 @@ struct default_dshear_config<
     value_type,
     std::enable_if_t<(bool(std::is_floating_point<value_type>::value)
                       && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
-    : dshear_config<32, 32, 1>
+    : dshear_config<32, 32, 2>
 {};
 
 // Based on value_type = float
