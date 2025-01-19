@@ -56,22 +56,11 @@ namespace cuAlgo {
         unsigned int blocksPerGrid = size / (ItemsPerThread*threadsPerBlock) +
                                     (size % (ItemsPerThread*threadsPerBlock) > 0);
 
-        if (blocksPerGrid == 1) {
-
-            gReduction1dVectorFlexible<T, reductionSum_impl>(g_idata        ,
-                                                             g_odata        ,
-                                                             size           ,
-                                                             stream         ,
-                                                             async          ,
-                                                             threadsPerBlock);
-        } else {
-
-            gReduction1dVectorPower2AtomicAdd<T, reductionSum_impl, threadsPerBlock, ItemsPerThread>(g_idata,
-                                                           g_odata,
-                                                           size   ,
-                                                           stream ,
-                                                           async  ,
-                                                           blocksPerGrid) ;
-        }
+        gReduction1dVectorPower2AtomicAdd<T, reductionSum_impl, threadsPerBlock, ItemsPerThread>(g_idata,
+                                                       g_odata,
+                                                       size   ,
+                                                       stream ,
+                                                       async  ,
+                                                       blocksPerGrid) ;
     }
 }
