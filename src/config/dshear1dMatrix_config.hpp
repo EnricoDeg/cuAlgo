@@ -1,5 +1,5 @@
 /*
- * @file histogram_config.hpp
+ * @file dshear1dMatrix_config.hpp
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -27,54 +27,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef DSHEAR1DMATRIX_HPP
-#define DSHEAR1DMATRIX_HPP
+#ifndef DSHEAR1DMATRIX_CONFIG_HPP
+#define DSHEAR1DMATRIX_CONFIG_HPP
 
-#include "internals/checkError.hpp"
-
-unsigned int get_arch()
-{
-    int device_id = -1;
-    check_cuda( cudaGetDevice(&device_id) );
-    cudaDeviceProp prop;
-    check_cuda( cudaGetDeviceProperties ( &prop, device_id ) );
-    unsigned int cc = prop.major * 10 + prop.minor;
-    return cc;
-}
-
-template<class Config>
-auto dispatch_target_arch(const unsigned int target_arch)
-{
-    switch(target_arch)
-    {
-        case 80:
-            return Config::template architecture_config<80>::params;
-        case 89:
-            return Config::template architecture_config<89>::params;
-    }
-    return Config::template architecture_config<0>::params;
-}
-
-
-template<class Config>
-__device__
-constexpr auto device_params()
-{
-#ifdef __CUDA_ARCH__
-#ifdef __CUDA_ARCH__
-#if __CUDA_ARCH__ == 890
-#warning "sm89"
-    return Config::template architecture_config<89>::params;
-#elif __CUDA_ARCH__ == 800
-    return Config::template architecture_config<80>::params;
-#else
-#warning "missing cuda arch"
-#endif
-#endif
-#else
-    return Config::template architecture_config<0>::params;
-#endif
-}
+#include "config/config.hpp"
 
 struct kernel_config_params
 {
