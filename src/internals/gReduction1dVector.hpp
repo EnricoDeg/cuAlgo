@@ -104,7 +104,7 @@ void reduction1dKernelWithAtomics(T *g_idata,
 
 	// write result for this block to global mem
 	if (tid == 0)
-		atomicAdd(&g_odata[0], sdata[0]);
+        Op.atomic(&g_odata[0], sdata[0]);
 }
 
 template<typename T, template<typename> class op_t>

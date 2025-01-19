@@ -636,30 +636,6 @@ void normalizeVector(T            *g_idata      ,
                      bool          async = false);
 
 /**
- * @brief   Compute LInfinity norm on a vector
- * 
- * @details Max of absolute value of elements of the input vector and
- *          return a pointer to a scalar
- * 
- * @param[in]  idata pointer to input vector
- * @param[out] odata pointer to output scalar with result of the L infinity norm
- * @param[in]  size  size of the input vector
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void normLInfVector(T            *g_idata      ,
-                    T            *g_odata      ,
-                    unsigned int  size         ,
-                    cudaStream_t  stream = 0   ,
-                    bool          async = false);
-
-/**
  * @brief   Pad matrix
  * 
  * @param[in]  idata pointer to input matrix

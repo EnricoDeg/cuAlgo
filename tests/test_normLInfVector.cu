@@ -29,6 +29,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include "src/cuAlgo.h"
+#include "src/API/normLInfVector.hpp"
 #include <gtest/gtest.h>
 
 TEST(normLInfVector, default_value) {
@@ -42,6 +43,8 @@ TEST(normLInfVector, default_value) {
 		for (unsigned int j = 0; j < 1024 ; ++j)
 			input[j + i*1024] = -j;
 
+	output[0] = 0;
+
 	float *d_input;
 	check_cuda( cudaMalloc(&d_input, size*sizeof(float)) );
 
@@ -49,8 +52,9 @@ TEST(normLInfVector, default_value) {
 	check_cuda( cudaMalloc(&d_output, sizeof(float)) );
 
 	check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(float), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_output, output, sizeof(float), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::normLInfVectorFloat(d_input, d_output, size);
+	cuAlgo::normLInfVector<float, 1024, 1>(d_input, d_output, size);
 
 	solution[0] = 0;
 	for(unsigned int i = 0; i < size; ++i)

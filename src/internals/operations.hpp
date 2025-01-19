@@ -32,6 +32,8 @@
 
 #include <cuda.h>
 
+// #include "internals/intrinsics.hpp"
+
 template <typename T>
 class reductionSum_impl {
 
@@ -44,6 +46,9 @@ class reductionSum_impl {
 	}
 	__device__ inline void sharedMemory(T * result, T * data) {
 		*result += *data;
+	}
+	__device__ inline void atomic(T * address, T value) {
+		atomicAdd(address, value);
 	}
 };
 
@@ -75,6 +80,9 @@ class normL1_impl {
 	__device__ inline void sharedMemory(T * result, T * data) {
 		*result += *data;
 	}
+	__device__ inline void atomic(T * address, T value) {
+		atomicAdd(address, value);
+	}
 };
 
 template <typename T>
@@ -90,6 +98,9 @@ class normL2_impl {
 	__device__ inline void sharedMemory(T * result, T * data) {
 		*result += *data;
 	}
+	__device__ inline void atomic(T * address, T value) {
+		atomicAdd(address, value);
+	}
 };
 
 template <typename T>
@@ -104,6 +115,17 @@ class normLInf_impl {
 	}
 	__device__ inline void sharedMemory(T * result, T * data) {
 		*result = max(*result, *data);
+	}
+	__device__ inline void atomic(T * addr, T val) {
+		if (*addr >= val) return;
+
+		unsigned int *const addr_as_ui = (unsigned int *)addr;
+		unsigned int old = *addr_as_ui, assumed;
+		do {
+			assumed = old;
+			if (__uint_as_float(assumed) >= val) break;
+			old = atomicCAS(addr_as_ui, assumed, __float_as_uint(val));
+		} while (assumed != old);
 	}
 };
 
