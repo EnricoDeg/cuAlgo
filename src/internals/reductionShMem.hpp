@@ -32,68 +32,84 @@
 
 #include <cuda.h>
 #include "internals/operations.hpp"
+#include "internals/utils.hpp"
 
-template <unsigned int blockSize, typename T, template<typename> class op_t>
-__device__ void warpReduceShMem(T* sdata, unsigned int tid, op_t<T> &Op) {
+template <
+unsigned int blockSize,
+typename T,
+template<typename> class op_t
+>
+CUALGO_DEVICE
+void warpReduceShMem(T* sdata, unsigned int tid, op_t<T> &Op) {
 
-	if (blockSize >= 64) {
-		Op.sharedMemory(&sdata[tid], &sdata[tid + 32]);
-		__syncwarp();
-	}
-	if (blockSize >= 32) {
-		Op.sharedMemory(&sdata[tid], &sdata[tid + 16]);
-		__syncwarp();
-	}
-	if (blockSize >= 16) {
-		Op.sharedMemory(&sdata[tid], &sdata[tid +  8]);
-		__syncwarp();
-	}
-	if (blockSize >= 8) {
-		Op.sharedMemory(&sdata[tid], &sdata[tid +  4]);
-		__syncwarp();
-	}
-	if (blockSize >= 4) {
-		Op.sharedMemory(&sdata[tid], &sdata[tid +  2]);
-		__syncwarp();
-	}
-	if (blockSize >= 2) {
-		Op.sharedMemory(&sdata[tid], &sdata[tid +  1]);
-		__syncwarp();
-	}
+    if (blockSize >= 64) {
+        Op.sharedMemory(&sdata[tid], &sdata[tid + 32]);
+        __syncwarp();
+    }
+    if (blockSize >= 32) {
+        Op.sharedMemory(&sdata[tid], &sdata[tid + 16]);
+        __syncwarp();
+    }
+    if (blockSize >= 16) {
+        Op.sharedMemory(&sdata[tid], &sdata[tid +  8]);
+        __syncwarp();
+    }
+    if (blockSize >= 8) {
+        Op.sharedMemory(&sdata[tid], &sdata[tid +  4]);
+        __syncwarp();
+    }
+    if (blockSize >= 4) {
+        Op.sharedMemory(&sdata[tid], &sdata[tid +  2]);
+        __syncwarp();
+    }
+    if (blockSize >= 2) {
+        Op.sharedMemory(&sdata[tid], &sdata[tid +  1]);
+        __syncwarp();
+    }
 };
 
-template <unsigned int blockSize, typename T, template<typename> class op_t>
-__device__ void blockReduceShMemUnroll(T* sdata, unsigned int tid, op_t<T> &Op) {
+template<
+unsigned int blockSize,
+typename T,
+template<typename> class op_t
+>
+CUALGO_DEVICE
+void blockReduceShMemUnroll(T* sdata, unsigned int tid, op_t<T> &Op) {
 
-	if (blockSize >= 1024) {
-		if (tid < 512) Op.sharedMemory(&sdata[tid], &sdata[tid + 512]);
-		__syncthreads();
-	}
-	if (blockSize >= 512) {
-		if (tid < 256) Op.sharedMemory(&sdata[tid], &sdata[tid + 256]);
-		__syncthreads();
-	}
-	if (blockSize >= 256) {
-		if (tid < 128) Op.sharedMemory(&sdata[tid], &sdata[tid + 128]);
-		__syncthreads();
-	}
-	if (blockSize >= 128) {
-		if (tid <  64) Op.sharedMemory(&sdata[tid], &sdata[tid +  64]);
-		__syncthreads();
-	}
+    if (blockSize >= 1024) {
+        if (tid < 512) Op.sharedMemory(&sdata[tid], &sdata[tid + 512]);
+        __syncthreads();
+    }
+    if (blockSize >= 512) {
+        if (tid < 256) Op.sharedMemory(&sdata[tid], &sdata[tid + 256]);
+        __syncthreads();
+    }
+    if (blockSize >= 256) {
+        if (tid < 128) Op.sharedMemory(&sdata[tid], &sdata[tid + 128]);
+        __syncthreads();
+    }
+    if (blockSize >= 128) {
+        if (tid <  64) Op.sharedMemory(&sdata[tid], &sdata[tid +  64]);
+        __syncthreads();
+    }
 
-	if (tid < 32) warpReduceShMem<blockSize, T, op_t>(sdata, tid, Op);
+    if (tid < 32)
+        warpReduceShMem<blockSize, T, op_t>(sdata, tid, Op);
 }
 
-template <typename T, template<typename> class op_t>
-__device__ void blockReduceShMem(T* sdata, unsigned int tid, op_t<T> &Op) {
+template<
+typename T,
+template<typename> class op_t
+>
+CUALGO_DEVICE
+void blockReduceShMem(T* sdata, unsigned int tid, op_t<T> &Op) {
 
-	for (unsigned int s=blockDim.x/2; s>0; s>>=1) {
-		if (tid < s) {
-			Op.sharedMemory(&sdata[tid], &sdata[tid + s]);
-		}
-		__syncthreads();
-	}
+    for (unsigned int s=blockDim.x/2; s>0; s>>=1) {
+        if (tid < s) {
+            Op.sharedMemory(&sdata[tid], &sdata[tid + s]);
+        }
+        __syncthreads();
+    }
 }
 
 #endif

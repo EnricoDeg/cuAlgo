@@ -77,7 +77,7 @@ void operationAndReduction1dKernel(T * CUALGO_RESTRICT g_idata1,
 
     // write result for this block to global mem
     if (tid == 0)
-        atomicAdd(&g_odata[0], sdata[0]);
+        Op.atomic(&g_odata[0], sdata[0]);
 }
 
 template<

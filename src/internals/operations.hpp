@@ -138,6 +138,9 @@ class dotProduct_impl {
     CUALGO_DEVICE inline void sharedMemory(T * result, T * data) {
         *result += *data;
     }
+    CUALGO_DEVICE inline void atomic(T * address, T value) {
+        atomicAdd(address, value);
+    }
 };
 
 template<typename T>
