@@ -107,6 +107,13 @@ void dshear1dMatrixDim1(const T            *__restrict__ idata,
 
 namespace cuAlgo {
 
+    template<typename T, typename DshearConfig = default_config>
+    dshear_config_params getConfigParams_dshear1dMatrix() {
+        using config = wrapped_dshear_config<DshearConfig, T>;
+        unsigned int target_arch = get_arch();
+        return dispatch_target_arch<config>(target_arch);
+    }
+
     /**
     * @brief   dshear operator in 1d on matrix
     * 
@@ -134,12 +141,11 @@ namespace cuAlgo {
                         unsigned int  dim   ,
                         unsigned int  mRows ,
                         unsigned int  mCols ,
+                        const dshear_config_params params = getConfigParams_dshear1dMatrix<T>(),
                         cudaStream_t  stream = 0,
                         bool          async  = false) {
 
         using config = wrapped_dshear_config<DshearConfig, T>;
-        unsigned int target_arch = get_arch();
-        const dshear_config_params params = dispatch_target_arch<config>(target_arch);
 
         const unsigned int block_sizeX      = params.dshear_kernel_config.block_sizeX;
         const unsigned int block_sizeY      = params.dshear_kernel_config.block_sizeY;

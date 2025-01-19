@@ -40,8 +40,11 @@ unsigned int itemsPerThread
 >
 void run_benchmark() {
 
-    unsigned int mRows = 4096;
-    unsigned int mCols = 4096;
+    unsigned int mRows = 1024;
+    unsigned int mCols = 1024;
+
+    static constexpr unsigned int warmup_size = 5;
+    static constexpr unsigned int batch_size = 5;
 
     float * idata = (float *)malloc(mRows * mCols * sizeof(float));
     for (unsigned int i = 0 ; i < mRows ; ++i)
@@ -56,15 +59,19 @@ void run_benchmark() {
 
     check_cuda( cudaMemcpy ( d_idata, idata, mRows * mCols * sizeof(float), cudaMemcpyHostToDevice ) );
 
-    for (unsigned int i = 0; i < 5; ++i)
-        cuAlgo::dshear1dMatrix<T, dshear_config<threadsPerBlockX, threadsPerBlockY, itemsPerThread>>(d_idata, d_odata, 1, 1, mRows, mCols);
+    using config = dshear_config<threadsPerBlockX, threadsPerBlockY, itemsPerThread>;
+
+    const dshear_config_params params = cuAlgo::getConfigParams_dshear1dMatrix<T, config>();
+
+    for (unsigned int i = 0; i < warmup_size; ++i)
+        cuAlgo::dshear1dMatrix<T, config>(d_idata, d_odata, 1, 1, mRows, mCols, params);
 
     cudaEvent_t start, stop;
     check_cuda(cudaEventCreate(&start));
     check_cuda(cudaEventCreate(&stop));
     check_cuda(cudaEventRecord(start, 0));
-    for (unsigned int i = 0; i < 10; ++i)
-        cuAlgo::dshear1dMatrix<T, dshear_config<threadsPerBlockX, threadsPerBlockY, itemsPerThread>>(d_idata, d_odata, 1, 1, mRows, mCols, 0);
+    for (unsigned int i = 0; i < batch_size; ++i)
+        cuAlgo::dshear1dMatrix<T, config>(d_idata, d_odata, 1, 1, mRows, mCols, params, 0, false);
 
     check_cuda( cudaStreamSynchronize(0) );
 
@@ -72,8 +79,8 @@ void run_benchmark() {
     check_cuda(cudaEventSynchronize(stop));
     float elapsed_mseconds;
     check_cuda(cudaEventElapsedTime(&elapsed_mseconds, start, stop));
-    std::cout << "Time taken by function: " << elapsed_mseconds * 1000 / 10 << " microseconds" << std::endl;
-    // std::cout << "Bytes per second = " << float(mRows * mCols * sizeof(T)) / 1000000000 / (float(duration.count()) / 1000000) << " Gb / s" << std::endl;
+    std::cout << "Time taken by function: " << elapsed_mseconds * 1000 / batch_size << " microseconds" << std::endl;
+    std::cout << "Bytes per second = " << float(batch_size * mRows * mCols * sizeof(T)) / 1000000000 / (elapsed_mseconds / 1000) << " Gb / s" << std::endl;
 
     // Destroy CUDA events
     check_cuda(cudaEventDestroy(start));

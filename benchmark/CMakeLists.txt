@@ -1,7 +1,7 @@
 SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 -Xptxas -lineinfo -DCUDA ")
-if (CUALGO_VERBOSE)
-  SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -DCUALGO_VERBOSE ")
-endif()
+# if (CUALGO_VERBOSE)
+#   SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -DCUALGO_VERBOSE ")
+# endif()
 
 # dshear1dMatrix
 add_executable( benchmark_dshear1dMatrix
