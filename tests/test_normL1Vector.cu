@@ -29,6 +29,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include "src/cuAlgo.h"
+#include "src/API/normL1Vector.hpp"
 #include <gtest/gtest.h>
 
 TEST(normL1Vector, default_value) {
@@ -50,7 +51,7 @@ TEST(normL1Vector, default_value) {
 
 	check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(float), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::normL1VectorFloat(d_input, d_output, size);
+	cuAlgo::normL1Vector<float, 1024, 1>(d_input, d_output, size);
 
 	solution[0] = 0;
 	for(unsigned int i = 0; i < size; ++i)

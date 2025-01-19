@@ -1,5 +1,5 @@
 /*
- * @file reduction1dVector.hpp
+ * @file normL1Vector.hpp
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -31,12 +31,13 @@
 namespace cuAlgo {
 
     /**
-    * @brief   Perform reduction on a vector
+    * @brief   Compute L1 norm on a vector
     * 
-    * @details Sum elements of the input vector and return a pointer to a scalar
+    * @details Sum absolute value of elements of the input vector and
+    *          return a pointer to a scalar
     * 
     * @param[in]  idata pointer to input vector
-    * @param[out] odata pointer to output scalar with result of the reduction
+    * @param[out] odata pointer to output scalar with result of the L1 norm
     * @param[in]  size  size of the input vector
     * @param[in]  stream CUDA stream where the kernels are launched.
     *                    Default is stream 0 (default stream)
@@ -46,22 +47,27 @@ namespace cuAlgo {
     * 
     * @ingroup algo
     */
-    template<typename T, unsigned int threadsPerBlock, unsigned int ItemsPerThread>
-    void reduction1dVector2(T            *g_idata,
-                           T            *g_odata,
-                           unsigned int  size   ,
-                           cudaStream_t  stream = 0,
-                           bool          async = false) {
+    template<
+    typename T,
+    unsigned int threadsPerBlock,
+    unsigned int ItemsPerThread
+    >
+    void normL1Vector(T            *g_idata,
+                      T            *g_odata,
+                      unsigned int  size,
+                      cudaStream_t  stream = 0,
+                      bool          async = false) {
 
         unsigned int blocksPerGrid = size / (ItemsPerThread*threadsPerBlock) +
                                     (size % (ItemsPerThread*threadsPerBlock) > 0);
 
-        using gReduction_impl = gReduction1d<T, reductionSum_impl, threadsPerBlock, ItemsPerThread>;
-        gReduction_impl{}.doit(g_idata,
-                               g_odata,
-                               size,
-                               stream,
-                               async,
-                               blocksPerGrid) ;
+        using gNormL1_impl = gReduction1d<T, normL1_impl, threadsPerBlock, ItemsPerThread>;
+        
+        gNormL1_impl{}.doit(g_idata,
+                            g_odata,
+                            size,
+                            stream,
+                            async,
+                            blocksPerGrid) ;
     }
 }

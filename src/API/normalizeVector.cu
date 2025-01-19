@@ -30,6 +30,7 @@
 #include "cuAlgo.hpp"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
+#include "API/normL1Vector.hpp"
 
 template<typename T>
 __global__ void normalizeKernel(T            * __restrict__ data,
@@ -55,7 +56,7 @@ namespace cuAlgo {
 		T * g_odata;
 		check_cuda( cudaMalloc(&g_odata, sizeof(T)) );
 
-		normL1Vector<T>(g_idata, g_odata, size, stream, async);
+		normL1Vector<T, 1024, 1>(g_idata, g_odata, size, stream, async);
 
 		dim3 threadsPerBlock(THREADS_PER_BLOCK);
 		dim3 blocksPerGrid(div_ceil(size, THREADS_PER_BLOCK));
@@ -77,15 +78,6 @@ namespace cuAlgo {
 		normalizeVector<float>(g_idata, size, stream, async);
 	}
 
-	void normalizeVectorComplexFloat(thrust::complex<float> *g_idata,
-	                                 unsigned int            size   ,
-	                                 cudaStream_t            stream ,
-	                                 bool                    async  )
-	{
-
-		normalizeVector<thrust::complex<float>>(g_idata, size, stream, async);
-	}
-
 	void normalizeVectorDouble(double       *g_idata,
 	                           unsigned int  size   ,
 	                           cudaStream_t  stream ,
@@ -93,15 +85,6 @@ namespace cuAlgo {
 	{
 
 		normalizeVector<double>(g_idata, size, stream, async);
-	}
-
-	void normalizeVectorComplexDouble(thrust::complex<double> *g_idata,
-	                                  unsigned int             size   ,
-	                                  cudaStream_t             stream ,
-	                                  bool                     async  )
-	{
-
-		normalizeVector<thrust::complex<double>>(g_idata, size, stream, async);
 	}
 
 	void normalizeVectorInt(int          *g_idata,
@@ -117,12 +100,6 @@ namespace cuAlgo {
 	                              unsigned int,
 	                              cudaStream_t, bool);
 	template void normalizeVector(double *,
-	                              unsigned int,
-	                              cudaStream_t, bool);
-	template void normalizeVector(thrust::complex<float> *,
-	                              unsigned int,
-	                              cudaStream_t, bool);
-	template void normalizeVector(thrust::complex<double> *,
 	                              unsigned int,
 	                              cudaStream_t, bool);
 }

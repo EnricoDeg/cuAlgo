@@ -65,8 +65,17 @@ __global__ void reduction1dKernel(T *g_idata, T *g_odata, unsigned int n, op_t<T
 	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
 }
 
-template <unsigned int blockSize, unsigned int ItemsPerThread, typename T, template<typename> class op_t>
-__global__ void reduction1dKernelWithAtomics(T *g_idata, T *g_odata, unsigned int n, op_t<T> Op) {
+template<
+unsigned int blockSize,
+unsigned int ItemsPerThread,
+typename T,
+template<typename> class op_t
+>
+CUALGO_GLOBAL
+void reduction1dKernelWithAtomics(T *g_idata,
+                                  T *g_odata,
+                                  unsigned int n,
+                                  op_t<T> Op) {
 
 	// use dynamic shared memory
 	// needed for template
@@ -215,23 +224,30 @@ void gReduction1dVectorPower2(T            *g_idata,
 	}
 }
 
-template<typename T, template<typename> class op_t, unsigned int threadsPerBlock, unsigned int ItemsPerThread>
-void gReduction1dVectorPower2AtomicAdd(T            *g_idata,
-                                T            *d_buffer,
-                                unsigned int  size   ,
-                                cudaStream_t  stream ,
-                                bool          async,
-								unsigned int blocksPerGrid) {
+template<
+typename T,
+template<typename> class op_t,
+unsigned int threadsPerBlock,
+unsigned int ItemsPerThread
+>
+struct gReduction1d {
+    void doit(T            *g_idata,
+              T            *d_buffer,
+              unsigned int  size,
+              cudaStream_t  stream,
+              bool          async,
+              unsigned int blocksPerGrid) {
 
-	unsigned int shmem = threadsPerBlock*sizeof(T);
-	op_t<T> op;
-	dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
-	dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
-	print_kernel_config(threadsPerBlock3, blocksPerGrid3);
+        unsigned int shmem = threadsPerBlock*sizeof(T);
+        op_t<T> op;
+        dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
+        dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
+        print_kernel_config(threadsPerBlock3, blocksPerGrid3);
 
-	TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-	     CUALGO_KERNEL_NAME(reduction1dKernelWithAtomics<threadsPerBlock, ItemsPerThread, T, op_t>),
-	     g_idata, d_buffer, size, op);
-}
+        TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+            CUALGO_KERNEL_NAME(reduction1dKernelWithAtomics<threadsPerBlock, ItemsPerThread, T, op_t>),
+            g_idata, d_buffer, size, op);
+    }
+};
 
 #endif

@@ -1019,11 +1019,6 @@ void normalizeVectorFloat(float        *g_idata      ,
                           cudaStream_t  stream = 0   ,
                           bool          async = false);
 
-void normalizeVectorComplexFloat(thrust::complex<float> *g_idata,
-                          unsigned int  size   ,
-                          cudaStream_t  stream = 0 ,
-                          bool          async  = false);
-
 /**
  * @brief   Normalize a vector of doubles
  * 
@@ -1036,69 +1031,10 @@ void normalizeVectorDouble(double       *g_idata      ,
                            cudaStream_t  stream = 0   ,
                            bool          async = false);
 
-void normalizeVectorComplexDouble(thrust::complex<double> *g_idata,
-                                  unsigned int  size   ,
-                                  cudaStream_t  stream = 0 ,
-                                  bool          async  = false);
-
 void normalizeVectorInt(int          *g_idata      ,
                         unsigned int  size         ,
                         cudaStream_t  stream = 0   ,
                         bool          async = false);
-
-/**
- * @brief   Compute L1 norm on a vector of floats
- * 
- * @details Sum absolute value of elements of the input vector and
- *          return a pointer to a scalar
- * 
- * @param[in]  idata pointer to input vector
- * @param[out] odata pointer to output scalar with result of the L1 norm
- * @param[in]  size  size of the input vector
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algoC
- */
-void normL1VectorFloat(float        *g_idata      ,
-                       float        *g_odata      ,
-                       unsigned int  size         ,
-                       cudaStream_t  stream = 0   ,
-                       bool          async = false);
-
-void normL1VectorComplexFloat(thrust::complex<float> *g_idata       ,
-                              thrust::complex<float> *g_odata       ,
-                              unsigned int            size          ,
-                              cudaStream_t            stream = 0    ,
-                              bool                    async = false );
-
-/**
- * @brief   Compute L1 norm on a vector of doubles
- * 
- * @details See documentation of normL1VectorFloat().
- * 
- * @ingroup algoC
- */
-void normL1VectorDouble(double       *g_idata      ,
-                        double       *g_odata      ,
-                        unsigned int  size         ,
-                        cudaStream_t  stream = 0   ,
-                        bool          async = false);
-
-void normL1VectorComplexDouble(thrust::complex<double> *g_idata       ,
-                               thrust::complex<double> *g_odata       ,
-                               unsigned int             size          ,
-                               cudaStream_t             stream = 0    ,
-                               bool                     async = false );
-
-void normL1VectorInt(int          *g_idata      ,
-                     int          *g_odata      ,
-                     unsigned int  size         ,
-                     cudaStream_t  stream = 0   ,
-                     bool          async = false);
 
 /**
  * @brief   Compute squared L2 norm on a vector of floats
