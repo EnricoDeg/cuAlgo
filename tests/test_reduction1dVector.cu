@@ -28,7 +28,7 @@
  */
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
+#include "src/API/reduction1dVector.hpp"
 #include <gtest/gtest.h>
 
 TEST(reduction1dVector, default_value) {
@@ -42,6 +42,8 @@ TEST(reduction1dVector, default_value) {
 		for (unsigned int j = 0; j < 1024 ; ++j)
 		input[j + i*1024] = j;
 
+	output[0] = 0;
+
 	int *d_input;
 	check_cuda( cudaMalloc(&d_input, size*sizeof(int)) );
 
@@ -49,8 +51,9 @@ TEST(reduction1dVector, default_value) {
 	check_cuda( cudaMalloc(&d_output, sizeof(int)) );
 
 	check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
+	check_cuda( cudaMemcpy ( d_output, output, sizeof(int), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::reduction1dVectorInt(d_input, d_output, size);
+	cuAlgo::reduction1dVector2<int, 1024, 2>(d_input, d_output, size);
 
 	solution[0] = 0;
 	for(unsigned int i = 0; i < size; ++i)

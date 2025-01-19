@@ -16,6 +16,10 @@ FetchContent_Declare(
 option(INSTALL_GTEST "Enable installation of googletest." OFF)
 FetchContent_MakeAvailable(googletest)
 
+if (CUALGO_VERBOSE)
+  SET(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -DCUALGO_VERBOSE ")
+endif()
+
 enable_testing()
 
 # convolution1dMatrix
