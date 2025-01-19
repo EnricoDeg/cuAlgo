@@ -32,151 +32,156 @@
 
 #include <cuda.h>
 
-// #include "internals/intrinsics.hpp"
+#include "internals/utils.hpp"
 
 template <typename T>
 class reductionSum_impl {
 
-	public:
-	__device__ inline T globalMemory(T * __restrict__ a, T * __restrict__ b ) {
-		return *a + *b;
-	}
-	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
-		*result += *a;
-	}
-	__device__ inline void sharedMemory(T * result, T * data) {
-		*result += *data;
-	}
-	__device__ inline void atomic(T * address, T value) {
-		atomicAdd(address, value);
-	}
-};
-
-template <typename T>
-class reductionProd_impl {
-
-	public:
-	__device__ inline T globalMemory(T * __restrict__ a, T * __restrict__ b ) {
-		return *a * *b;
-	}
-	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
-		*result *= *a;
-	}
-	__device__ inline void sharedMemory(T * result, T * data) {
-		*result *= *data;
-	}
+    public:
+    CUALGO_DEVICE inline T globalMemory(T * CUALGO_RESTRICT a,
+                                        T * CUALGO_RESTRICT b ) {
+        return *a + *b;
+    }
+    CUALGO_DEVICE inline void loadSharedMemory(T * result,
+                                               T * CUALGO_RESTRICT a) {
+        *result += *a;
+    }
+    CUALGO_DEVICE inline void sharedMemory(T * result, T * data) {
+        *result += *data;
+    }
+    CUALGO_DEVICE inline void atomic(T * address, T value) {
+        atomicAdd(address, value);
+    }
 };
 
 template <typename T>
 class normL1_impl {
 
-	public:
-	__device__ inline T globalMemory(T * __restrict__ a, T * __restrict__ b ) {
-		return abs(*a) + abs(*b);
-	}
-	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
-		*result += *a;
-	}
-	__device__ inline void sharedMemory(T * result, T * data) {
-		*result += *data;
-	}
-	__device__ inline void atomic(T * address, T value) {
-		atomicAdd(address, value);
-	}
+    public:
+    CUALGO_DEVICE inline T globalMemory(T * CUALGO_RESTRICT a,
+                                        T * CUALGO_RESTRICT b ) {
+        return abs(*a) + abs(*b);
+    }
+    CUALGO_DEVICE inline void loadSharedMemory(T * result,
+                                               T * CUALGO_RESTRICT a) {
+        *result += *a;
+    }
+    CUALGO_DEVICE inline void sharedMemory(T * result, T * data) {
+        *result += *data;
+    }
+    CUALGO_DEVICE inline void atomic(T * address, T value) {
+        atomicAdd(address, value);
+    }
 };
 
 template <typename T>
 class normL2_impl {
 
-	public:
-	__device__ inline T globalMemory(T * __restrict__ a, T * __restrict__ b ) {
-		return 	abs(*a) * abs(*a) + abs(*b) * abs(*b);
-	}
-	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
-		*result += *a;
-	}
-	__device__ inline void sharedMemory(T * result, T * data) {
-		*result += *data;
-	}
-	__device__ inline void atomic(T * address, T value) {
-		atomicAdd(address, value);
-	}
+    public:
+    CUALGO_DEVICE inline T globalMemory(T * CUALGO_RESTRICT a,
+                                        T * CUALGO_RESTRICT b ) {
+        return 	abs(*a) * abs(*a) + abs(*b) * abs(*b);
+    }
+    CUALGO_DEVICE inline void loadSharedMemory(T * result,
+                                               T * CUALGO_RESTRICT a) {
+        *result += *a;
+    }
+    CUALGO_DEVICE inline void sharedMemory(T * result, T * data) {
+        *result += *data;
+    }
+    CUALGO_DEVICE inline void atomic(T * address, T value) {
+        atomicAdd(address, value);
+    }
 };
 
 template <typename T>
 class normLInf_impl {
 
-	public:
-	__device__ inline T globalMemory(T * __restrict__ a, T * __restrict__ b ) {
-		return max(abs(*a), abs(*b));
-	}
-	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
-		*result = max(*result, *a);
-	}
-	__device__ inline void sharedMemory(T * result, T * data) {
-		*result = max(*result, *data);
-	}
-	__device__ inline void atomic(T * addr, T val) {
-		if (*addr >= val) return;
+    public:
+    CUALGO_DEVICE inline T globalMemory(T * CUALGO_RESTRICT a,
+                                        T * CUALGO_RESTRICT b ) {
+        return max(abs(*a), abs(*b));
+    }
+    CUALGO_DEVICE inline void loadSharedMemory(T * result,
+                                               T * CUALGO_RESTRICT a) {
+        *result = max(*result, *a);
+    }
+    CUALGO_DEVICE inline void sharedMemory(T * result, T * data) {
+        *result = max(*result, *data);
+    }
+    CUALGO_DEVICE inline void atomic(T * addr, T val) {
+        if (*addr >= val) return;
 
-		unsigned int *const addr_as_ui = (unsigned int *)addr;
-		unsigned int old = *addr_as_ui, assumed;
-		do {
-			assumed = old;
-			if (__uint_as_float(assumed) >= val) break;
-			old = atomicCAS(addr_as_ui, assumed, __float_as_uint(val));
-		} while (assumed != old);
-	}
+        unsigned int *const addr_as_ui = (unsigned int *)addr;
+        unsigned int old = *addr_as_ui, assumed;
+        do {
+            assumed = old;
+            if (__uint_as_float(assumed) >= val) break;
+            old = atomicCAS(addr_as_ui, assumed, __float_as_uint(val));
+        } while (assumed != old);
+    }
 };
 
 template <typename T>
 class dotProduct_impl {
 
-	public:
-	__device__ inline T globalMemory(T * __restrict__ init,
-	                                 T * __restrict__ a1, T * __restrict__ a2) {
-		return (*init) + (*a1) * (*a2);
-	}
-	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
-		*result += *a;
-	}
-	__device__ inline void sharedMemory(T * result, T * data) {
-		*result += *data;
-	}
+    public:
+    CUALGO_DEVICE inline T globalMemory(T * CUALGO_RESTRICT init,
+                                        T * CUALGO_RESTRICT a1,
+                                        T * CUALGO_RESTRICT a2) {
+        return (*init) + (*a1) * (*a2);
+    }
+    CUALGO_DEVICE inline void loadSharedMemory(T * result,
+                                               T * CUALGO_RESTRICT a) {
+        *result += *a;
+    }
+    CUALGO_DEVICE inline void sharedMemory(T * result, T * data) {
+        *result += *data;
+    }
 };
 
 template<typename T>
 class convolution_impl {
 
-	public:
-	__device__ inline T firstRealImag(const T * __restrict__ a, const T * __restrict__ b) {
-		return (*a) * (*b);
-	}
-	__device__ inline T nReal(const T * __restrict__ a, const T * __restrict__ b,
-	                          const T * __restrict__ c, const T * __restrict__ d) {
-		return (*a) * (*b) - (*c) * (*d);
-	}
-	__device__ inline T nImag(const T * __restrict__ a, const T * __restrict__ b,
-	                          const T * __restrict__ c, const T * __restrict__ d) {
-		return (*a) * (*b) + (*c) * (*d);
-	}
+    public:
+    CUALGO_DEVICE inline T firstRealImag(const T * CUALGO_RESTRICT a,
+                                         const T * CUALGO_RESTRICT b) {
+        return (*a) * (*b);
+    }
+    CUALGO_DEVICE inline T nReal(const T * CUALGO_RESTRICT a,
+                                 const T * CUALGO_RESTRICT b,
+                                 const T * CUALGO_RESTRICT c,
+                                 const T * CUALGO_RESTRICT d) {
+        return (*a) * (*b) - (*c) * (*d);
+    }
+    CUALGO_DEVICE inline T nImag(const T * CUALGO_RESTRICT a,
+                                 const T * CUALGO_RESTRICT b,
+                                 const T * CUALGO_RESTRICT c,
+                                 const T * CUALGO_RESTRICT d) {
+        return (*a) * (*b) + (*c) * (*d);
+    }
 };
 
 template<typename T>
 class correlation_impl {
 
-	public:
-	__device__ inline T firstRealImag(const T * __restrict__ a, const T * __restrict__ b) {
-		return (*a) * (*b);
-	}
-	__device__ inline T nReal(const T * __restrict__ a, const T * __restrict__ b,
-	                          const T * __restrict__ c, const T * __restrict__ d) {
-		return (*a) * (*b) + (*c) * (*d);
-	}
-	__device__ inline T nImag(const T * __restrict__ a, const T * __restrict__ b,
-	                          const T * __restrict__ c, const T * __restrict__ d) {
-		return (*a) * (*b) - (*c) * (*d);
-	}
+    public:
+    CUALGO_DEVICE inline T firstRealImag(const T * CUALGO_RESTRICT a,
+                                         const T * CUALGO_RESTRICT b) {
+        return (*a) * (*b);
+    }
+    CUALGO_DEVICE inline T nReal(const T * CUALGO_RESTRICT a,
+                                 const T * CUALGO_RESTRICT b,
+                                 const T * CUALGO_RESTRICT c,
+                                 const T * CUALGO_RESTRICT d) {
+        return (*a) * (*b) + (*c) * (*d);
+    }
+    CUALGO_DEVICE inline T nImag(const T * CUALGO_RESTRICT a,
+                                 const T * CUALGO_RESTRICT b,
+                                 const T * CUALGO_RESTRICT c,
+                                 const T * CUALGO_RESTRICT d) {
+        return (*a) * (*b) - (*c) * (*d);
+    }
 };
 
 #endif
