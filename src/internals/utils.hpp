@@ -40,6 +40,10 @@ using namespace std::chrono;
 #define FULL_WARP_MASK 0xffffffff
 
 #define CUALGO_GLOBAL __global__
+#define CUALGO_DEVICE __device__
+#define CUALGO_RESTRICT __restrict__
+#define CUALGO_HOST __host__
+
 #define CUALGO_UNROLL _Pragma("unroll")
 #define CUALGO_NO_UNROLL _Pragma("nounroll")
 

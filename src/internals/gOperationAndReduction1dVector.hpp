@@ -36,152 +36,73 @@
 #include "internals/utils.hpp"
 #include "internals/reductionShMem.hpp"
 
-template <unsigned int blockSize, typename T, template<typename> class op_t>
-__global__ void operationAndReduction1dKernel(T *g_idata1, T *g_idata2, T *g_odata, unsigned int n, op_t<T> Op) {
+template <
+unsigned int blockSize,
+unsigned int ItemsPerThread,
+typename T,
+template<typename> class op_t
+>
+CUALGO_GLOBAL
+void operationAndReduction1dKernel(T * CUALGO_RESTRICT g_idata1,
+                                   T * CUALGO_RESTRICT g_idata2,
+                                   T * CUALGO_RESTRICT g_odata ,
+                                   unsigned int        n       ,
+                                   op_t<T>             Op      ) {
 
-	// use dynamic shared memory
-	// needed for template
-	SharedMemory<T> smem;
-	T * sdata = smem.getPointer();
+    // use dynamic shared memory
+    // needed for template
+    SharedMemory<T> smem;
+    T * sdata = smem.getPointer();
 
-	// parameters
-	unsigned int tid = threadIdx.x;
-	unsigned int i = blockIdx.x*(blockSize*2) + threadIdx.x;
-	unsigned int gridSize = blockSize*2*gridDim.x;
+    // parameters
+    unsigned int tid = threadIdx.x;
+    unsigned int i = blockIdx.x*(blockDim.x) + threadIdx.x;
+    unsigned int gridSize = blockDim.x*gridDim.x;
 
-	// load multiple elements to shared memory
-	sdata[tid] = 0;
-	while (i < n) {
-		T a = Op.globalMemory( &g_idata1[i], &g_idata2[i], &g_idata1[i+blockSize], &g_idata2[i+blockSize] );
-		Op.loadSharedMemory(&sdata[tid], &a);
-		i += gridSize;
-	}
-	__syncthreads();
+    // load multiple elements to shared memory
+    sdata[tid] = 0;
+    T a = 0;
 
-	// do reduction in shared mem
-	blockReduceShMemUnroll<blockSize, T, op_t>(sdata, tid, Op);
+    for (unsigned int item = 0; item < ItemsPerThread; ++item) {
+        if (i < n) {
+            a = Op.globalMemory( &a , &g_idata1[i], &g_idata2[i] );
+        }
+        i += gridSize;
+    }
+    Op.loadSharedMemory(&sdata[tid], &a);
+    __syncthreads();
 
-	// write result for this block to global mem
-	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
+    // do reduction in shared mem
+    blockReduceShMemUnroll<blockSize, T, op_t>(sdata, tid, Op);
+
+    // write result for this block to global mem
+    if (tid == 0)
+        atomicAdd(&g_odata[0], sdata[0]);
 }
 
-template<typename T, template<typename> class op_t>
-__global__ void operationAndReduction1dKernelFlexible(T *g_idata1, T *g_idata2, T *g_odata, op_t<T> Op) {
+template<
+typename T,
+template<typename> class op_t,
+unsigned int threadsPerBlock,
+unsigned int ItemsPerThread
+>
+void gOperationAndReduction1dVector(T            * g_idata1     ,
+                                    T            * g_idata2     ,
+                                    T            * d_buffer     ,
+                                    unsigned int   size         ,
+                                    cudaStream_t   stream       ,
+                                    bool           async        ,
+                                    unsigned int   blocksPerGrid) {
 
-	// use dynamic shared memory
-	// neeeded for template
-	SharedMemory<T> smem;
-	T * sdata = smem.getPointer();
+    unsigned int shmem = threadsPerBlock*sizeof(T);
+    op_t<T> op;
+    dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
+    dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
+    print_kernel_config(threadsPerBlock3, blocksPerGrid3);
 
-	// parameters
-	unsigned int tid = threadIdx.x;
-	unsigned int i = blockIdx.x*(blockDim.x*2) + threadIdx.x;
-
-	// load one element to shared mem
-	sdata[tid] = Op.globalMemory( &g_idata1[i], &g_idata2[i], &g_idata1[i+blockDim.x], &g_idata2[i+blockDim.x] );
-	__syncthreads();
-
-	// do reduction in shared mem
-	blockReduceShMem<T, op_t>(sdata, tid, Op);
-
-	// write result for this block to global mem
-	if (tid == 0) g_odata[blockIdx.x] = sdata[0];
-}
-
-template<typename T, template<typename> class op_t>
-void gOperationAndReduction1dVectorFlexible(T            *g_idata1       ,
-                                            T            *g_idata2       ,
-                                            T            *g_odata        ,
-                                            unsigned int  size           ,
-                                            cudaStream_t  stream         ,
-                                            bool          async          ,
-                                            unsigned int  threadsPerBlock) {
-
-	unsigned int shmem = threadsPerBlock*sizeof(T);
-	op_t<T> op;
-
-	dim3 blocksPerGrid3(1, 1, 1);
-	dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
-	print_kernel_config(threadsPerBlock3, blocksPerGrid3);
-
-	TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-	     operationAndReduction1dKernelFlexible<T COMMA op_t>,
-	     g_idata1, g_idata2, g_odata, op);
-}
-
-template<typename T, template<typename> class op_t>
-void gOperationAndReduction1dVectorPower2(T            *g_idata1       ,
-                                          T            *g_idata2       ,
-                                          T            *d_buffer       ,
-                                          unsigned int  size           ,
-                                          cudaStream_t  stream         ,
-                                          bool          async          ,
-                                          unsigned int  threadsPerBlock,
-                                          unsigned int  blocksPerGrid  ) {
-
-	unsigned int shmem = threadsPerBlock*sizeof(T);
-	op_t<T> op;
-	dim3 blocksPerGrid3(blocksPerGrid, 1, 1);
-	dim3 threadsPerBlock3(threadsPerBlock, 1, 1);
-	print_kernel_config(threadsPerBlock3, blocksPerGrid3);
-
-	switch (threadsPerBlock) {
-		case 1024:
-		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     operationAndReduction1dKernel<1024 COMMA T COMMA op_t>,
-		     g_idata1, g_idata2, d_buffer, size, op);
-		break;
-		case 512:
-		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     operationAndReduction1dKernel< 512 COMMA T COMMA op_t>,
-		     g_idata1, g_idata2, d_buffer, size, op);
-		break;
-		case 256:
-		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     operationAndReduction1dKernel< 256 COMMA T COMMA op_t>,
-		     g_idata1, g_idata2, d_buffer, size, op);
-		break;
-		case 128:
-		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     operationAndReduction1dKernel< 128 COMMA T COMMA op_t>,
-		     g_idata1, g_idata2, d_buffer, size, op);
-		break;
-		case 64:
-		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     operationAndReduction1dKernel<  64 COMMA T COMMA op_t>,
-		     g_idata1, g_idata2, d_buffer, size, op);
-		break;
-		case 32:
-		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     operationAndReduction1dKernel< 32 COMMA T COMMA op_t>,
-		     g_idata1, g_idata2, d_buffer, size, op);
-		break;
-		case 16:
-		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     operationAndReduction1dKernel<  16 COMMA T COMMA op_t>,
-		     g_idata1, g_idata2, d_buffer, size, op);
-		break;
-		case 8:
-		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     operationAndReduction1dKernel<   8 COMMA T COMMA op_t>,
-		     g_idata1, g_idata2, d_buffer, size, op);
-		break;
-		case 4:
-		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     operationAndReduction1dKernel<   4 COMMA T COMMA op_t>,
-		     g_idata1, g_idata2, d_buffer, size, op);
-		break;
-		case 2:
-		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     operationAndReduction1dKernel<   2 COMMA T COMMA op_t>,
-		     g_idata1, g_idata2, d_buffer, size, op);
-		break;
-		case 1:
-		TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
-		     operationAndReduction1dKernel<   1 COMMA T COMMA op_t>,
-		     g_idata1, g_idata2, d_buffer, size, op);
-		break;
-	}
+    TIME(blocksPerGrid3, threadsPerBlock3, shmem, stream, async,
+         CUALGO_KERNEL_NAME(operationAndReduction1dKernel<threadsPerBlock, ItemsPerThread, T, op_t>),
+         g_idata1, g_idata2, d_buffer, size, op);
 }
 
 #endif

@@ -229,31 +229,6 @@ void convolutionTaperReduction1dMatrix(T            *R            ,
                                        cudaStream_t  stream = 0   ,
                                        bool          async = false);
 
-/**
- * @brief   Compute dot product of two vectors
- * 
- * @details Sum product of elements of the input vectors and
- *          return a pointer to a scalar
- * 
- * @param[in]  g_idata1 pointer to input vector
- * @param[in]  g_idata2 pointer to input vector
- * @param[out] g_odata pointer to output scalar with result of the L1 norm
- * @param[in]  size  size of the input vector
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void dotProduct1dVector(T            *g_idata1     ,
-                        T            *g_idata2     ,
-                        T            *g_odata      ,
-                        unsigned int  size         ,
-                        cudaStream_t  stream = 0   ,
-                        bool          async = false);
 
 /**
  * @brief   downsample operator in 1d on matrix

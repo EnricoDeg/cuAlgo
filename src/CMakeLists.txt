@@ -30,7 +30,6 @@ set(SOURCE_EXE  internals/utils.cu
                 API/fftshift1dVector.cu
                 API/normL2Vector.cu
                 API/normLInfVector.cu
-                API/dotProduct1dVector.cu
                 API/normalizeVector.cu
                 API/convolution2dMatrixDD.cu
                 API/downsample1dMatrix.cu

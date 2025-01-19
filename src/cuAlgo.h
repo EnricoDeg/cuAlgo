@@ -342,52 +342,6 @@ void convolutionTaperReduction1dMatrixInt(int          *R            ,
                                           bool          async = false);
 
 /**
- * @brief   Compute dot product of two vectors of floats
- * 
- * @details Sum product of elements of the input vectors and
- *          return a pointer to a scalar
- * 
- * @param[in]  g_idata1 pointer to input vector
- * @param[in]  g_idata2 pointer to input vector
- * @param[out] g_odata pointer to output scalar with result of the L1 norm
- * @param[in]  size  size of the input vector
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algoC
- */
-void dotProduct1dVectorFloat(float        *g_idata1     ,
-                             float        *g_idata2     ,
-                             float        *g_odata      ,
-                             unsigned int  size         ,
-                             cudaStream_t  stream = 0   ,
-                             bool          async = false);
-
-/**
- * @brief   Compute dot product of two vectors of double
- * 
- * @details See documentation of dotProductVectorFloat().
- * 
- * @ingroup algoC
- */
-void dotProduct1dVectorDouble(double       *g_idata1     ,
-                              double       *g_idata2     ,
-                              double       *g_odata      ,
-                              unsigned int  size         ,
-                              cudaStream_t  stream = 0   ,
-                              bool          async = false);
-
-void dotProduct1dVectorInt(int          *g_idata1     ,
-                           int          *g_idata2     ,
-                           int          *g_odata      ,
-                           unsigned int  size         ,
-                           cudaStream_t  stream = 0   ,
-                           bool          async = false);
-
-/**
  * @brief   downsample operator in 1d on matrix of floats
  * 
  * @details The operation can be applied on both direction

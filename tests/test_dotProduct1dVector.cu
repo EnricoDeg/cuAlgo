@@ -29,6 +29,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include "src/cuAlgo.h"
+#include "src/API/dotProduct1dVector.hpp"
 #include <gtest/gtest.h>
 
 TEST(dotProduct1dVector, default_value) {
@@ -60,7 +61,7 @@ TEST(dotProduct1dVector, default_value) {
 	check_cuda( cudaMemcpy ( d_input1, input1, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
 	check_cuda( cudaMemcpy ( d_input2, input2, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::dotProduct1dVectorInt(d_input1, d_input2, d_output, size);
+	cuAlgo::dotProduct1dVector<int, 1024, 2>(d_input1, d_input2, d_output, size);
 
 	solution[0] = 0;
 	for(unsigned int i = 0; i < size; ++i)

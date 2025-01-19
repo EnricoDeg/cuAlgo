@@ -111,9 +111,9 @@ template <typename T>
 class dotProduct_impl {
 
 	public:
-	__device__ inline T globalMemory(T * __restrict__ a1, T * __restrict__ a2 ,
-	                                 T * __restrict__ b1, T * __restrict__ b2 ) {
-		return (*a1) * (*a2) + (*b1) * (*b2);
+	__device__ inline T globalMemory(T * __restrict__ init,
+	                                 T * __restrict__ a1, T * __restrict__ a2) {
+		return (*init) + (*a1) * (*a2);
 	}
 	__device__ inline void loadSharedMemory(T * result, T * __restrict__ a) {
 		*result += *a;
