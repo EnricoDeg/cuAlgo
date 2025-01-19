@@ -10,7 +10,6 @@ endif()
 set(SOURCE_EXE  internals/utils.cu
                 API/getRowBlocks.cu
                 internals/checkError.cu
-                API/reduction1dVector.cu
                 API/reduction1dMatrix.cu
                 API/convolution1dMatrix.cu
                 API/correlation1dMatrix.cu

@@ -714,29 +714,6 @@ void reduction1dMatrix(T            *B     ,
                       bool          async = false);
 
 /**
- * @brief   Perform reduction on a vector
- * 
- * @details Sum elements of the input vector and return a pointer to a scalar
- * 
- * @param[in]  idata pointer to input vector
- * @param[out] odata pointer to output scalar with result of the reduction
- * @param[in]  size  size of the input vector
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void reduction1dVector(T            *g_idata,
-                       T            *g_odata,
-                       unsigned int  size   ,
-                       cudaStream_t  stream = 0,
-                       bool          async = false );
-
-/**
  * @brief   Apply 1d taper to matrix.
  * 
  * @details The taper is applied on the fastest 

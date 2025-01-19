@@ -1202,59 +1202,6 @@ void reduction1dMatrixInt(int          *B            ,
                           bool          async = false);
 
 /**
- * @brief   Perform reduction on a vector of floats
- * 
- * @details Sum elements of the input vector and return a pointer to a scalar
- * 
- * @param[in]  idata pointer to input vector
- * @param[out] odata pointer to output scalar with result of the reduction
- * @param[in]  size  size of the input vector
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algoC
- */
-void reduction1dVectorFloat(float        *g_idata      ,
-                            float        *g_odata      ,
-                            unsigned int  size         ,
-                            cudaStream_t  stream = 0   ,
-                            bool          async = false);
-
-void reduction1dVectorComplexFloat(thrust::complex<float> *g_idata     ,
-                                   thrust::complex<float> *g_odata     ,
-                                   unsigned int            size        ,
-                                   cudaStream_t            stream = 0  ,
-                                   bool                    async =false);
-
-/**
- * @brief   Perform reduction on a vector of doubles
- * 
- * @details See documentation of reduction1dVectorFloat().
- * 
- * @ingroup algoC
- */
-void reduction1dVectorDouble(double       *g_idata      ,
-                             double       *g_odata      ,
-                             unsigned int  size         ,
-                             cudaStream_t  stream = 0   ,
-                             bool          async = false);
-
-void reduction1dVectorComplexDouble(thrust::complex<double> *g_idata     ,
-                                    thrust::complex<double> *g_odata     ,
-                                    unsigned int            size        ,
-                                    cudaStream_t            stream = 0  ,
-                                    bool                    async =false);
-
-void reduction1dVectorInt(int          *g_idata      ,
-                          int          *g_odata      ,
-                          unsigned int  size         ,
-                          cudaStream_t  stream = 0   ,
-                          bool          async = false);
-
-/**
  * @brief   Apply 1d taper to matrix using floats.
  * 
  * @details The taper is applied on the fastest 
