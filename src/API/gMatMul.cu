@@ -29,82 +29,108 @@
 #include "cuAlgo.h"
 #include "internals/utils.hpp"
 
-template <const uint BLOCKSIZE, typename T>
-__global__ void gMatMulKernel(T                      alpha,
-                              const T * __restrict__ A    ,
-                              const T * __restrict__ B    ,
-                              T                      beta ,
-                              T       * __restrict__ C    ,
-                              unsigned int           M    ,
-                              unsigned int           N    ,
-                              unsigned int           K    ) {
+template <
+unsigned int BM,
+unsigned int BN,
+unsigned int BK,
+unsigned int TM,
+typename T
+>
+CUALGO_GLOBAL
+void gMatMulKernel(T                      alpha,
+                   const T * __restrict__ A    ,
+                   const T * __restrict__ B    ,
+                   T                      beta ,
+                   T       * __restrict__ C    ,
+                   unsigned int           M    ,
+                   unsigned int           N    ,
+                   unsigned int           K    ) {
 
     // output matrix block in this thread block
-    const unsigned int cRow = blockIdx.x;
-    const unsigned int cCol = blockIdx.y;
+    const uint cRow = blockIdx.y;
+    const uint cCol = blockIdx.x;
 
-    __shared__ T As[BLOCKSIZE * BLOCKSIZE];
-    __shared__ T Bs[BLOCKSIZE * BLOCKSIZE];
+    // each warp will calculate 32*TM elements, with 32 being the columnar dim.
+    const int threadCol = threadIdx.x % BN;
+    const int threadRow = threadIdx.x / BN;
 
-    // inner row and col in block
-    const unsigned int threadCol = (threadIdx.x % BLOCKSIZE);
-    const unsigned int threadRow = (threadIdx.x / BLOCKSIZE);
+    // allocate space for the current blocktile in SMEM
+    __shared__ T As[BM * BK];
+    __shared__ T Bs[BK * BN];
 
-    // advance pointers to the starting positions
-    A += cRow * BLOCKSIZE * K;                    // row=cRow, col=0
-    B += cCol * BLOCKSIZE;                        // row=0, col=cCol
-    C += cRow * BLOCKSIZE * N + cCol * BLOCKSIZE; // row=cRow, col=cCol
+    // Move blocktile to beginning of A's row and B's column
+    A += cRow * BM * K;
+    B += cCol * BN;
+    C += cRow * BM * N + cCol * BN;
 
-    T tmp = 0.0;
-    for (int bkIdx = 0; bkIdx < K; bkIdx += BLOCKSIZE) {
-        // Have each thread load one of the elements in A & B
-        // Make the threadCol (=threadIdx.x) the consecutive index
-        // to allow global memory access coalescing
-        As[threadRow * BLOCKSIZE + threadCol] = A[threadRow * K + threadCol];
-        Bs[threadRow * BLOCKSIZE + threadCol] = B[threadRow * N + threadCol];
+    const uint innerColA = threadIdx.x % BK; // warp-level GMEM coalescing
+    const uint innerRowA = threadIdx.x / BK;
+    const uint innerColB = threadIdx.x % BN; // warp-level GMEM coalescing
+    const uint innerRowB = threadIdx.x / BN;
 
-        // block threads in this block until cache is fully populated
+    // allocate thread-local cache for results in registerfile
+    T threadResults[TM] = {0};
+
+    // outer loop over block tiles
+    for (uint bkIdx = 0; bkIdx < K; bkIdx += BK) {
+        // populate the SMEM caches
+        As[innerRowA * BK + innerColA] = A[innerRowA * K + innerColA];
+        Bs[innerRowB * BN + innerColB] = B[innerRowB * N + innerColB];
         __syncthreads();
-        A += BLOCKSIZE;
-        B += BLOCKSIZE * N;
 
-        // execute the dotproduct on the currently cached block
-        for (int dotIdx = 0; dotIdx < BLOCKSIZE; ++dotIdx) {
-            tmp += As[threadRow * BLOCKSIZE + dotIdx] *
-                Bs[dotIdx * BLOCKSIZE + threadCol];
+        // advance blocktile
+        A += BK;
+        B += BK * N;
+
+        // calculate per-thread results
+        for (uint dotIdx = 0; dotIdx < BK; ++dotIdx) {
+            // we make the dotproduct loop the outside loop, which facilitates
+            // reuse of the Bs entry, which we can cache in a tmp var.
+            T tmpB = Bs[dotIdx * BN + threadCol];
+            for (uint resIdx = 0; resIdx < TM; ++resIdx) {
+            threadResults[resIdx] +=
+                As[(threadRow * TM + resIdx) * BK + dotIdx] * tmpB;
+            }
         }
-        // need to sync again at the end, to avoid faster threads
-        // fetching the next block into the cache before slower threads are done
         __syncthreads();
     }
-    C[threadRow * N + threadCol] =
-        alpha * tmp + beta * C[threadRow * N + threadCol];
 
+    // write out the results
+    for (uint resIdx = 0; resIdx < TM; ++resIdx) {
+        C[(threadRow * TM + resIdx) * N + threadCol] =
+            alpha * threadResults[resIdx] +
+            beta * C[(threadRow * TM + resIdx) * N + threadCol];
+    }
 }
 
 namespace cuAlgo {
 
-	template <typename T>
-	void gMatMul(T             alpha ,
-	             const T      *A     ,
-	             const T      *B     ,
-	             T             beta  ,
-	             T            *C     ,
-	             unsigned int  M     ,
-	             unsigned int  N     ,
-	             unsigned int  K     ,
-	             cudaStream_t  stream,
-	             bool          async ) {
+    template <typename T>
+    void gMatMul(T             alpha ,
+                 const T      *A     ,
+                 const T      *B     ,
+                 T             beta  ,
+                 T            *C     ,
+                 unsigned int  M     ,
+                 unsigned int  N     ,
+                 unsigned int  K     ,
+                 cudaStream_t  stream,
+                 bool          async ) {
 
-		// create as many blocks as necessary to map all of C
-		dim3 blocksPerGrid(div_ceil(M, 32), div_ceil(N, 32));
-		dim3 threadsPerBlock(32 * 32);
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
+        static constexpr uint BM = 64;
+        static constexpr uint BN = 64;
+        static constexpr uint BK = 8;
+        static constexpr uint TM = 8;
 
-		TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
-		      gMatMulKernel<32 COMMA T>,
-		      alpha, A, B, beta, C, M, N, K);
-	}
+        // create as many blocks as necessary to map all of C
+        dim3 blocksPerGrid(div_ceil(N, BN), div_ceil(M, BM));
+        dim3 threadsPerBlock((BM*BN)/TM);
+        print_kernel_config(threadsPerBlock, blocksPerGrid);
+
+        TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
+              CUALGO_KERNEL_NAME(gMatMulKernel<BM,BN,BK,TM, T>),
+              alpha, A, B, beta, C, M, N, K);
+    }
 
 	void gMatMulInt(int           alpha ,
 	                const int    *A     ,
