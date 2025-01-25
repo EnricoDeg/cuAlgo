@@ -39,17 +39,47 @@ __global__ void gMatMulKernel(T                      alpha,
                               unsigned int           N    ,
                               unsigned int           K    ) {
 
-	// compute position in C that this thread is responsible for
-	const unsigned int x = blockIdx.x * BLOCKSIZE + (threadIdx.x / BLOCKSIZE);
-	const unsigned int y = blockIdx.y * BLOCKSIZE + (threadIdx.x % BLOCKSIZE);
+    // output matrix block in this thread block
+    const unsigned int cRow = blockIdx.x;
+    const unsigned int cCol = blockIdx.y;
 
-	if (x < M && y < N) {
-		int tmp = 0.0;
-		for (int i = 0; i < K; ++i) {
-			tmp += A[x * K + i] * B[i * N + y];
-		}
-		C[x * N + y] = alpha * tmp + beta * C[x * N + y];
-	}
+    __shared__ T As[BLOCKSIZE * BLOCKSIZE];
+    __shared__ T Bs[BLOCKSIZE * BLOCKSIZE];
+
+    // inner row and col in block
+    const unsigned int threadCol = (threadIdx.x % BLOCKSIZE);
+    const unsigned int threadRow = (threadIdx.x / BLOCKSIZE);
+
+    // advance pointers to the starting positions
+    A += cRow * BLOCKSIZE * K;                    // row=cRow, col=0
+    B += cCol * BLOCKSIZE;                        // row=0, col=cCol
+    C += cRow * BLOCKSIZE * N + cCol * BLOCKSIZE; // row=cRow, col=cCol
+
+    T tmp = 0.0;
+    for (int bkIdx = 0; bkIdx < K; bkIdx += BLOCKSIZE) {
+        // Have each thread load one of the elements in A & B
+        // Make the threadCol (=threadIdx.x) the consecutive index
+        // to allow global memory access coalescing
+        As[threadRow * BLOCKSIZE + threadCol] = A[threadRow * K + threadCol];
+        Bs[threadRow * BLOCKSIZE + threadCol] = B[threadRow * N + threadCol];
+
+        // block threads in this block until cache is fully populated
+        __syncthreads();
+        A += BLOCKSIZE;
+        B += BLOCKSIZE * N;
+
+        // execute the dotproduct on the currently cached block
+        for (int dotIdx = 0; dotIdx < BLOCKSIZE; ++dotIdx) {
+            tmp += As[threadRow * BLOCKSIZE + dotIdx] *
+                Bs[dotIdx * BLOCKSIZE + threadCol];
+        }
+        // need to sync again at the end, to avoid faster threads
+        // fetching the next block into the cache before slower threads are done
+        __syncthreads();
+    }
+    C[threadRow * N + threadCol] =
+        alpha * tmp + beta * C[threadRow * N + threadCol];
+
 }
 
 namespace cuAlgo {
