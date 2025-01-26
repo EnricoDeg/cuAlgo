@@ -29,6 +29,42 @@
 #include "cuAlgo.h"
 #include "internals/utils.hpp"
 
+template <typename T, int vec_elements>
+struct vecT
+{
+  static_assert(!sizeof(T), "cuAlgo can only have 1-4 elements");
+};
+
+template <typename T>
+struct vecT<T, 1>
+{
+  T x;
+};
+
+template <typename T>
+struct vecT<T, 2>
+{
+  T x;
+  T y;
+};
+
+template <typename T>
+struct vecT<T, 3>
+{
+  T x;
+  T y;
+  T z;
+};
+
+template <typename T>
+struct vecT<T, 4>
+{
+  T x;
+  T y;
+  T z;
+  T w;
+};
+
 template <
 unsigned int BM,
 unsigned int BN,
@@ -39,20 +75,20 @@ typename T
 >
 CUALGO_GLOBAL
 void gMatMulKernel(T                      alpha,
-                   const T * __restrict__ A    ,
-                   const T * __restrict__ B    ,
+                   T * __restrict__ A    ,
+                   T * __restrict__ B    ,
                    T                      beta ,
                    T       * __restrict__ C    ,
                    unsigned int           M    ,
                    unsigned int           N    ,
-                   unsigned int           K    ) {
+                   unsigned int           K    )
+{
+    static constexpr int numberVectorElements = 16 / sizeof(T);
+    using vecN = vecT<T,numberVectorElements>;
+    static_assert(numberVectorElements == 4, "must be vector of 4 for now");
 
     const uint cRow = blockIdx.y;
     const uint cCol = blockIdx.x;
-
-    const uint totalResultsBlocktile = BM * BN;
-    // A thread is responsible for calculating TM*TN elements in the blocktile
-    const uint numThreadsBlocktile = totalResultsBlocktile / (TM * TN);
 
     // BN/TN are the number of threads to span a column
     const int threadCol = threadIdx.x % (BN / TN);
@@ -68,18 +104,10 @@ void gMatMulKernel(T                      alpha,
     C += cRow * BM * N + cCol * BN;
 
     // calculating the indices that this thread will load into SMEM
-    const uint innerRowA = threadIdx.x / BK;
-    const uint innerColA = threadIdx.x % BK;
-
-    // calculates the number of rows of As that are being loaded in a single step
-    // by a single block
-    const uint strideA = numThreadsBlocktile / BK;
-    const uint innerRowB = threadIdx.x / BN;
-    const uint innerColB = threadIdx.x % BN;
-    // for both As and Bs we want each load to span the full column-width, for
-    // better GMEM coalescing (as opposed to spanning full row-width and iterating
-    // across columns)
-    const uint strideB = numThreadsBlocktile / BN;
+    uint innerRowA = threadIdx.x / (BK / numberVectorElements);
+    uint innerColA = threadIdx.x % (BK / numberVectorElements);
+    uint innerRowB = threadIdx.x / (BN / numberVectorElements);
+    uint innerColB = threadIdx.x % (BN / numberVectorElements);
 
     // allocate thread-local cache for results in registerfile
     T threadResults[TM * TN] = {0};
@@ -89,15 +117,18 @@ void gMatMulKernel(T                      alpha,
 
     // outer-most loop over block tiles
     for (uint bkIdx = 0; bkIdx < K; bkIdx += BK) {
+
         // populate the SMEM caches
-        for (uint loadOffset = 0; loadOffset < BM; loadOffset += strideA) {
-            As[(innerRowA + loadOffset) * BK + innerColA] =
-                A[(innerRowA + loadOffset) * K + innerColA];
-        }
-        for (uint loadOffset = 0; loadOffset < BK; loadOffset += strideB) {
-            Bs[(innerRowB + loadOffset) * BN + innerColB] =
-                B[(innerRowB + loadOffset) * N + innerColB];
-        }
+        // transpose A while loading it
+        vecN tmp =
+            reinterpret_cast<vecN *>(&A[innerRowA * K + innerColA * 4])[0];
+        As[(innerColA * 4 + 0) * BM + innerRowA] = tmp.x;
+        As[(innerColA * 4 + 1) * BM + innerRowA] = tmp.y;
+        As[(innerColA * 4 + 2) * BM + innerRowA] = tmp.z;
+        As[(innerColA * 4 + 3) * BM + innerRowA] = tmp.w;
+
+        reinterpret_cast<vecN *>(&Bs[innerRowB * BN + innerColB * 4])[0] =
+            reinterpret_cast<vecN *>(&B[innerRowB * N + innerColB * 4])[0];
         __syncthreads();
 
         // advance blocktile
@@ -108,7 +139,7 @@ void gMatMulKernel(T                      alpha,
         for (uint dotIdx = 0; dotIdx < BK; ++dotIdx) {
             // block into registers
             for (uint i = 0; i < TM; ++i) {
-                regM[i] = As[(threadRow * TM + i) * BK + dotIdx];
+                regM[i] = As[dotIdx * BM + threadRow * TM + i];
             }
             for (uint i = 0; i < TN; ++i) {
                 regN[i] = Bs[dotIdx * BN + threadCol * TN + i];
@@ -125,10 +156,20 @@ void gMatMulKernel(T                      alpha,
 
     // write out the results
     for (uint resIdxM = 0; resIdxM < TM; ++resIdxM) {
-        for (uint resIdxN = 0; resIdxN < TN; ++resIdxN) {
-            C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN] =
-                alpha * threadResults[resIdxM * TN + resIdxN] +
-                beta * C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN];
+        for (uint resIdxN = 0; resIdxN < TN; resIdxN += 4) {
+            // load C vector into registers
+            vecN tmp = reinterpret_cast<vecN *>(
+                &C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN])[0];
+
+            // perform GEMM update in reg
+            tmp.x = alpha * threadResults[resIdxM * TN + resIdxN] + beta * tmp.x;
+            tmp.y = alpha * threadResults[resIdxM * TN + resIdxN + 1] + beta * tmp.y;
+            tmp.z = alpha * threadResults[resIdxM * TN + resIdxN + 2] + beta * tmp.z;
+            tmp.w = alpha * threadResults[resIdxM * TN + resIdxN + 3] + beta * tmp.w;
+            // write back
+            reinterpret_cast<vecN *>(
+                &C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN])[0] =
+                tmp;
         }
     }
 }
@@ -137,8 +178,8 @@ namespace cuAlgo {
 
     template <typename T>
     void gMatMul(T             alpha ,
-                 const T      *A     ,
-                 const T      *B     ,
+                 T      *A     ,
+                 T      *B     ,
                  T             beta  ,
                  T            *C     ,
                  unsigned int  M     ,
@@ -164,8 +205,8 @@ namespace cuAlgo {
     }
 
 	void gMatMulInt(int           alpha ,
-	                const int    *A     ,
-	                const int    *B     ,
+	                int    *A     ,
+	                int    *B     ,
 	                int           beta  ,
 	                int          *C     ,
 	                unsigned int  M     ,
@@ -177,43 +218,4 @@ namespace cuAlgo {
 
 		gMatMul<int>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
 	}
-
-	void gMatMulFloat(float         alpha ,
-	                  const float  *A     ,
-	                  const float  *B     ,
-	                  float         beta  ,
-	                  float        *C     ,
-	                  unsigned int  M     ,
-	                  unsigned int  N     ,
-	                  unsigned int  K     ,
-	                  cudaStream_t  stream,
-	                  bool          async )
-	{
-
-		gMatMul<float>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
-	}
-
-	void gMatMulDouble(double        alpha ,
-	                   const double *A     ,
-	                   const double *B     ,
-	                   double        beta  ,
-	                   double       *C     ,
-	                   unsigned int  M     ,
-	                   unsigned int  N     ,
-	                   unsigned int  K     ,
-	                   cudaStream_t  stream,
-	                   bool          async )
-	{
-
-		gMatMul<double>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
-	}
-
-	template void gMatMul(float , const float  *, const float  *,
-	                      float , float  *,
-	                      unsigned int, unsigned int, unsigned int,
-	                      cudaStream_t, bool);
-	template void gMatMul(double, const double *, const double *,
-	                      double, double *,
-	                      unsigned int, unsigned int, unsigned int,
-	                      cudaStream_t, bool);
 }

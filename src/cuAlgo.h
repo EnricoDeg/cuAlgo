@@ -576,64 +576,9 @@ void fliplr1dMatrixDouble(double       *data         ,
                           cudaStream_t  stream = 0   ,
                           bool          async = false);
 
-/**
- * @brief   Perform general matrix-matrix multiplication with floats.
- * 
- * @details The following operation is performed
- *          C = alpha * A * B + beta * C
- * 
- * @param[in]    A     pointer to the input matrix.
- *                     The matrix has dimensions {K,M}.
- * @param[in]    B     pointer to the input matrix.
- *                     The matrix has dimensions {N,K}.
- * @param[inout] C     pointer to the output matrix.
- *                     The matrix has dimensions {N,M}.
- * @param[in]    M     non-contiguous dimension of the A and C matrices
- * @param[in]    N     contiguous dimension of the B and C matrix
- * @param[in]    K     contiguous dimension of the A matrix
- *                     non-contiguous dimension of the B matrix
- * @param[in]    alpha scalar parameter to apply to A * B
- * @param[in]    beta  scalar parameter to apply to C
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algoC
- */
-void gMatMulFloat(float         alpha        ,
-                  const float  *A            ,
-                  const float  *B            ,
-                  float         beta         ,
-                  float        *C            ,
-                  unsigned int  M            ,
-                  unsigned int  N            ,
-                  unsigned int  K            ,
-                  cudaStream_t  stream = 0   ,
-                  bool          async = false);
-
-/**
- * @brief   Perform general matrix-matrix multiplication with doubles.
- * 
- * @details See documentation of gMatMulFloat().
- * 
- * @ingroup algoC
- */
-void gMatMulDouble(double        alpha        ,
-                   const double *A            ,
-                   const double *B            ,
-                   double        beta         ,
-                   double       *C            ,
-                   unsigned int  M            ,
-                   unsigned int  N            ,
-                   unsigned int  K            ,
-                   cudaStream_t  stream = 0   ,
-                   bool          async = false);
-
 void gMatMulInt(int           alpha        ,
-                const int    *A            ,
-                const int    *B            ,
+                int    *A            ,
+                int    *B            ,
                 int           beta         ,
                 int          *C            ,
                 unsigned int  M            ,
