@@ -34,6 +34,7 @@ unsigned int BM,
 unsigned int BN,
 unsigned int BK,
 unsigned int TM,
+unsigned int TN,
 typename T
 >
 CUALGO_GLOBAL
@@ -46,15 +47,18 @@ void gMatMulKernel(T                      alpha,
                    unsigned int           N    ,
                    unsigned int           K    ) {
 
-    // output matrix block in this thread block
     const uint cRow = blockIdx.y;
     const uint cCol = blockIdx.x;
 
-    // each warp will calculate 32*TM elements, with 32 being the columnar dim.
-    const int threadCol = threadIdx.x % BN;
-    const int threadRow = threadIdx.x / BN;
+    const uint totalResultsBlocktile = BM * BN;
+    // A thread is responsible for calculating TM*TN elements in the blocktile
+    const uint numThreadsBlocktile = totalResultsBlocktile / (TM * TN);
 
-    // allocate space for the current blocktile in SMEM
+    // BN/TN are the number of threads to span a column
+    const int threadCol = threadIdx.x % (BN / TN);
+    const int threadRow = threadIdx.x / (BN / TN);
+
+    // allocate space for the current blocktile in smem
     __shared__ T As[BM * BK];
     __shared__ T Bs[BK * BN];
 
@@ -63,43 +67,69 @@ void gMatMulKernel(T                      alpha,
     B += cCol * BN;
     C += cRow * BM * N + cCol * BN;
 
-    const uint innerColA = threadIdx.x % BK; // warp-level GMEM coalescing
+    // calculating the indices that this thread will load into SMEM
     const uint innerRowA = threadIdx.x / BK;
-    const uint innerColB = threadIdx.x % BN; // warp-level GMEM coalescing
+    const uint innerColA = threadIdx.x % BK;
+
+    // calculates the number of rows of As that are being loaded in a single step
+    // by a single block
+    const uint strideA = numThreadsBlocktile / BK;
     const uint innerRowB = threadIdx.x / BN;
+    const uint innerColB = threadIdx.x % BN;
+    // for both As and Bs we want each load to span the full column-width, for
+    // better GMEM coalescing (as opposed to spanning full row-width and iterating
+    // across columns)
+    const uint strideB = numThreadsBlocktile / BN;
 
     // allocate thread-local cache for results in registerfile
-    T threadResults[TM] = {0};
+    T threadResults[TM * TN] = {0};
+    // register caches for As and Bs
+    T regM[TM] = {0};
+    T regN[TN] = {0};
 
-    // outer loop over block tiles
+    // outer-most loop over block tiles
     for (uint bkIdx = 0; bkIdx < K; bkIdx += BK) {
         // populate the SMEM caches
-        As[innerRowA * BK + innerColA] = A[innerRowA * K + innerColA];
-        Bs[innerRowB * BN + innerColB] = B[innerRowB * N + innerColB];
+        for (uint loadOffset = 0; loadOffset < BM; loadOffset += strideA) {
+            As[(innerRowA + loadOffset) * BK + innerColA] =
+                A[(innerRowA + loadOffset) * K + innerColA];
+        }
+        for (uint loadOffset = 0; loadOffset < BK; loadOffset += strideB) {
+            Bs[(innerRowB + loadOffset) * BN + innerColB] =
+                B[(innerRowB + loadOffset) * N + innerColB];
+        }
         __syncthreads();
 
         // advance blocktile
-        A += BK;
-        B += BK * N;
+        A += BK;     // move BK columns to right
+        B += BK * N; // move BK rows down
 
         // calculate per-thread results
         for (uint dotIdx = 0; dotIdx < BK; ++dotIdx) {
-            // we make the dotproduct loop the outside loop, which facilitates
-            // reuse of the Bs entry, which we can cache in a tmp var.
-            T tmpB = Bs[dotIdx * BN + threadCol];
-            for (uint resIdx = 0; resIdx < TM; ++resIdx) {
-            threadResults[resIdx] +=
-                As[(threadRow * TM + resIdx) * BK + dotIdx] * tmpB;
+            // block into registers
+            for (uint i = 0; i < TM; ++i) {
+                regM[i] = As[(threadRow * TM + i) * BK + dotIdx];
+            }
+            for (uint i = 0; i < TN; ++i) {
+                regN[i] = Bs[dotIdx * BN + threadCol * TN + i];
+            }
+            for (uint resIdxM = 0; resIdxM < TM; ++resIdxM) {
+                for (uint resIdxN = 0; resIdxN < TN; ++resIdxN) {
+                    threadResults[resIdxM * TN + resIdxN] +=
+                        regM[resIdxM] * regN[resIdxN];
+                }
             }
         }
         __syncthreads();
     }
 
     // write out the results
-    for (uint resIdx = 0; resIdx < TM; ++resIdx) {
-        C[(threadRow * TM + resIdx) * N + threadCol] =
-            alpha * threadResults[resIdx] +
-            beta * C[(threadRow * TM + resIdx) * N + threadCol];
+    for (uint resIdxM = 0; resIdxM < TM; ++resIdxM) {
+        for (uint resIdxN = 0; resIdxN < TN; ++resIdxN) {
+            C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN] =
+                alpha * threadResults[resIdxM * TN + resIdxN] +
+                beta * C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN];
+        }
     }
 }
 
@@ -117,18 +147,19 @@ namespace cuAlgo {
                  cudaStream_t  stream,
                  bool          async ) {
 
-        static constexpr uint BM = 64;
-        static constexpr uint BN = 64;
+        static constexpr uint BM = 128;
+        static constexpr uint BN = 128;
         static constexpr uint BK = 8;
         static constexpr uint TM = 8;
+        static constexpr uint TN = 8;
 
         // create as many blocks as necessary to map all of C
         dim3 blocksPerGrid(div_ceil(N, BN), div_ceil(M, BM));
-        dim3 threadsPerBlock((BM*BN)/TM);
+        dim3 threadsPerBlock((BM*BN)/(TM*TN));
         print_kernel_config(threadsPerBlock, blocksPerGrid);
 
         TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
-              CUALGO_KERNEL_NAME(gMatMulKernel<BM,BN,BK,TM, T>),
+              CUALGO_KERNEL_NAME(gMatMulKernel<BM,BN,BK,TM,TN, T>),
               alpha, A, B, beta, C, M, N, K);
     }
 
