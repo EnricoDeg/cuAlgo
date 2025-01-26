@@ -43,6 +43,11 @@ using namespace std::chrono;
 #define CUALGO_DEVICE __device__
 #define CUALGO_RESTRICT __restrict__
 #define CUALGO_HOST __host__
+#define CUALGO_SHMEM __shared__
+#define CUALGO_FORCE_INLINE __forceinline__
+#define CUALGO_LAUNCH_BOUNDS(N) __launch_bounds__(N)
+
+#define CUALGO_WARPSIZE 32
 
 #define CUALGO_UNROLL _Pragma("unroll")
 #define CUALGO_NO_UNROLL _Pragma("nounroll")
