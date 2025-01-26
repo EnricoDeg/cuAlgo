@@ -38,31 +38,103 @@ struct vecT
 template <typename T>
 struct vecT<T, 1>
 {
-  T x;
+    T x;
+
+    __device__
+    __forceinline__
+    void store(T * results, T alpha, T beta) {
+        x = alpha * results[0] + beta * x;
+    }
+
+    __device__
+    __forceinline__
+    void load_transpose(T * As,
+                        unsigned int row,
+                        unsigned int col,
+                        unsigned int Ncol) {
+        As[(col * 1 + 0) * Ncol + row] = x;
+    }
 };
 
 template <typename T>
 struct vecT<T, 2>
 {
-  T x;
-  T y;
+    T x;
+    T y;
+
+    __device__
+    __forceinline__
+    void store(T * results, T alpha, T beta) {
+        x = alpha * results[0] + beta * x;
+        y = alpha * results[1] + beta * y;
+    }
+
+    __device__
+    __forceinline__
+    void load_transpose(T * As,
+                        unsigned int row,
+                        unsigned int col,
+                        unsigned int Ncol) {
+        As[(col * 2 + 0) * Ncol + row] = x;
+        As[(col * 2 + 1) * Ncol + row] = y;
+    }
 };
 
 template <typename T>
 struct vecT<T, 3>
 {
-  T x;
-  T y;
-  T z;
+    T x;
+    T y;
+    T z;
+
+    __device__
+    __forceinline__
+    void store(T * results, T alpha, T beta) {
+        x = alpha * results[0] + beta * x;
+        y = alpha * results[1] + beta * y;
+        z = alpha * results[2] + beta * z;
+    }
+
+    __device__
+    __forceinline__
+    void load_transpose(T * As,
+                        unsigned int row,
+                        unsigned int col,
+                        unsigned int Ncol) {
+        As[(col * 3 + 0) * Ncol + row] = x;
+        As[(col * 3 + 1) * Ncol + row] = y;
+        As[(col * 3 + 2) * Ncol + row] = z;
+    }
 };
 
 template <typename T>
 struct vecT<T, 4>
 {
-  T x;
-  T y;
-  T z;
-  T w;
+    T x;
+    T y;
+    T z;
+    T w;
+
+    __device__
+    __forceinline__
+    void store(T * results, T alpha, T beta) {
+        x = alpha * results[0] + beta * x;
+        y = alpha * results[1] + beta * y;
+        z = alpha * results[2] + beta * z;
+        w = alpha * results[3] + beta * w;
+    }
+
+    __device__
+    __forceinline__
+    void load_transpose(T * As,
+                        unsigned int row,
+                        unsigned int col,
+                        unsigned int Ncol) {
+        As[(col * 4 + 0) * Ncol + row] = x;
+        As[(col * 4 + 1) * Ncol + row] = y;
+        As[(col * 4 + 2) * Ncol + row] = z;
+        As[(col * 4 + 3) * Ncol + row] = w;
+    }
 };
 
 template <
@@ -85,7 +157,6 @@ void gMatMulKernel(T                      alpha,
 {
     static constexpr int numberVectorElements = 16 / sizeof(T);
     using vecN = vecT<T,numberVectorElements>;
-    static_assert(numberVectorElements == 4, "must be vector of 4 for now");
 
     const uint cRow = blockIdx.y;
     const uint cCol = blockIdx.x;
@@ -121,14 +192,11 @@ void gMatMulKernel(T                      alpha,
         // populate the SMEM caches
         // transpose A while loading it
         vecN tmp =
-            reinterpret_cast<vecN *>(&A[innerRowA * K + innerColA * 4])[0];
-        As[(innerColA * 4 + 0) * BM + innerRowA] = tmp.x;
-        As[(innerColA * 4 + 1) * BM + innerRowA] = tmp.y;
-        As[(innerColA * 4 + 2) * BM + innerRowA] = tmp.z;
-        As[(innerColA * 4 + 3) * BM + innerRowA] = tmp.w;
+            reinterpret_cast<vecN *>(&A[innerRowA * K + innerColA * numberVectorElements])[0];
+        tmp.load_transpose(As, innerRowA, innerColA, BM);
 
-        reinterpret_cast<vecN *>(&Bs[innerRowB * BN + innerColB * 4])[0] =
-            reinterpret_cast<vecN *>(&B[innerRowB * N + innerColB * 4])[0];
+        reinterpret_cast<vecN *>(&Bs[innerRowB * BN + innerColB * numberVectorElements])[0] =
+            reinterpret_cast<vecN *>(&B[innerRowB * N + innerColB * numberVectorElements])[0];
         __syncthreads();
 
         // advance blocktile
@@ -156,16 +224,12 @@ void gMatMulKernel(T                      alpha,
 
     // write out the results
     for (uint resIdxM = 0; resIdxM < TM; ++resIdxM) {
-        for (uint resIdxN = 0; resIdxN < TN; resIdxN += 4) {
+        for (uint resIdxN = 0; resIdxN < TN; resIdxN += numberVectorElements) {
             // load C vector into registers
             vecN tmp = reinterpret_cast<vecN *>(
                 &C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN])[0];
-
             // perform GEMM update in reg
-            tmp.x = alpha * threadResults[resIdxM * TN + resIdxN] + beta * tmp.x;
-            tmp.y = alpha * threadResults[resIdxM * TN + resIdxN + 1] + beta * tmp.y;
-            tmp.z = alpha * threadResults[resIdxM * TN + resIdxN + 2] + beta * tmp.z;
-            tmp.w = alpha * threadResults[resIdxM * TN + resIdxN + 3] + beta * tmp.w;
+            tmp.store(&threadResults[resIdxM * TN + resIdxN], alpha, beta);
             // write back
             reinterpret_cast<vecN *>(
                 &C[(threadRow * TM + resIdxM) * N + threadCol * TN + resIdxN])[0] =
