@@ -576,17 +576,6 @@ void fliplr1dMatrixDouble(double       *data         ,
                           cudaStream_t  stream = 0   ,
                           bool          async = false);
 
-void gMatMulInt(int           alpha        ,
-                int    *A            ,
-                int    *B            ,
-                int           beta         ,
-                int          *C            ,
-                unsigned int  M            ,
-                unsigned int  N            ,
-                unsigned int  K            ,
-                cudaStream_t  stream = 0   ,
-                bool          async = false);
-
 /**
  * @brief   Perform matrix-vector multiplication with floats.
  * 

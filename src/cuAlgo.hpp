@@ -360,44 +360,6 @@ void fliplr1dMatrix(T            *data         ,
                     bool          async = false);
 
 /**
- * @brief   Perform general matrix-matrix multiplication
- * 
- * @details The following operation is performed
- *          C = alpha * A * B + beta * C
- * 
- * @param[in]    A     pointer to the input matrix.
- *                     The matrix has dimensions {K,M}.
- * @param[in]    B     pointer to the input matrix.
- *                     The matrix has dimensions {N,K}.
- * @param[inout] C     pointer to the output matrix.
- *                     The matrix has dimensions {N,M}.
- * @param[in]    M     non-contiguous dimension of the A and C matrices
- * @param[in]    N     contiguous dimension of the B and C matrix
- * @param[in]    K     contiguous dimension of the A matrix
- *                     non-contiguous dimension of the B matrix
- * @param[in]    alpha scalar parameter to apply to A * B
- * @param[in]    beta  scalar parameter to apply to C
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void gMatMul(T             alpha        ,
-             const T      *A            ,
-             const T      *B            ,
-             T             beta         ,
-             T            *C            ,
-             unsigned int  M            ,
-             unsigned int  N            ,
-             unsigned int  K            ,
-             cudaStream_t  stream = 0   ,
-             bool          async = false);
-
-/**
  * @brief   Perform matrix-vector multiplication.
  * 
  * @details The vector A is multiplied with matrix B and the result is stored 

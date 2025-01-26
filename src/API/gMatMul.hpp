@@ -1,5 +1,5 @@
 /*
- * @file gMatMul.cu
+ * @file gMatMul.hpp
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -176,6 +176,32 @@ void gMatMulKernel(T                      alpha,
 
 namespace cuAlgo {
 
+    /**
+    * @brief   Perform general matrix-matrix multiplication
+    * 
+    * @details The following operation is performed
+    *          C = alpha * A * B + beta * C
+    * 
+    * @param[in]    A     pointer to the input matrix.
+    *                     The matrix has dimensions {K,M}.
+    * @param[in]    B     pointer to the input matrix.
+    *                     The matrix has dimensions {N,K}.
+    * @param[inout] C     pointer to the output matrix.
+    *                     The matrix has dimensions {N,M}.
+    * @param[in]    M     non-contiguous dimension of the A and C matrices
+    * @param[in]    N     contiguous dimension of the B and C matrix
+    * @param[in]    K     contiguous dimension of the A matrix
+    *                     non-contiguous dimension of the B matrix
+    * @param[in]    alpha scalar parameter to apply to A * B
+    * @param[in]    beta  scalar parameter to apply to C
+    * @param[in]  stream CUDA stream where the kernels are launched.
+    *                    Default is stream 0 (default stream)
+    * @param[in]  async  bool to define if kernels are launched asynchronously
+    *                    (without synchronization).
+    *                    Default is false (device is synchronized after each kernel launched)
+    * 
+    * @ingroup algo
+    */
     template <typename T>
     void gMatMul(T             alpha ,
                  T      *A     ,
@@ -185,8 +211,8 @@ namespace cuAlgo {
                  unsigned int  M     ,
                  unsigned int  N     ,
                  unsigned int  K     ,
-                 cudaStream_t  stream,
-                 bool          async ) {
+                 cudaStream_t  stream = 0,
+                 bool          async = false) {
 
         static constexpr uint BM = 128;
         static constexpr uint BN = 128;
@@ -203,19 +229,4 @@ namespace cuAlgo {
               CUALGO_KERNEL_NAME(gMatMulKernel<BM,BN,BK,TM,TN, T>),
               alpha, A, B, beta, C, M, N, K);
     }
-
-	void gMatMulInt(int           alpha ,
-	                int    *A     ,
-	                int    *B     ,
-	                int           beta  ,
-	                int          *C     ,
-	                unsigned int  M     ,
-	                unsigned int  N     ,
-	                unsigned int  K     ,
-	                cudaStream_t  stream,
-	                bool          async )
-	{
-
-		gMatMul<int>( alpha , A, B, beta, C, M, N, K, stream, async ) ;
-	}
 }

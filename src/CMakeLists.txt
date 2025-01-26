@@ -17,7 +17,6 @@ set(SOURCE_EXE  internals/utils.cu
                 API/convolutionTaperReduction1dMatrix.cu
                 API/exclusiveScan1dVector.cu
                 API/transposeMatrix.cu
-                API/gMatMul.cu
                 API/gMatVecMul.cu
                 API/gSpMatVecMulCSRVector.cu
                 API/gSpMatVecMulCSRAdaptive.cu
