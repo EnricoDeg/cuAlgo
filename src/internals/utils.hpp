@@ -90,8 +90,10 @@ void print_kernel_config(dim3 threadsPerBlock, dim3 blocksPerGrid);
   do {                                                                                           \
     auto start = high_resolution_clock::now();                                                   \
     func<<< blocksPerGrid, threadsPerBlock, shmem, stream >>>(args);                             \
-    if (!async)                                                                                  \
+    if (!async) {                                                                                \
+        check_cuda( cudaPeekAtLastError() ) ;                                                    \
         check_cuda( cudaStreamSynchronize(stream) );                                             \
+    }                                                                                            \
     auto stop = high_resolution_clock::now();                                                    \
     auto duration = duration_cast<microseconds>(stop - start);                                   \
     std::cout << "Time taken by function: " << duration.count() << " microseconds" << std::endl; \
