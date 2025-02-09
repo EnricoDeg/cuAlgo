@@ -40,57 +40,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   Perform 2D convolution in data domain with floats on the input matrices.
- * 
- * @details The convolution is done in the data domain without Fourier
- *          Transform.
- * 
- * @param[out] odata  pointer to the output matrix for the convolution.
- *                    The matrix has dimensions {mRows+fRows-1, mCols+fCols-1}.
- * @param[in]  idata  pointer to the input matrix for the convolution.
- *                    The matrix has dimensions {mRows, mCols}.
- * @param[in]  filter pointer to the kernel of the convolution.
- *                    The matrix has dimension {fRows, fCols}.
- * @param[in]  mRows  non-contiguous dimension of the input matrix
- * @param[in]  mCols  contiguous dimension of the input matrix
- * @param[in]  fRows  non-contiguous dimensions of the kernel matrix
- * @param[in]  fCols  contiguous dimension of the kernel matrix
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algoC
- */
-void convolution2dMatrixDDFloat(float        * odata        ,
-                                float        * idata        ,
-                                float        * filter       ,
-                                unsigned int   mRows        ,
-                                unsigned int   mCols        ,
-                                unsigned int   fRows        ,
-                                unsigned int   fCols        ,
-                                cudaStream_t   stream = 0   ,
-                                bool           async = false);
-
-/**
- * @brief   Perform 2D convolution in data domain with doubles on the input matrices.
- * 
- * @details See documentation of convolution2dMatrixDDFloat().
- * 
- * @ingroup algoC
- */
-void convolution2dMatrixDDDouble(double       * odata        ,
-                                 double       * idata        ,
-                                 double       * filter       ,
-                                 unsigned int   mRows        ,
-                                 unsigned int   mCols        ,
-                                 unsigned int   fRows        ,
-                                 unsigned int   fCols        ,
-                                 cudaStream_t   stream = 0   ,
-                                 bool           async = false);
-
-/**
  * @brief   Perform 1D convolution with floats on the input matrices and then a 
  *          1D reduction in the slow dimension.
  * 
