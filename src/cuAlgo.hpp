@@ -38,49 +38,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   Perform 1D convolution on the input matrices, then apply a taper
- *          on the slow dimension and finally perform a 1D reduction in the
- *          slow dimension.
- * 
- * @details This function is similar to convolutionReduction1dMatrix() but a
- *          taper defined in the slow dimension is applied before the 1D
- *          reduction.
- * 
- * @param[in]  R     pointer to the first input matrix for the convolution.
- *                   The signals are assumed to be in the frequency domain already.
- *                   The matrix has dimensions {N,K}.
- * @param[in]  V     pointer to the second input matrix for the convolution.
- *                   The signals are assumed to be in the frequency domain already.
- *                   The matrix has dimensions {N,K}.
- * @param[in]  Taper pointer to the input vector with the taper values.
- *                   The vector is defined in the slow dimension of the input
- *                   matrices so it has dimension {K}.
- * @param[out] C     pointer to the the output vector with the result of the
- *                   convolution and the reduction.
- *                   The signals are still in the frequency domain already.
- *                   The vector has dimension {N}.
- * @param[in]  N     contiguous dimension of the input matrices
- * @param[in]  K     non-contiguous dimension of the input matrices
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void convolutionTaperReduction1dMatrix(T            *R            ,
-                                       T            *V            ,
-                                       T            *Taper        ,
-                                       T            *C            ,
-                                       unsigned int  N            ,
-                                       unsigned int  K            ,
-                                       cudaStream_t  stream = 0   ,
-                                       bool          async = false);
-
-
-/**
  * @brief   downsample operator in 1d on matrix
  * 
  * @details The operation can be applied on both direction
