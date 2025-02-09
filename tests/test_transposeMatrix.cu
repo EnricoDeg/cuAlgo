@@ -30,146 +30,147 @@
 #include <iostream>
 #include <stdlib.h>
 #include "src/cuAlgo.h"
+#include "src/API/transposeMatrix.hpp"
 #include <gtest/gtest.h>
 
 TEST(transposeMatrix, default_value) {
 
-	unsigned int size_x = 1024;
-	unsigned int size_y = 1024;
-	float * input  = (float *)malloc(size_x * size_y * sizeof(float));
-	float * output = (float *)malloc(size_x * size_y * sizeof(float));
-	for(unsigned int j = 0; j < size_y; ++j)
-		for (unsigned int i = 0; i < size_x ; ++i)
-		input[i + j * size_x] = i + j * size_x;
+    unsigned int size_x = 1024;
+    unsigned int size_y = 1024;
+    float * input  = (float *)malloc(size_x * size_y * sizeof(float));
+    float * output = (float *)malloc(size_x * size_y * sizeof(float));
+    for(unsigned int j = 0; j < size_y; ++j)
+        for (unsigned int i = 0; i < size_x ; ++i)
+            input[i + j * size_x] = i + j * size_x;
 
-	float *d_input;
-	check_cuda( cudaMalloc(&d_input, size_x * size_y * sizeof(float)) );
+    float *d_input;
+    check_cuda( cudaMalloc(&d_input, size_x * size_y * sizeof(float)) );
 
-	float *d_output;
-	check_cuda( cudaMalloc(&d_output, size_x * size_y * sizeof(float)) );
+    float *d_output;
+    check_cuda( cudaMalloc(&d_output, size_x * size_y * sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, size_x * size_y * sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, size_x * size_y * sizeof(float), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::transposeMatrixFloat(d_input, d_output, size_x, size_y);
+    cuAlgo::transposeMatrix<32, 32, float>(d_input, d_output, size_x, size_y);
 
-	check_cuda( cudaMemcpy ( output, d_output, size_x * size_y * sizeof(float), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( output, d_output, size_x * size_y * sizeof(float), cudaMemcpyDeviceToHost ) );
 
-	for(int j = 0; j < size_y; ++j)
-		for (int i = 0; i < size_x ; ++i)
-			ASSERT_EQ(input[i + j * size_x] , output[j + i * size_y]);
+    for(int j = 0; j < size_y; ++j)
+        for (int i = 0; i < size_x ; ++i)
+            ASSERT_EQ(input[i + j * size_x] , output[j + i * size_y]);
 
-	check_cuda( cudaFree(d_input ) );
-	check_cuda( cudaFree(d_output) );
-	free(input );
-	free(output);
+    check_cuda( cudaFree(d_input ) );
+    check_cuda( cudaFree(d_output) );
+    free(input );
+    free(output);
 }
 
 TEST(transposeMatrix, async) {
 
-	unsigned int size_x = 1024;
-	unsigned int size_y = 1024;
-	float * input  = (float *)malloc(size_x * size_y * sizeof(float));
-	float * output = (float *)malloc(size_x * size_y * sizeof(float));
-	for(unsigned int j = 0; j < size_y; ++j)
-		for (unsigned int i = 0; i < size_x ; ++i)
-		input[i + j * size_x] = i + j * size_x;
+    unsigned int size_x = 1024;
+    unsigned int size_y = 1024;
+    float * input  = (float *)malloc(size_x * size_y * sizeof(float));
+    float * output = (float *)malloc(size_x * size_y * sizeof(float));
+    for(unsigned int j = 0; j < size_y; ++j)
+        for (unsigned int i = 0; i < size_x ; ++i)
+            input[i + j * size_x] = i + j * size_x;
 
-	float *d_input;
-	check_cuda( cudaMalloc(&d_input, size_x * size_y * sizeof(float)) );
+    float *d_input;
+    check_cuda( cudaMalloc(&d_input, size_x * size_y * sizeof(float)) );
 
-	float *d_output;
-	check_cuda( cudaMalloc(&d_output, size_x * size_y * sizeof(float)) );
+    float *d_output;
+    check_cuda( cudaMalloc(&d_output, size_x * size_y * sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, size_x * size_y * sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, size_x * size_y * sizeof(float), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::transposeMatrixFloat(d_input, d_output, size_x, size_y, 0, true);
+    cuAlgo::transposeMatrix<32, 32, float>(d_input, d_output, size_x, size_y, 0, true);
 
-	check_cuda( cudaStreamSynchronize(0) );
+    check_cuda( cudaStreamSynchronize(0) );
 
-	check_cuda( cudaMemcpy ( output, d_output, size_x * size_y * sizeof(float), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( output, d_output, size_x * size_y * sizeof(float), cudaMemcpyDeviceToHost ) );
 
-	for(int j = 0; j < size_y; ++j)
-		for (int i = 0; i < size_x ; ++i)
-			ASSERT_EQ(input[i + j * size_x] , output[j + i * size_y]);
+    for(int j = 0; j < size_y; ++j)
+        for (int i = 0; i < size_x ; ++i)
+            ASSERT_EQ(input[i + j * size_x] , output[j + i * size_y]);
 
-	check_cuda( cudaFree(d_input ) );
-	check_cuda( cudaFree(d_output) );
-	free(input );
-	free(output);
+    check_cuda( cudaFree(d_input ) );
+    check_cuda( cudaFree(d_output) );
+    free(input );
+    free(output);
 }
 
 TEST(transposeMatrix, stream1) {
 
-	cudaStream_t stream;
-	unsigned int size_x = 1024;
-	unsigned int size_y = 1024;
-	float * input  = (float *)malloc(size_x * size_y * sizeof(float));
-	float * output = (float *)malloc(size_x * size_y * sizeof(float));
-	for(unsigned int j = 0; j < size_y; ++j)
-		for (unsigned int i = 0; i < size_x ; ++i)
-		input[i + j * size_x] = i + j * size_x;
+    cudaStream_t stream;
+    unsigned int size_x = 1024;
+    unsigned int size_y = 1024;
+    float * input  = (float *)malloc(size_x * size_y * sizeof(float));
+    float * output = (float *)malloc(size_x * size_y * sizeof(float));
+    for(unsigned int j = 0; j < size_y; ++j)
+        for (unsigned int i = 0; i < size_x ; ++i)
+            input[i + j * size_x] = i + j * size_x;
 
-	float *d_input;
-	check_cuda( cudaMalloc( &d_input, size_x * size_y * sizeof(float) ) );
+    float *d_input;
+    check_cuda( cudaMalloc( &d_input, size_x * size_y * sizeof(float) ) );
 
-	float *d_output;
-	check_cuda( cudaMalloc( &d_output, size_x * size_y * sizeof(float) ) );
+    float *d_output;
+    check_cuda( cudaMalloc( &d_output, size_x * size_y * sizeof(float) ) );
 
-	check_cuda( cudaMemcpy ( d_input, input, size_x * size_y * sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, size_x * size_y * sizeof(float), cudaMemcpyHostToDevice ) );
 
-	check_cuda( cudaStreamCreate ( &stream ) ) ;
+    check_cuda( cudaStreamCreate ( &stream ) ) ;
 
-	cuAlgo::transposeMatrixFloat(d_input, d_output, size_x, size_y, stream);
+    cuAlgo::transposeMatrix<32, 32, float>(d_input, d_output, size_x, size_y, stream);
 
-	check_cuda( cudaStreamSynchronize( stream ) );
+    check_cuda( cudaStreamSynchronize( stream ) );
 
-	check_cuda( cudaStreamDestroy( stream ) );
+    check_cuda( cudaStreamDestroy( stream ) );
 
-	check_cuda( cudaMemcpy ( output, d_output, size_x * size_y * sizeof(float), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( output, d_output, size_x * size_y * sizeof(float), cudaMemcpyDeviceToHost ) );
 
-	for(int j = 0; j < size_y; ++j)
-		for (int i = 0; i < size_x ; ++i)
-			ASSERT_EQ(input[i + j * size_x] , output[j + i * size_y]);
+    for(int j = 0; j < size_y; ++j)
+        for (int i = 0; i < size_x ; ++i)
+            ASSERT_EQ(input[i + j * size_x] , output[j + i * size_y]);
 
-	check_cuda( cudaFree(d_input ) );
-	check_cuda( cudaFree(d_output) );
-	free(input );
-	free(output);
+    check_cuda( cudaFree(d_input ) );
+    check_cuda( cudaFree(d_output) );
+    free(input );
+    free(output);
 }
 
 TEST(transposeMatrix, stream1async) {
 
-	cudaStream_t stream;
-	unsigned int size_x = 1024;
-	unsigned int size_y = 1024;
-	float * input  = (float *)malloc(size_x * size_y * sizeof(float));
-	float * output = (float *)malloc(size_x * size_y * sizeof(float));
-	for(unsigned int j = 0; j < size_y; ++j)
-		for (unsigned int i = 0; i < size_x ; ++i)
-		input[i + j * size_x] = i + j * size_x;
+    cudaStream_t stream;
+    unsigned int size_x = 1024;
+    unsigned int size_y = 1024;
+    float * input  = (float *)malloc(size_x * size_y * sizeof(float));
+    float * output = (float *)malloc(size_x * size_y * sizeof(float));
+    for(unsigned int j = 0; j < size_y; ++j)
+        for (unsigned int i = 0; i < size_x ; ++i)
+            input[i + j * size_x] = i + j * size_x;
 
-	float *d_input;
-	check_cuda( cudaMalloc( &d_input, size_x * size_y * sizeof(float) ) );
+    float *d_input;
+    check_cuda( cudaMalloc( &d_input, size_x * size_y * sizeof(float) ) );
 
-	float *d_output;
-	check_cuda( cudaMalloc( &d_output, size_x * size_y * sizeof(float) ) );
+    float *d_output;
+    check_cuda( cudaMalloc( &d_output, size_x * size_y * sizeof(float) ) );
 
-	check_cuda( cudaMemcpy ( d_input, input, size_x * size_y * sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, size_x * size_y * sizeof(float), cudaMemcpyHostToDevice ) );
 
-	check_cuda( cudaStreamCreate ( &stream ) ) ;
+    check_cuda( cudaStreamCreate ( &stream ) ) ;
 
-	cuAlgo::transposeMatrixFloat(d_input, d_output, size_x, size_y, stream);
+    cuAlgo::transposeMatrix<32, 32, float>(d_input, d_output, size_x, size_y, stream);
 
-	check_cuda( cudaStreamDestroy( stream ) );
+    check_cuda( cudaStreamDestroy( stream ) );
 
-	check_cuda( cudaMemcpy ( output, d_output, size_x * size_y * sizeof(float), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( output, d_output, size_x * size_y * sizeof(float), cudaMemcpyDeviceToHost ) );
 
-	for(int j = 0; j < size_y; ++j)
-		for (int i = 0; i < size_x ; ++i)
-			ASSERT_EQ(input[i + j * size_x] , output[j + i * size_y]);
+    for(int j = 0; j < size_y; ++j)
+        for (int i = 0; i < size_x ; ++i)
+            ASSERT_EQ(input[i + j * size_x] , output[j + i * size_y]);
 
-	check_cuda( cudaFree(d_input ) );
-	check_cuda( cudaFree(d_output) );
-	free(input );
-	free(output);
+    check_cuda( cudaFree(d_input ) );
+    check_cuda( cudaFree(d_output) );
+    free(input );
+    free(output);
 }

@@ -371,32 +371,6 @@ void taper1dMatrix(T            *A            ,
                    bool          async = false);
 
 /**
- * @brief   Perform matrix transposition
- * 
- * @details The input matrix has dimensions {size_x, size_y} and 
- *          the output matrix has dimensions {size_y, size_x}
- * 
- * @param[in]  idata pointer to input matrix to be transposed
- * @param[out] odata pointer to output matrix with result of the transposition
- * @param[in]  size_x contiguous dimension of the input matrix
- * @param[in]  size_y non-contiguous dimension of the input matrix
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void transposeMatrix(T            *idata        ,
-                     T            *odata        ,
-                     unsigned int  size_x       ,
-                     unsigned int  size_y       ,
-                     cudaStream_t  stream = 0   ,
-                     bool          async = false);
-
-/**
  * @brief   upsample operator in 1d on matrix
  * 
  * @details The operation can be applied on both direction

@@ -11,7 +11,6 @@ set(SOURCE_EXE  internals/utils.cu
                 API/getRowBlocks.cu
                 internals/checkError.cu
                 API/reduction1dMatrix.cu
-                API/transposeMatrix.cu
                 API/gMatVecMul.cu
                 API/gSpMatVecMulCSRVector.cu
                 API/gSpMatVecMulCSRAdaptive.cu
