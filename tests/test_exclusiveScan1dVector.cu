@@ -30,44 +30,45 @@
 #include <iostream>
 #include <stdlib.h>
 #include "src/cuAlgo.h"
+#include "src/API/exclusiveScan1dVector.hpp"
 #include <gtest/gtest.h>
 
 TEST(exclusiveScan1dVector, default_values) {
 
-	const unsigned int size = 8192;
-	int *idata    = (int *)malloc(size * sizeof(int));
-	int *odata    = (int *)malloc(size * sizeof(int));
-	int *solution = (int *)malloc(size * sizeof(int));
+    const unsigned int size = 8192;
+    int *idata    = (int *)malloc(size * sizeof(int));
+    int *odata    = (int *)malloc(size * sizeof(int));
+    int *solution = (int *)malloc(size * sizeof(int));
 
-	for (unsigned int i = 0 ; i < size ; ++i) {
+    for (unsigned int i = 0 ; i < size ; ++i) {
 
-		idata[i]    = i * 2;
-		odata[i]    = size - i;
-		solution[i] = size - i;
-	}
+        idata[i]    = i * 2;
+        odata[i]    = size - i;
+        solution[i] = size - i;
+    }
 
-	solution[0] = 0;
-	for (unsigned int i = 1 ; i < size ; ++i)
-		solution[i] = idata[i-1] + solution[i-1];
+    solution[0] = 0;
+    for (unsigned int i = 1 ; i < size ; ++i)
+        solution[i] = idata[i-1] + solution[i-1];
 
-	int *d_idata;
-	check_cuda( cudaMalloc(&d_idata, size * sizeof(int)) );
-	int *d_odata;
-	check_cuda( cudaMalloc(&d_odata, size * sizeof(int)) );
+    int *d_idata;
+    check_cuda( cudaMalloc(&d_idata, size * sizeof(int)) );
+    int *d_odata;
+    check_cuda( cudaMalloc(&d_odata, size * sizeof(int)) );
 
-	check_cuda( cudaMemcpy ( d_idata, idata, size * sizeof(int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_odata, odata, size * sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_idata, idata, size * sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_odata, odata, size * sizeof(int), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::exclusiveScan1dVectorInt(d_idata, d_odata, size);
+    cuAlgo::exclusiveScan1dVector<1024, int>(d_idata, d_odata, size);
 
-	check_cuda( cudaMemcpy ( odata, d_odata, size * sizeof(int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( odata, d_odata, size * sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	for (unsigned int i = 0 ; i < size ; ++i)
-		ASSERT_EQ(solution[i], odata[i]);
+    for (unsigned int i = 0 ; i < size ; ++i)
+        ASSERT_EQ(solution[i], odata[i]);
 
-	check_cuda( cudaFree(d_idata) );
-	check_cuda( cudaFree(d_odata) );
-	free(idata);
-	free(odata);
-	free(solution);
+    check_cuda( cudaFree(d_idata) );
+    check_cuda( cudaFree(d_odata) );
+    free(idata);
+    free(odata);
+    free(solution);
 }

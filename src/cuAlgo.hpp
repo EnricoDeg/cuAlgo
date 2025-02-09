@@ -38,31 +38,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   Perform exclusive scan or prefix sum on a vector
- * 
- * @details The input and output arrays are expected to be multiple of 
- *          1024. If not, they should be padded before calling the 
- *          function.
- * 
- * @param[in]  g_idata input array of size {size}
- * @param[out] g_odata output array of size {size}
- * @param[in]  size size of input and output arrays
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void exclusiveScan1dVector(T            *g_idata      ,
-                           T            *g_odata      ,
-                           unsigned int  size         ,
-                           cudaStream_t  stream = 0   ,
-                           bool          async = false);
-
-/**
  * @brief   Perform fftshift on a vector
  * 
  * @details The input vector has dimension {size} and 
