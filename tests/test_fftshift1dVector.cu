@@ -30,68 +30,69 @@
 #include <iostream>
 #include <stdlib.h>
 #include "src/cuAlgo.h"
+#include "src/API/fftshift1dVector.hpp"
 #include <gtest/gtest.h>
 
 #define BLOCKSIZE 1024
 
 void fftshiftVectorCPU(int * idata, int * odata, unsigned int size) {
 
-	int * __restrict in  = idata ;
-	int * __restrict out = odata ;
+    int * __restrict in  = idata ;
+    int * __restrict out = odata ;
 
-	if (size % 2 == 0) {
+    if (size % 2 == 0) {
 
-		for (unsigned int j = 0; j < size / 2; ++j) {
-			out[j] = in[size / 2 + j];
-		}
-		for (unsigned int j = size / 2; j < size; ++j) {
-			out[j] = in[j - size / 2];
-		}
-	} else {
+        for (unsigned int j = 0; j < size / 2; ++j) {
+            out[j] = in[size / 2 + j];
+        }
+        for (unsigned int j = size / 2; j < size; ++j) {
+            out[j] = in[j - size / 2];
+        }
+    } else {
 
-		for (unsigned int j = 0; j < ( size - 1 ) / 2; ++j) {
-			out[j] = in[(size + 1 )/ 2 + j];
-		}
-		for (unsigned int j = ( size - 1 ) / 2; j < size; ++j) {
-			out[j] = in[j - ( size - 1 ) / 2];
-		}
-	}
+        for (unsigned int j = 0; j < ( size - 1 ) / 2; ++j) {
+            out[j] = in[(size + 1 )/ 2 + j];
+        }
+        for (unsigned int j = ( size - 1 ) / 2; j < size; ++j) {
+            out[j] = in[j - ( size - 1 ) / 2];
+        }
+    }
 }
 
 TEST(fftshiftVector, default_even) {
 
-	unsigned int nblocks = 2;
-	unsigned int size = BLOCKSIZE * nblocks;
+    unsigned int nblocks = 2;
+    unsigned int size = BLOCKSIZE * nblocks;
 
-	int * input    = (int *)malloc(size * sizeof(int));
-	int * output   = (int *)malloc(size * sizeof(int));
-	int * solution = (int *)malloc(size * sizeof(int));
+    int * input    = (int *)malloc(size * sizeof(int));
+    int * output   = (int *)malloc(size * sizeof(int));
+    int * solution = (int *)malloc(size * sizeof(int));
 
-	for(unsigned int i = 0; i < nblocks; ++i)
-		for (unsigned int j = 0; j < BLOCKSIZE ; ++j)
-		input[j + i*BLOCKSIZE] = j;
+    for(unsigned int i = 0; i < nblocks; ++i)
+        for (unsigned int j = 0; j < BLOCKSIZE ; ++j)
+            input[j + i*BLOCKSIZE] = j;
 
-	int *d_input;
-	check_cuda( cudaMalloc(&d_input , size * sizeof(int)) );
+    int *d_input;
+    check_cuda( cudaMalloc(&d_input , size * sizeof(int)) );
 
-	int *d_output;
-	check_cuda( cudaMalloc(&d_output, size * sizeof(int)) );
+    int *d_output;
+    check_cuda( cudaMalloc(&d_output, size * sizeof(int)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::fftshift1dVectorInt(d_input, d_output, size);
+    cuAlgo::fftshift1dVector<BLOCKSIZE, int>(d_input, d_output, size);
 
-	fftshiftVectorCPU(input, solution, size);
+    fftshiftVectorCPU(input, solution, size);
 
-	check_cuda( cudaMemcpy ( output, d_output, (unsigned int)size*sizeof(int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( output, d_output, (unsigned int)size*sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	for(unsigned int i = 0; i < nblocks; ++i)
-		for (unsigned int j = 0; j < BLOCKSIZE ; ++j)
-			ASSERT_EQ( output[j + i * BLOCKSIZE] , solution[j + i * BLOCKSIZE] );
+    for(unsigned int i = 0; i < nblocks; ++i)
+        for (unsigned int j = 0; j < BLOCKSIZE ; ++j)
+            ASSERT_EQ( output[j + i * BLOCKSIZE] , solution[j + i * BLOCKSIZE] );
 
-	check_cuda( cudaFree(d_input) );
-	check_cuda( cudaFree(d_output) );
-	free(input);
-	free(output);
-	free(solution);
+    check_cuda( cudaFree(d_input) );
+    check_cuda( cudaFree(d_output) );
+    free(input);
+    free(output);
+    free(solution);
 }

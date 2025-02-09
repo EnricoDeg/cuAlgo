@@ -19,7 +19,6 @@ set(SOURCE_EXE  internals/utils.cu
                 API/grad2dMatrix.cu
                 API/histogram.cu
                 API/taper1dMatrix.cu
-                API/fftshift1dVector.cu
                 API/normalizeVector.cu
                 API/fftshift2dMatrix.cu
                 API/fliplr1dMatrix.cu

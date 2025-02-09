@@ -38,30 +38,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   Perform fftshift on a vector
- * 
- * @details The input vector has dimension {size} and 
- *          the output vector has dimension {size}
- * 
- * @param[in]  idata pointer to input vector to be shifted
- * @param[out] odata pointer to output vector with result of the fftshift
- * @param[in]  size  contiguous dimension of the input and output vectors
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void fftshift1dVector(T            *idata        ,
-                      T            *odata        ,
-                      unsigned int  size         ,
-                      cudaStream_t  stream = 0   ,
-                      bool          async = false);
-
-/**
  * @brief   Perform fftshift on a matrix in place
  * 
  * @details The fftshift operation is performed on both
