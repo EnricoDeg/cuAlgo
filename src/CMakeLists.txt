@@ -11,7 +11,6 @@ set(SOURCE_EXE  internals/utils.cu
                 API/getRowBlocks.cu
                 internals/checkError.cu
                 API/reduction1dMatrix.cu
-                API/convolutionReduction1dMatrix.cu
                 API/convolutionTaperReduction1dMatrix.cu
                 API/exclusiveScan1dVector.cu
                 API/transposeMatrix.cu

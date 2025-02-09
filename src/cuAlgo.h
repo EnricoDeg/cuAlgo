@@ -40,67 +40,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   Perform 1D convolution with floats on the input matrices and then a 
- *          1D reduction in the slow dimension.
- * 
- * @details This function combines convolution1dMatrix() and reduction1dMatrix()
- *          in a single kernel. The input matrices has dimensions {N,K}
- *          and the output vector has dimension {N}.
- * 
- * @param[in]  R pointer to the first input matrix for the convolution.
- *               The signals are assumed to be in the frequency domain already.
- *               The matrix has dimensions {N,K}.
- * @param[in]  V pointer to the second input matrix for the convolution.
- *               The signals are assumed to be in the frequency domain already.
- *               The matrix has dimensions {N,K}.
- * @param[out] C pointer to the the output vector with the result of the 
- *               convolution and the reduction.
- *               The signals are still in the frequency domain already.
- *               The vector has dimension {N}.
- * @param[in]  N contiguous dimension of the input matrices
- * @param[in]  K non-contiguous dimension of the input matrices
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algoC
- */
-void convolutionReduction1dMatrixFloat(float        *R            ,
-                                       float        *V            ,
-                                       float        *C            ,
-                                       unsigned int  N            ,
-                                       unsigned int  K            ,
-                                       cudaStream_t  stream = 0   ,
-                                       bool          async = false);
-
-/**
- * @brief   Perform 1D convolution with doubles on the input matrices and then a 
- *          1D reduction in the slow dimension.
- * 
- * @details See documentation of convolutionReduction1dMatrixFloat().
- * 
- * @ingroup algoC
- */
-
-void convolutionReduction1dMatrixDouble(double       *R            ,
-                                        double       *V            ,
-                                        double       *C            ,
-                                        unsigned int  N            ,
-                                        unsigned int  K            ,
-                                        cudaStream_t  stream = 0   ,
-                                        bool          async = false);
-
-void convolutionReduction1dMatrixInt(int          *R            ,
-                                     int          *V            ,
-                                     int          *C            ,
-                                     unsigned int  N            ,
-                                     unsigned int  K            ,
-                                     cudaStream_t  stream = 0   ,
-                                     bool          async = false) ;
-
-/**
  * @brief   Perform 1D convolution with floats on the input matrices, then apply a taper
  *          on the slow dimension and finally perform a 1D reduction in the
  *          slow dimension.

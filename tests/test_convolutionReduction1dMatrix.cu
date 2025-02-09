@@ -30,69 +30,70 @@
 #include <iostream>
 #include <stdlib.h>
 #include "src/cuAlgo.h"
+#include "src/API/convolutionReduction1dMatrix.hpp"
 #include <gtest/gtest.h>
 
 TEST(convolutionReduction1dMatrix, default_values) {
 
-	size_t K = 8192;
-	size_t N = 4096;
+    size_t K = 8192;
+    size_t N = 4096;
 
-	int * R = (int *)malloc(K * N * sizeof(int));
-	for (size_t i = 0 ; i < K ; ++i)
-		for (size_t j = 0 ; j < N ; ++j)
-			R [j + i * N] = j * i;
+    int * R = (int *)malloc(K * N * sizeof(int));
+    for (size_t i = 0 ; i < K ; ++i)
+        for (size_t j = 0 ; j < N ; ++j)
+            R [j + i * N] = j * i;
 
-	int * V = (int *)malloc(K * N * sizeof(int));
-	for (size_t i = 0 ; i < K ; ++i)
-		for (size_t j = 0 ; j < N ; ++j)
-			V [j + i * N] = N * K - j * i;
+    int * V = (int *)malloc(K * N * sizeof(int));
+    for (size_t i = 0 ; i < K ; ++i)
+        for (size_t j = 0 ; j < N ; ++j)
+            V [j + i * N] = N * K - j * i;
 
-	int * C = (int *)malloc(N * sizeof(int));
-	int * solution = (int *)malloc(N * sizeof(int));
+    int * C = (int *)malloc(N * sizeof(int));
+    int * solution = (int *)malloc(N * sizeof(int));
 
-	int *d_R;
-	check_cuda( cudaMalloc(&d_R, K * N * sizeof(int)) );
+    int *d_R;
+    check_cuda( cudaMalloc(&d_R, K * N * sizeof(int)) );
 
-	int *d_V;
-	check_cuda( cudaMalloc(&d_V, K * N * sizeof(int)) );
+    int *d_V;
+    check_cuda( cudaMalloc(&d_V, K * N * sizeof(int)) );
 
-	int *d_C;
-	check_cuda( cudaMalloc(&d_C, N * sizeof(int)) );
+    int *d_C;
+    check_cuda( cudaMalloc(&d_C, N * sizeof(int)) );
 
-	check_cuda( cudaMemcpy ( d_R, R, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_R, R, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
 
-	check_cuda( cudaMemcpy ( d_V, V, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_V, V, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::convolutionReduction1dMatrixInt(d_R, d_V, d_C, N, K);
+    cuAlgo::convolutionReduction1dMatrix<32, 32, 8, int>(d_R, d_V, d_C, N, K);
 
-	for (size_t i = 0 ; i < N ; ++i)
-		solution[i] = 0;
+    for (size_t i = 0 ; i < N ; ++i)
+        solution[i] = 0;
 
-	for (int j = 0 ; j < K ; ++j) {
+    for (int j = 0 ; j < K ; ++j) {
 
-		solution[0] += R[j * N] * V[j * N];
+        solution[0] += R[j * N] * V[j * N];
 
-		for (int i = 1; i < N / 2; ++i)
-			solution[i] += R[i + j * N] * V[i + j * N] -
-			               R[N - i + j * N] * V[N - i + j * N];
+        for (int i = 1; i < N / 2; ++i)
+            solution[i] += R[i + j * N] * V[i + j * N] -
+                           R[N - i + j * N] * V[N - i + j * N];
 
-		solution[N / 2] += R[N / 2 + j * N] * V[N / 2 + j * N];
+        solution[N / 2] += R[N / 2 + j * N] * V[N / 2 + j * N];
 
-		for (int i = N / 2 + 1, k = 0; i < N; ++i, ++k)
-			solution[i] += R[N / 2 - 1 - k + j * N] * V[i + j * N] +
-			               R[i + j * N] * V[N / 2 - 1 - k + j * N];
-	}
+        for (int i = N / 2 + 1, k = 0; i < N; ++i, ++k)
+            solution[i] += R[N / 2 - 1 - k + j * N] * V[i + j * N] +
+                           R[i + j * N] * V[N / 2 - 1 - k + j * N];
+    }
 
-	check_cuda( cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	for (size_t i = 0 ; i < N ; ++i)
-		ASSERT_EQ(solution[i], C[i]);
+    for (size_t i = 0 ; i < N ; ++i)
+        ASSERT_EQ(solution[i], C[i]);
 
-	check_cuda( cudaFree(d_R) );
-	check_cuda( cudaFree(d_V) );
-	check_cuda( cudaFree(d_C) );
-	free(R);
-	free(V);
-	free(C);
-	free(solution);
+    check_cuda( cudaFree(d_R) );
+    check_cuda( cudaFree(d_V) );
+    check_cuda( cudaFree(d_C) );
+    free(R);
+    free(V);
+    free(C);
+    free(solution);
 }
