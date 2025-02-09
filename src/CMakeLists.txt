@@ -20,7 +20,6 @@ set(SOURCE_EXE  internals/utils.cu
                 API/histogram.cu
                 API/taper1dMatrix.cu
                 API/normalizeVector.cu
-                API/fftshift2dMatrix.cu
                 API/fliplr1dMatrix.cu
                 API/padarray2dMatrix.cu
                 API/upsample1dMatrix.cu

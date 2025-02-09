@@ -38,30 +38,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   Perform fftshift on a matrix in place
- * 
- * @details The fftshift operation is performed on both
- *          dimensions
- * 
- * @param[inout] data  pointer to matrix to be shifted
- * @param[in]    mRows non-contiguous dimension of the matrix
- * @param[in]    mCols contiguous dimension of the matrix
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void fftshift2dMatrix(T            *data         ,
-                      unsigned int  mRows        ,
-                      unsigned int  mCols        ,
-                      cudaStream_t  stream = 0   ,
-                      bool          async = false);
-
-/**
  * @brief   Flip rows or columns of a matrix in place
  * 
  * @details The `dim` argument defines if rows or columns 

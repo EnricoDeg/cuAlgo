@@ -40,54 +40,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   Perform fftshift on a matrix with floats in place
- * 
- * @details The fftshift operation is performed on both
- *          dimensions
- * 
- * @param[inout] data  pointer to matrix to be shifted
- * @param[in]    mRows non-contiguous dimension of the matrix
- * @param[in]    mCols contiguous dimension of the matrix
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algoC
- */
-void fftshift2dMatrixFloat(float        *data         ,
-                           unsigned int  mRows        ,
-                           unsigned int  mCols        ,
-                           cudaStream_t  stream = 0   ,
-                           bool          async = false);
-
-void fftshift2dMatrixComplexFloat(thrust::complex<float> *data         ,
-                                  unsigned int            mRows        ,
-                                  unsigned int            mCols        ,
-                                  cudaStream_t            stream = 0   ,
-                                  bool                    async = false);
-
-/**
- * @brief   Perform fftshift on a matrix with doubles in place
- * 
- * @details See documentation of fftshift2dMatrixFloat()
- * 
- * @ingroup algoC
- */
-void fftshift2dMatrixDouble(double       *data         ,
-                            unsigned int  mRows        ,
-                            unsigned int  mCols        ,
-                            cudaStream_t  stream = 0   ,
-                            bool          async = false);
-
-void fftshift2dMatrixComplexDouble(thrust::complex<double> *data         ,
-                                   unsigned int             mRows        ,
-                                   unsigned int             mCols        ,
-                                   cudaStream_t             stream = 0   ,
-                                   bool                     async = false);
-
-/**
  * @brief   Flip rows or columns of a matrix of floats in place
  * 
  * @details The `dim` argument defines if rows or columns 
