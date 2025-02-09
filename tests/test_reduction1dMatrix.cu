@@ -29,46 +29,47 @@
 #include <iostream>
 #include <stdlib.h>
 #include "src/cuAlgo.h"
+#include "src/API/reduction1dMatrix.hpp"
 #include <gtest/gtest.h>
 
 TEST(reduction1dMatrix, default_value) {
 
-	unsigned int K = 8192;
-	unsigned int N = 4096;
+    unsigned int K = 8192;
+    unsigned int N = 4096;
 
-	int * B = (int *)malloc(K * N * sizeof(int));
-	for (size_t i = 0 ; i < K ; ++i)
-		for (size_t j = 0 ; j < N ; ++j)
-			B [j + i * N] = j*i;
+    int * B = (int *)malloc(K * N * sizeof(int));
+    for (size_t i = 0 ; i < K ; ++i)
+        for (size_t j = 0 ; j < N ; ++j)
+            B [j + i * N] = j*i;
 
-	int * C = (int *)malloc(N * sizeof(int));
-	int * solution = (int *)malloc(N * sizeof(int));
+    int * C = (int *)malloc(N * sizeof(int));
+    int * solution = (int *)malloc(N * sizeof(int));
 
-	int *d_B;
-	check_cuda( cudaMalloc(&d_B, K * N * sizeof(int)) );
+    int *d_B;
+    check_cuda( cudaMalloc(&d_B, K * N * sizeof(int)) );
 
-	int *d_C;
-	check_cuda( cudaMalloc(&d_C, N * sizeof(int)) );
+    int *d_C;
+    check_cuda( cudaMalloc(&d_C, N * sizeof(int)) );
 
-	check_cuda( cudaMemcpy ( d_B, B, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_B, B, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::reduction1dMatrixInt(d_B, d_C, N, K);
+    cuAlgo::reduction1dMatrix<32, 32, 16, int>(d_B, d_C, N, K);
 
-	for (size_t i = 0 ; i < N ; ++i)
-		solution[i] = 0;
+    for (size_t i = 0 ; i < N ; ++i)
+        solution[i] = 0;
 
-	for (int i = 0 ; i < K ; ++i)
-		for (int j = 0 ; j < N ; ++j)
-			solution[j] += B [j + i * N];
+    for (int i = 0 ; i < K ; ++i)
+        for (int j = 0 ; j < N ; ++j)
+            solution[j] += B [j + i * N];
 
-	check_cuda( cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	for (size_t i = 0 ; i < N ; ++i)
-		ASSERT_EQ(solution[i], C[i]);
+    for (size_t i = 0 ; i < N ; ++i)
+        ASSERT_EQ(solution[i], C[i]);
 
-	check_cuda( cudaFree(d_B) );
-	check_cuda( cudaFree(d_C) );
-	free(B);
-	free(C);
-	free(solution);
+    check_cuda( cudaFree(d_B) );
+    check_cuda( cudaFree(d_C) );
+    free(B);
+    free(C);
+    free(solution);
 }

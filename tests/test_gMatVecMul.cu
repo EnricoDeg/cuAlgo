@@ -29,58 +29,59 @@
 #include <iostream>
 #include <stdlib.h>
 #include "src/cuAlgo.h"
+#include "src/API/gMatVecMul.hpp"
 #include <gtest/gtest.h>
 
 TEST(gMatVecMul, default_value) {
 
-	unsigned int N = 8192;
-	unsigned int K = N;
+    unsigned int N = 8192;
+    unsigned int K = N;
 
-	int * B        = (int *)malloc(N * K * sizeof(int));
-	int * A        = (int *)malloc(K     * sizeof(int));
-	int * C        = (int *)malloc(N     * sizeof(int));
-	int * solution = (int *)malloc(N     * sizeof(int));
+    int * B        = (int *)malloc(N * K * sizeof(int));
+    int * A        = (int *)malloc(K     * sizeof(int));
+    int * C        = (int *)malloc(N     * sizeof(int));
+    int * solution = (int *)malloc(N     * sizeof(int));
 
-	for(unsigned int i = 0; i < K; ++i)
-		for(unsigned int j = 0; j < N ; ++j)
-			B[j + i * N] = j*i;
+    for(unsigned int i = 0; i < K; ++i)
+        for(unsigned int j = 0; j < N ; ++j)
+            B[j + i * N] = j*i;
 
-	for (unsigned int j = 0; j < K ; ++j)
-		A[j] = j;
+    for (unsigned int j = 0; j < K ; ++j)
+        A[j] = j;
 
-	int *d_B;
-	check_cuda( cudaMalloc(&d_B, N * K * sizeof(int)) );
+    int *d_B;
+    check_cuda( cudaMalloc(&d_B, N * K * sizeof(int)) );
 
-	int *d_A;
-	check_cuda( cudaMalloc(&d_A, K *     sizeof(int)) );
+    int *d_A;
+    check_cuda( cudaMalloc(&d_A, K *     sizeof(int)) );
 
-	int *d_C;
-	check_cuda( cudaMalloc(&d_C, N *     sizeof(int)) );
+    int *d_C;
+    check_cuda( cudaMalloc(&d_C, N *     sizeof(int)) );
 
-	check_cuda( cudaMemcpy ( d_B, B, (size_t)N * K * sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_B, B, (size_t)N * K * sizeof(int), cudaMemcpyHostToDevice ) );
 
-	check_cuda( cudaMemcpy ( d_A, A, (size_t)K     * sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_A, A, (size_t)K     * sizeof(int), cudaMemcpyHostToDevice ) );
 
-	for(unsigned int i = 0; i < 5; ++i)
-		cuAlgo::gMatVecMulInt(d_A, d_B, d_C, N, K);
+    for(unsigned int i = 0; i < 5; ++i)
+        cuAlgo::gMatVecMul<1024, 32, 2, int>(d_A, d_B, d_C, N, K);
 
-	check_cuda( cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( C, d_C, N * sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	for(unsigned int j = 0; j < N ; ++j)
-		solution[j] = 0;
+    for(unsigned int j = 0; j < N ; ++j)
+        solution[j] = 0;
 
-	for(unsigned int i = 0; i < K; ++i)
-		for(unsigned int j = 0; j < N ; ++j)
-			solution[j] += A[i] * B[j + i * K];
+    for(unsigned int i = 0; i < K; ++i)
+        for(unsigned int j = 0; j < N ; ++j)
+            solution[j] += A[i] * B[j + i * K];
 
-	for(unsigned int j = 0; j < N ; ++j)
-		ASSERT_EQ(solution[j], C[j]);
+    for(unsigned int j = 0; j < N ; ++j)
+        ASSERT_EQ(solution[j], C[j]);
 
-	check_cuda( cudaFree(d_A) );
-	check_cuda( cudaFree(d_B) );
-	check_cuda( cudaFree(d_C) );
-	free(A);
-	free(B);
-	free(C);
-	free(solution);
+    check_cuda( cudaFree(d_A) );
+    check_cuda( cudaFree(d_B) );
+    check_cuda( cudaFree(d_C) );
+    free(A);
+    free(B);
+    free(C);
+    free(solution);
 }

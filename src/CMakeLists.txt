@@ -9,8 +9,6 @@ endif()
 
 set(SOURCE_EXE  internals/utils.cu
                 internals/checkError.cu
-                API/reduction1dMatrix.cu
-                API/gMatVecMul.cu
                 API/gSpMatVecMulCSRVector.cu
                 API/gSpMatVecMulCSRAdaptive.cu
                 API/gSpMatVecMulELL.cu

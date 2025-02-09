@@ -36,38 +36,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   Perform matrix-vector multiplication.
- * 
- * @details The vector A is multiplied with matrix B and the result is stored 
- *          in vector C.
- *          B * A = C
- * 
- * @param[in]  A pointer to the input vector.
- *               The vector has dimensions {K}.
- * @param[in]  B pointer to the input matrix.
- *               The matrix has dimensions {K,N}.
- * @param[out] C pointer to the output vector.
- *               The vector has dimensions {N}.
- * @param[in]  N contiguous dimension of the input matrix
- * @param[in]  K non-contiguous dimension of the input matrix
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void gMatVecMul(const T        *A            ,
-                     const T        *B            ,
-                           T        *C            ,
-                           unsigned int  N            ,
-                           unsigned int  K            ,
-                           cudaStream_t  stream = 0   ,
-                           bool          async = false);
-
-/**
  * @brief   Compute the matrix gradient
  * 
  * @details The gradient is computed using first order
@@ -298,33 +266,6 @@ void padarray2dMatrix(T        *idata        ,
                       unsigned int  mRows        ,
                       unsigned int  mCols        ,
                       cudaStream_t  stream = 0   ,
-                      bool          async = false);
-
-/**
- * @brief   Perform 1D reduction on a 2D array (matrix)
- *          of size {N,K}
- * 
- * @details The reduction is done on the slow dimension, so the output
- *          vector has size {N}.
- * 
- * @param[in]  B pointer to input matrix to be reduced
- * @param[out] C pointer to output vector with result of the reduction
- * @param[in]  N contiguous dimension of the input matrix
- * @param[in]  K non-contiguous dimension of the input matrix
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template <typename T>
-void reduction1dMatrix(T            *B     ,
-                      T            *C     ,
-                      unsigned int  N     ,
-                      unsigned int  K     ,
-                      cudaStream_t  stream = 0,
                       bool          async = false);
 
 /**

@@ -30,6 +30,7 @@
 #include "cuAlgo.hpp"
 #include "internals/utils.hpp"
 #include "internals/kernelParameters.hpp"
+#include "src/API/reduction1dMatrix.hpp"
 
 template<
 unsigned int BlockSize,
@@ -111,7 +112,8 @@ namespace cuAlgo {
     * @ingroup algo
     */
     template <
-    unsigned int BlockSize,
+    unsigned int BlockSizeX,
+    unsigned int BlockSizeY,
     unsigned int ItemsPerThread,
     typename T
     >
@@ -124,6 +126,7 @@ namespace cuAlgo {
                                            cudaStream_t stream = 0,
                                            bool async = false) {
 
+        static constexpr unsigned int BlockSize = BlockSizeX * BlockSizeY;
         unsigned int chunks = K / ItemsPerThread;
 
         if (chunks > 1) {
@@ -139,7 +142,7 @@ namespace cuAlgo {
                  CUALGO_KERNEL_NAME(convolutionTaperReduction1dMatrixKernel<BlockSize,T>),
                  R, V, Taper, d_buffer, N, K, chunks);
 
-            reduction1dMatrix<T>(d_buffer, C, N, chunks, 0, false);
+            reduction1dMatrix<BlockSizeX, BlockSizeY, T>(d_buffer, C, N, chunks, 0, false);
 
             check_cuda( cudaFree ( d_buffer ) );
         } else {
