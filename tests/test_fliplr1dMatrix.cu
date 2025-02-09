@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <chrono>
 #include "src/cuAlgo.h"
+#include "src/API/fliplr1dMatrix.hpp"
 #include <gtest/gtest.h>
 
 using namespace std::chrono;
@@ -38,215 +39,215 @@ using namespace std::chrono;
 void fliplrMatrix_CPU(float *idata, float *odata, unsigned int dim,
                       unsigned int mRows, unsigned int mCols) {
 
-	if ( dim == 0 ) {
+    if ( dim == 0 ) {
 
-		for (unsigned int i = 0; i < mRows; ++i) {
+        for (unsigned int i = 0; i < mRows; ++i) {
 
-			const float * __restrict__ in = idata + (mRows - 1 - i) * mCols;
-			float * __restrict__ out = odata + i * mCols;
-			for (unsigned int j = 0; j < mCols; ++j)
-				out[j] = in[j];
-		}
-	} else if (dim == 1) {
+            const float * __restrict__ in = idata + (mRows - 1 - i) * mCols;
+            float * __restrict__ out = odata + i * mCols;
+            for (unsigned int j = 0; j < mCols; ++j)
+                out[j] = in[j];
+        }
+    } else if (dim == 1) {
 
-		for (unsigned int i = 0; i < mRows; ++i) {
+        for (unsigned int i = 0; i < mRows; ++i) {
 
-			const float * __restrict__ in = idata + i*mCols;
-			float * __restrict__ out = odata + i*mCols;
-			for (unsigned int j = 0; j < mCols; ++j)
-				out[j] = in[mCols - 1 -j];
-		}
-	}
+            const float * __restrict__ in = idata + i*mCols;
+            float * __restrict__ out = odata + i*mCols;
+            for (unsigned int j = 0; j < mCols; ++j)
+                out[j] = in[mCols - 1 -j];
+        }
+    }
 }
 
 TEST(fliplr1dMatrix, default_dim0_even) {
 
-	unsigned int mRows = 1024;
-	unsigned int mCols = 1024;
+    unsigned int mRows = 1024;
+    unsigned int mCols = 1024;
 
-	float * input    = (float *)malloc(mRows * mCols * sizeof(float));
-	float * solution = (float *)malloc(mRows * mCols * sizeof(float));
+    float * input    = (float *)malloc(mRows * mCols * sizeof(float));
+    float * solution = (float *)malloc(mRows * mCols * sizeof(float));
 
-	for(unsigned int i = 0; i < mRows; ++i)
-		for (unsigned int j = 0; j < mCols ; ++j)
-		input[j + i*mCols] = i * j + 1;
+    for(unsigned int i = 0; i < mRows; ++i)
+        for (unsigned int j = 0; j < mCols ; ++j)
+            input[j + i*mCols] = i * j + 1;
 
-	float *d_input;
-	check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(float)) );
+    float *d_input;
+    check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::fliplr1dMatrixFloat(d_input, 0, mRows, mCols);
+    cuAlgo::fliplr1dMatrix<32, 32, float>(d_input, 0, mRows, mCols);
 
-	fliplrMatrix_CPU(input, solution, 0, mRows, mCols);
+    fliplrMatrix_CPU(input, solution, 0, mRows, mCols);
 
-	check_cuda( cudaMemcpy ( input, d_input, mRows * mCols * sizeof(float), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( input, d_input, mRows * mCols * sizeof(float), cudaMemcpyDeviceToHost ) );
 
-	for(unsigned int i = 0; i < mRows; ++i)
-		for (unsigned int j = 0; j < mCols ; ++j)
-			ASSERT_EQ( input[j + i * mCols] , solution[j + i * mCols] );
+    for(unsigned int i = 0; i < mRows; ++i)
+        for (unsigned int j = 0; j < mCols ; ++j)
+            ASSERT_EQ( input[j + i * mCols] , solution[j + i * mCols] );
 
-	check_cuda( cudaFree(d_input) );
-	free(input);
-	free(solution);
+    check_cuda( cudaFree(d_input) );
+    free(input);
+    free(solution);
 }
 
 TEST(fliplr1dMatrix, default_dim0_odd) {
 
-	unsigned int mRows = 1025;
-	unsigned int mCols = 1024;
+    unsigned int mRows = 1025;
+    unsigned int mCols = 1024;
 
-	float * input    = (float *)malloc(mRows * mCols * sizeof(float));
-	float * solution = (float *)malloc(mRows * mCols * sizeof(float));
+    float * input    = (float *)malloc(mRows * mCols * sizeof(float));
+    float * solution = (float *)malloc(mRows * mCols * sizeof(float));
 
-	for(unsigned int i = 0; i < mRows; ++i)
-		for (unsigned int j = 0; j < mCols ; ++j)
-		input[j + i*mCols] = i * j + 1;
+    for(unsigned int i = 0; i < mRows; ++i)
+        for (unsigned int j = 0; j < mCols ; ++j)
+            input[j + i*mCols] = i * j + 1;
 
-	float *d_input;
-	check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(float)) );
+    float *d_input;
+    check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::fliplr1dMatrixFloat(d_input, 0, mRows, mCols);
+    cuAlgo::fliplr1dMatrix<32, 32, float>(d_input, 0, mRows, mCols);
 
-	fliplrMatrix_CPU(input, solution, 0, mRows, mCols);
+    fliplrMatrix_CPU(input, solution, 0, mRows, mCols);
 
-	check_cuda( cudaMemcpy ( input, d_input, mRows * mCols * sizeof(float), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( input, d_input, mRows * mCols * sizeof(float), cudaMemcpyDeviceToHost ) );
 
-	for(unsigned int i = 0; i < mRows; ++i)
-		for (unsigned int j = 0; j < mCols ; ++j)
-			ASSERT_EQ( input[j + i * mCols] , solution[j + i * mCols] );
+    for(unsigned int i = 0; i < mRows; ++i)
+        for (unsigned int j = 0; j < mCols ; ++j)
+            ASSERT_EQ( input[j + i * mCols] , solution[j + i * mCols] );
 
-	check_cuda( cudaFree(d_input) );
-	free(input);
-	free(solution);
+    check_cuda( cudaFree(d_input) );
+    free(input);
+    free(solution);
 }
 
 TEST(fliplr1dMatrix, default_dim1_even) {
 
-	unsigned int mRows = 1024;
-	unsigned int mCols = 1024;
+    unsigned int mRows = 1024;
+    unsigned int mCols = 1024;
 
-	float * input    = (float *)malloc(mRows * mCols * sizeof(float));
-	float * solution = (float *)malloc(mRows * mCols * sizeof(float));
+    float * input    = (float *)malloc(mRows * mCols * sizeof(float));
+    float * solution = (float *)malloc(mRows * mCols * sizeof(float));
 
-	for(unsigned int i = 0; i < mRows; ++i)
-		for (unsigned int j = 0; j < mCols ; ++j)
-		input[j + i*mCols] = i * j + 1;
+    for(unsigned int i = 0; i < mRows; ++i)
+        for (unsigned int j = 0; j < mCols ; ++j)
+            input[j + i*mCols] = i * j + 1;
 
-	float *d_input;
-	check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(float)) );
+    float *d_input;
+    check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::fliplr1dMatrixFloat(d_input, 1, mRows, mCols);
+    cuAlgo::fliplr1dMatrix<32, 32, float>(d_input, 1, mRows, mCols);
 
-	fliplrMatrix_CPU(input, solution, 1, mRows, mCols);
+    fliplrMatrix_CPU(input, solution, 1, mRows, mCols);
 
-	check_cuda( cudaMemcpy ( input, d_input, mRows * mCols * sizeof(float), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( input, d_input, mRows * mCols * sizeof(float), cudaMemcpyDeviceToHost ) );
 
-	for(unsigned int i = 0; i < mRows; ++i)
-		for (unsigned int j = 0; j < mCols ; ++j)
-			ASSERT_EQ( input[j + i * mCols] , solution[j + i * mCols] );
+    for(unsigned int i = 0; i < mRows; ++i)
+        for (unsigned int j = 0; j < mCols ; ++j)
+            ASSERT_EQ( input[j + i * mCols] , solution[j + i * mCols] );
 
-	check_cuda( cudaFree(d_input) );
-	free(input);
-	free(solution);
+    check_cuda( cudaFree(d_input) );
+    free(input);
+    free(solution);
 }
 
 TEST(fliplr1dMatrix, default_dim1_odd) {
 
-	unsigned int mRows = 1024;
-	unsigned int mCols = 1025;
+    unsigned int mRows = 1024;
+    unsigned int mCols = 1025;
 
-	float * input    = (float *)malloc(mRows * mCols * sizeof(float));
-	float * solution = (float *)malloc(mRows * mCols * sizeof(float));
+    float * input    = (float *)malloc(mRows * mCols * sizeof(float));
+    float * solution = (float *)malloc(mRows * mCols * sizeof(float));
 
-	for(unsigned int i = 0; i < mRows; ++i)
-		for (unsigned int j = 0; j < mCols ; ++j)
-		input[j + i*mCols] = i * j + 1;
+    for(unsigned int i = 0; i < mRows; ++i)
+        for (unsigned int j = 0; j < mCols ; ++j)
+            input[j + i*mCols] = i * j + 1;
 
-	float *d_input;
-	check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(float)) );
+    float *d_input;
+    check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::fliplr1dMatrixFloat(d_input, 1, mRows, mCols);
+    cuAlgo::fliplr1dMatrix<32, 32, float>(d_input, 1, mRows, mCols);
 
-	fliplrMatrix_CPU(input, solution, 1, mRows, mCols);
+    fliplrMatrix_CPU(input, solution, 1, mRows, mCols);
 
-	check_cuda( cudaMemcpy ( input, d_input, mRows * mCols * sizeof(float), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( input, d_input, mRows * mCols * sizeof(float), cudaMemcpyDeviceToHost ) );
 
-	for(unsigned int i = 0; i < mRows; ++i)
-		for (unsigned int j = 0; j < mCols ; ++j)
-			ASSERT_EQ( input[j + i * mCols] , solution[j + i * mCols] );
+    for(unsigned int i = 0; i < mRows; ++i)
+        for (unsigned int j = 0; j < mCols ; ++j)
+            ASSERT_EQ( input[j + i * mCols] , solution[j + i * mCols] );
 
-	check_cuda( cudaFree(d_input) );
-	free(input);
-	free(solution);
+    check_cuda( cudaFree(d_input) );
+    free(input);
+    free(solution);
 }
 
 TEST(fliplr1dMatrix, performance_dim0_even) {
 
-	unsigned int mRows = 1024;
-	unsigned int mCols = 1024;
-	unsigned int iterations = 10;
+    unsigned int mRows = 1024;
+    unsigned int mCols = 1024;
+    unsigned int iterations = 10;
 
-	float * input    = (float *)malloc(mRows * mCols * sizeof(float));
+    float * input    = (float *)malloc(mRows * mCols * sizeof(float));
 
-	for(unsigned int i = 0; i < mRows; ++i)
-		for (unsigned int j = 0; j < mCols ; ++j)
-		input[j + i*mCols] = i * j + 1;
+    for(unsigned int i = 0; i < mRows; ++i)
+        for (unsigned int j = 0; j < mCols ; ++j)
+            input[j + i*mCols] = i * j + 1;
 
-	float *d_input;
-	check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(float)) );
+    float *d_input;
+    check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
 
-	// warm-up
-	cuAlgo::fliplr1dMatrixFloat(d_input, 0, mRows, mCols);
+    // warm-up
+    cuAlgo::fliplr1dMatrix<32, 32, float>(d_input, 0, mRows, mCols);
 
-	auto start = high_resolution_clock::now();
-	for (unsigned int i = 0; i < iterations; ++i)
-		cuAlgo::fliplr1dMatrixFloat(d_input, 0, mRows, mCols);
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	std::cout << duration.count() / iterations << std::endl;
-	ASSERT_TRUE(duration.count() / iterations < 20);
+    auto start = high_resolution_clock::now();
+    for (unsigned int i = 0; i < iterations; ++i)
+        cuAlgo::fliplr1dMatrix<32, 32, float>(d_input, 0, mRows, mCols);
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    std::cout << duration.count() / iterations << std::endl;
+    ASSERT_TRUE(duration.count() / iterations < 20);
 
-	check_cuda( cudaFree(d_input) );
-	free(input);
+    check_cuda( cudaFree(d_input) );
+    free(input);
 }
 
 TEST(fliplr1dMatrix, performance_dim1_even) {
 
-	unsigned int mRows = 1024;
-	unsigned int mCols = 1024;
-	unsigned int iterations = 10;
+    unsigned int mRows = 1024;
+    unsigned int mCols = 1024;
+    unsigned int iterations = 10;
 
-	float * input    = (float *)malloc(mRows * mCols * sizeof(float));
+    float * input    = (float *)malloc(mRows * mCols * sizeof(float));
 
-	for(unsigned int i = 0; i < mRows; ++i)
-		for (unsigned int j = 0; j < mCols ; ++j)
-		input[j + i*mCols] = i * j + 1;
+    for(unsigned int i = 0; i < mRows; ++i)
+        for (unsigned int j = 0; j < mCols ; ++j)
+            input[j + i*mCols] = i * j + 1;
 
-	float *d_input;
-	check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(float)) );
+    float *d_input;
+    check_cuda( cudaMalloc(&d_input , mRows * mCols * sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
 
-	// warm-up
-	cuAlgo::fliplr1dMatrixFloat(d_input, 1, mRows, mCols);
+    // warm-up
+    cuAlgo::fliplr1dMatrix<32, 32, float>(d_input, 1, mRows, mCols);
 
-	auto start = high_resolution_clock::now();
-	for (unsigned int i = 0; i < iterations; ++i)
-		cuAlgo::fliplr1dMatrixFloat(d_input, 1, mRows, mCols);
-	auto stop = high_resolution_clock::now();
-	auto duration = duration_cast<microseconds>(stop - start);
-	std::cout << duration.count() / iterations << std::endl;
-	ASSERT_TRUE(duration.count() / iterations < 20);
+    auto start = high_resolution_clock::now();
+    for (unsigned int i = 0; i < iterations; ++i)
+        cuAlgo::fliplr1dMatrix<32, 32, float>(d_input, 1, mRows, mCols);
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    std::cout << duration.count() / iterations << std::endl;
+    ASSERT_TRUE(duration.count() / iterations < 20);
 
-	check_cuda( cudaFree(d_input) );
-	free(input);
+    check_cuda( cudaFree(d_input) );
+    free(input);
 }

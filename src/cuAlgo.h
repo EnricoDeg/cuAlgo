@@ -40,52 +40,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   Flip rows or columns of a matrix of floats in place
- * 
- * @details The `dim` argument defines if rows or columns 
- *          should be flipped.
- * 
- * @param[inout] data  pointer to matrix to be flipped
- * @param[in]    dim   dimension to flip
- * @param[in]    mRows non-contiguous dimension of the matrix
- * @param[in]    mCols contiguous dimension of the matrix
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algoC
- */
-void fliplr1dMatrixFloat(float        *data         ,
-                         unsigned int  dim          ,
-                         unsigned int  mRows        ,
-                         unsigned int  mCols        ,
-                         cudaStream_t  stream = 0   ,
-                         bool          async = false);
-
-void fliplr1dMatrixComplexFloat(thrust::complex<float>        *data         ,
-                         unsigned int  dim          ,
-                         unsigned int  mRows        ,
-                         unsigned int  mCols        ,
-                         cudaStream_t  stream = 0   ,
-                         bool          async = false);
-
-/**
- * @brief   Flip rows or columns of a matrix of doubles in place
- * 
- * @details See documentation of fliplr1dMatrixFloat()
- * 
- * @ingroup algoC
- */
-void fliplr1dMatrixDouble(double       *data         ,
-                          unsigned int  dim          ,
-                          unsigned int  mRows        ,
-                          unsigned int  mCols        ,
-                          cudaStream_t  stream = 0   ,
-                          bool          async = false);
-
-/**
  * @brief   Perform matrix-vector multiplication with floats.
  * 
  * @details The vector A is multiplied with matrix B and the result is stored 
