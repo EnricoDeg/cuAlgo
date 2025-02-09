@@ -35,44 +35,51 @@
 #include "internals/templateShMem.hpp"
 #include "internals/utils.hpp"
 
-#define COMPUTE_PER_THREAD  4
+template<
+unsigned int BlockSizeX,
+unsigned int BlockSizeY,
+typename T,
+template<typename> class op_t>
+CUALGO_GLOBAL
+void gConvolutionCorrelation1dMatrixKernel(const T * CUALGO_RESTRICT R,
+                                           const T * CUALGO_RESTRICT V,
+                                           T * CUALGO_RESTRICT C,
+                                           unsigned int N,
+                                           unsigned int K,
+                                           unsigned int chunks,
+                                           op_t<T> Op) {
 
-template<typename T, template<typename> class op_t>
-__global__ void gConvolutionCorrelation1dMatrixKernel(const T      *__restrict__ R,
-                                                      const T      *__restrict__ V,
-                                                            T      *__restrict__ C,
-                                                      unsigned int               N,
-                                                      unsigned int               K,
-                                                      unsigned int          chunks,
-                                                      op_t<T>                   Op) {
+    const unsigned int col = blockIdx.x * BlockSizeX + threadIdx.x;
+          unsigned int row = blockIdx.y * BlockSizeY + threadIdx.y;
 
-	const unsigned int col = blockIdx.x * THREADS_PER_BLOCK_X + threadIdx.x;
-	      unsigned int row = blockIdx.y * THREADS_PER_BLOCK_Y + threadIdx.y;
+    if (col < N / 2 && row < chunks) {
 
-	if (col < N / 2 && row < chunks) {
+        if (col == 0) {
 
-		if (col == 0) {
+            CUALGO_UNROLL
+            for (unsigned int i = 0; i < K / chunks; ++i, row+=chunks) {
+                C[col         + N * row] = Op.firstRealImag(&R[col + N * row], &V[col + N * row]);
+                C[col + N / 2 + N * row] = Op.firstRealImag(&R[col + N / 2 + N * row], &V[col + N / 2 + N * row]);
+            }
+        } else if (col > 0 && col < N / 2) {
 
-#pragma unroll
-			for (unsigned int i = 0; i < K / chunks; ++i, row+=chunks) {
-				C[col         + N * row] = Op.firstRealImag(&R[col + N * row], &V[col + N * row]);
-				C[col + N / 2 + N * row] = Op.firstRealImag(&R[col + N / 2 + N * row], &V[col + N / 2 + N * row]);
-			}
-		} else if (col > 0 && col < N / 2) {
-
-#pragma unroll
-			for (unsigned int i = 0; i < K / chunks; ++i, row+=chunks) {
-				C[col         + N * row] = Op.nReal(&R[    col + N * row], &V[    col + N * row],
-				                                    &R[N - col + N * row], &V[N - col + N * row]) ;
-				C[col + N / 2 + N * row] = Op.nImag(&R[N / 2 - col + N * row], &V[N / 2 + col + N * row],
-				                                    &R[N / 2 + col + N * row], &V[N / 2 - col + N * row]) ;
-			}
-		}
-	}
+            CUALGO_UNROLL
+            for (unsigned int i = 0; i < K / chunks; ++i, row+=chunks) {
+                C[col         + N * row] = Op.nReal(&R[    col + N * row], &V[    col + N * row],
+                                                    &R[N - col + N * row], &V[N - col + N * row]) ;
+                C[col + N / 2 + N * row] = Op.nImag(&R[N / 2 - col + N * row], &V[N / 2 + col + N * row],
+                                                    &R[N / 2 + col + N * row], &V[N / 2 - col + N * row]) ;
+            }
+        }
+    }
 }
 
-
-template<typename T, template<typename> class op_t>
+template<
+unsigned int BlockSizeX,
+unsigned int BlockSizeY,
+unsigned int ItemsPerThread,
+typename T,
+template<typename> class op_t>
 void gConvolutionCorrelation1dMatrix(T            *R     ,
                                      T            *V     ,
                                      T            *C     ,
@@ -81,17 +88,17 @@ void gConvolutionCorrelation1dMatrix(T            *R     ,
                                      cudaStream_t  stream,
                                      bool          async ) {
 
-	op_t<T> op;
+    op_t<T> op;
 
-	unsigned int chunks = K / COMPUTE_PER_THREAD;
+    unsigned int chunks = K / ItemsPerThread;
 
-	dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-	dim3 blocksPerGrid(div_ceil(N / 2, THREADS_PER_BLOCK_X), div_ceil(chunks, THREADS_PER_BLOCK_Y));
-	print_kernel_config(threadsPerBlock, blocksPerGrid);
+    dim3 threadsPerBlock(BlockSizeX, BlockSizeY);
+    dim3 blocksPerGrid(div_ceil(N / 2, BlockSizeX), div_ceil(chunks, BlockSizeY));
+    print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-	TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-	     gConvolutionCorrelation1dMatrixKernel<T COMMA op_t>,
-	     R, V, C, N, K, chunks, op);
+    TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+         CUALGO_KERNEL_NAME(gConvolutionCorrelation1dMatrixKernel<BlockSizeX, BlockSizeY, T,op_t>),
+         R, V, C, N, K, chunks, op);
 }
 
 #endif

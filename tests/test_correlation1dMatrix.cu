@@ -31,72 +31,73 @@
 #include <stdlib.h>
 #include <chrono>
 #include "src/cuAlgo.h"
+#include "src/API/correlation1dMatrix.hpp"
 #include <gtest/gtest.h>
 
 using namespace std::chrono;
 
 TEST(correlation1dMatrix, default_values) {
 
-	unsigned int K = 8192;
-	unsigned int N = 4096;
+    unsigned int K = 8192;
+    unsigned int N = 4096;
 
-	int * R = (int *)malloc(K * N * sizeof(int));
-	for (unsigned int i = 0 ; i < K ; ++i)
-		for (unsigned int j = 0 ; j < N ; ++j)
-			R [j + i * N] = j * i;
+    int * R = (int *)malloc(K * N * sizeof(int));
+    for (unsigned int i = 0 ; i < K ; ++i)
+        for (unsigned int j = 0 ; j < N ; ++j)
+            R [j + i * N] = j * i;
 
-	int * V = (int *)malloc(K * N * sizeof(int));
-	for (unsigned int i = 0 ; i < K ; ++i)
-		for (unsigned int j = 0 ; j < N ; ++j)
-			V [j + i * N] = N * K - j * i;
+    int * V = (int *)malloc(K * N * sizeof(int));
+    for (unsigned int i = 0 ; i < K ; ++i)
+        for (unsigned int j = 0 ; j < N ; ++j)
+            V [j + i * N] = N * K - j * i;
 
-	int * C = (int *)malloc(N*K * sizeof(int));
-	int * solution = (int *)malloc(N*K * sizeof(int));
+    int * C = (int *)malloc(N*K * sizeof(int));
+    int * solution = (int *)malloc(N*K * sizeof(int));
 
-	int *d_R;
-	check_cuda( cudaMalloc(&d_R, K * N * sizeof(int)) );
+    int *d_R;
+    check_cuda( cudaMalloc(&d_R, K * N * sizeof(int)) );
 
-	int *d_V;
-	check_cuda( cudaMalloc(&d_V, K * N * sizeof(int)) );
+    int *d_V;
+    check_cuda( cudaMalloc(&d_V, K * N * sizeof(int)) );
 
-	int *d_C;
-	check_cuda( cudaMalloc(&d_C, N * K * sizeof(int)) );
+    int *d_C;
+    check_cuda( cudaMalloc(&d_C, N * K * sizeof(int)) );
 
-	check_cuda( cudaMemcpy ( d_R, R, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_R, R, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
 
-	check_cuda( cudaMemcpy ( d_V, V, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_V, V, K * N *sizeof(int), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::correlation1dMatrixInt(d_R, d_V, d_C, N, K);
+    cuAlgo::correlation1dMatrix<32, 32, 4, int>(d_R, d_V, d_C, N, K);
 
-	for (unsigned int i = 0 ; i < N ; ++i)
-		solution[i] = 0;
+    for (unsigned int i = 0 ; i < N ; ++i)
+        solution[i] = 0;
 
-	for (int j = 0 ; j < K ; ++j) {
+    for (int j = 0 ; j < K ; ++j) {
 
-		solution[j * N] = R[j * N] * V[j * N];
+        solution[j * N] = R[j * N] * V[j * N];
 
-		for (int i = 1; i < N / 2; ++i)
-			solution[i + j * N] = R[i + j * N] * V[i + j * N] +
-			                      R[N - i + j * N] * V[N - i + j * N];
+        for (int i = 1; i < N / 2; ++i)
+            solution[i + j * N] = R[i + j * N] * V[i + j * N] +
+                                  R[N - i + j * N] * V[N - i + j * N];
 
-		solution[N / 2 + j * N] = R[N / 2 + j * N] * V[N / 2 + j * N];
+        solution[N / 2 + j * N] = R[N / 2 + j * N] * V[N / 2 + j * N];
 
-		for (int i = N / 2 + 1, k = 0; i < N; ++i, ++k)
-			solution[i + j * N] = R[N / 2 - 1 - k + j * N] * V[i + j * N] -
-			                      R[i + j * N] * V[N / 2 - 1 - k + j * N];
-	}
+        for (int i = N / 2 + 1, k = 0; i < N; ++i, ++k)
+            solution[i + j * N] = R[N / 2 - 1 - k + j * N] * V[i + j * N] -
+                                  R[i + j * N] * V[N / 2 - 1 - k + j * N];
+    }
 
-	check_cuda( cudaMemcpy ( C, d_C, N * K * sizeof(int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( C, d_C, N * K * sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	for (unsigned int j = 0 ; j < K ; ++j)
-		for (unsigned int i = 0 ; i < N ; ++i)
-			ASSERT_EQ( solution[i + j * N] , C[i + j * N] );
+    for (unsigned int j = 0 ; j < K ; ++j)
+        for (unsigned int i = 0 ; i < N ; ++i)
+            ASSERT_EQ( solution[i + j * N] , C[i + j * N] );
 
-	check_cuda( cudaFree(d_R) );
-	check_cuda( cudaFree(d_V) );
-	check_cuda( cudaFree(d_C) );
-	free(R);
-	free(V);
-	free(C);
-	free(solution);
+    check_cuda( cudaFree(d_R) );
+    check_cuda( cudaFree(d_V) );
+    check_cuda( cudaFree(d_C) );
+    free(R);
+    free(V);
+    free(C);
+    free(solution);
 }
