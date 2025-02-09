@@ -38,36 +38,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   downsample operator in 1d on matrix
- * 
- * @details The operation can be applied on both direction
- * 
- * @param[in]  idata pointer to input matrix
- * @param[out] odata pointer to output matrix
- * @param[in]  dim dimension where to apply the dshear operation.
- *             0 for rows and 1 for columns.
- * @param[in]  stride downsample stride on dimension `dim`
- * @param[in]  mRows non-contiguous dimension of the input matrix
- * @param[in]  mCols contiguous dimension of the input matrix
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void downsample1dMatrix(T            *idata        ,
-                        T            *odata        ,
-                        unsigned int  dim          ,
-                        unsigned int  stride       ,
-                        unsigned int  mRows        ,
-                        unsigned int  mCols        ,
-                        cudaStream_t  stream = 0   ,
-                        bool          async = false);
-
-/**
  * @brief   Perform exclusive scan or prefix sum on a vector
  * 
  * @details The input and output arrays are expected to be multiple of 

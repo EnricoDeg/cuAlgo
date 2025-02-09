@@ -22,7 +22,6 @@ set(SOURCE_EXE  internals/utils.cu
                 API/taper1dMatrix.cu
                 API/fftshift1dVector.cu
                 API/normalizeVector.cu
-                API/downsample1dMatrix.cu
                 API/fftshift2dMatrix.cu
                 API/fliplr1dMatrix.cu
                 API/padarray2dMatrix.cu

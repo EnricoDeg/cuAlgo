@@ -30,6 +30,7 @@
 #include <iostream>
 #include <cstring>
 #include "src/cuAlgo.h"
+#include "src/API/downsample1dMatrix.hpp"
 #include <gtest/gtest.h>
 
 void downsample1dMatrix_CPU( float * idata, float * odata,
@@ -76,43 +77,43 @@ void downsample1dMatrix_CPU( float * idata, float * odata,
 
 TEST(downsample1dMatrix, default_values_dim0) {
 
-	unsigned int mRows  = 1024;
-	unsigned int mCols  = 1024;
-	unsigned int stride = 2;
-	unsigned int mRowsDown = mRows / stride;
+    unsigned int mRows  = 1024;
+    unsigned int mCols  = 1024;
+    unsigned int stride = 2;
+    unsigned int mRowsDown = mRows / stride;
 
-	float * idata    = (float *)malloc(mRows     * mCols * sizeof(float));
-	for (unsigned int i = 0 ; i < mRows ; ++i)
-		for (unsigned int j = 0 ; j < mCols ; ++j)
-			idata[j + i * mCols] = j * i + 1;
+    float * idata    = (float *)malloc(mRows     * mCols * sizeof(float));
+    for (unsigned int i = 0 ; i < mRows ; ++i)
+        for (unsigned int j = 0 ; j < mCols ; ++j)
+            idata[j + i * mCols] = j * i + 1;
 
-	float * odata    = (float *)malloc(mRowsDown * mCols * sizeof(float));
-	float * solution = (float *)malloc(mRowsDown * mCols * sizeof(float));
+    float * odata    = (float *)malloc(mRowsDown * mCols * sizeof(float));
+    float * solution = (float *)malloc(mRowsDown * mCols * sizeof(float));
 
-	float *d_idata;
-	check_cuda( cudaMalloc(&d_idata, mRows     * mCols * sizeof(float)) );
+    float *d_idata;
+    check_cuda( cudaMalloc(&d_idata, mRows     * mCols * sizeof(float)) );
 
-	float *d_odata;
-	check_cuda( cudaMalloc(&d_odata, mRowsDown * mCols * sizeof(float)) );
+    float *d_odata;
+    check_cuda( cudaMalloc(&d_odata, mRowsDown * mCols * sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_idata, idata, mRows * mCols * sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_idata, idata, mRows * mCols * sizeof(float), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::downsample1dMatrixFloat(d_idata, d_odata, 0, stride, mRows, mCols);
+    cuAlgo::downsample1dMatrix<32, 32, float>(d_idata, d_odata, 0, stride, mRows, mCols);
 
-	for (unsigned int i = 0 ; i < mRowsDown * mCols ; ++i)
-		solution[i] = 0;
+    for (unsigned int i = 0 ; i < mRowsDown * mCols ; ++i)
+        solution[i] = 0;
 
-	downsample1dMatrix_CPU(idata, solution, 0, stride, mRows, mCols);
+    downsample1dMatrix_CPU(idata, solution, 0, stride, mRows, mCols);
 
-	check_cuda( cudaMemcpy ( odata, d_odata, mRowsDown * mCols * sizeof(float), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( odata, d_odata, mRowsDown * mCols * sizeof(float), cudaMemcpyDeviceToHost ) );
 
-	for (unsigned int j = 0 ; j < mRowsDown ; ++j)
-		for (unsigned int i = 0 ; i < mCols ; ++i)
-			ASSERT_EQ( solution[i + j * mCols] , odata[i + j * mCols] );
+    for (unsigned int j = 0 ; j < mRowsDown ; ++j)
+        for (unsigned int i = 0 ; i < mCols ; ++i)
+            ASSERT_EQ( solution[i + j * mCols] , odata[i + j * mCols] );
 
-	check_cuda( cudaFree(d_idata) );
-	check_cuda( cudaFree(d_odata) );
-	free(idata);
-	free(odata);
-	free(solution);
+    check_cuda( cudaFree(d_idata) );
+    check_cuda( cudaFree(d_odata) );
+    free(idata);
+    free(odata);
+    free(solution);
 }

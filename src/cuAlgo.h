@@ -40,60 +40,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   downsample operator in 1d on matrix of floats
- * 
- * @details The operation can be applied on both direction
- * 
- * @param[in]  idata pointer to input matrix
- * @param[out] odata pointer to output matrix
- * @param[in]  dim dimension where to apply the dshear operation.
- *             0 for rows and 1 for columns.
- * @param[in]  stride downsample stride on dimension `dim`
- * @param[in]  mRows non-contiguous dimension of the input matrix
- * @param[in]  mCols contiguous dimension of the input matrix
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algoC
- */
-void downsample1dMatrixFloat(float        *idata        ,
-                             float        *odata        ,
-                             unsigned int  dim          ,
-                             unsigned int  stride       ,
-                             unsigned int  mRows        ,
-                             unsigned int  mCols        ,
-                             cudaStream_t  stream = 0   ,
-                             bool          async = false);
-
-void downsample1dMatrixComplexFloat(thrust::complex<float>        *idata        ,
-                             thrust::complex<float>        *odata        ,
-                             unsigned int  dim          ,
-                             unsigned int  stride       ,
-                             unsigned int  mRows        ,
-                             unsigned int  mCols        ,
-                             cudaStream_t  stream = 0   ,
-                             bool          async = false);
-
-/**
- * @brief   downsample operator in 1d on matrix of doubles
- * 
- * @details See documentation of downsample1dMatrixFloat().
- * 
- * @ingroup algoC
- */
-void downsample1dMatrixDouble(double       *idata        ,
-                              double       *odata        ,
-                              unsigned int  dim          ,
-                              unsigned int  stride       ,
-                              unsigned int  mRows        ,
-                              unsigned int  mCols        ,
-                              cudaStream_t  stream = 0   ,
-                              bool          async = false);
-
-/**
  * @brief   Perform exclusive scan or prefix sum on a vector using
  *          floats.
  * 
