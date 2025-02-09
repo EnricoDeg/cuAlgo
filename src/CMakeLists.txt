@@ -8,7 +8,6 @@ if (CUALGO_VERBOSE)
 endif()
 
 set(SOURCE_EXE  internals/utils.cu
-                API/getRowBlocks.cu
                 internals/checkError.cu
                 API/reduction1dMatrix.cu
                 API/gMatVecMul.cu

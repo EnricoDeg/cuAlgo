@@ -29,6 +29,7 @@
 #include <iostream>
 #include <stdlib.h>
 #include "src/cuAlgo.h"
+#include "src/API/getRowBlocks.hpp"
 #include <gtest/gtest.h>
 
 TEST(gSpMatVecMulCSRAdaptive, default_value) {
@@ -104,7 +105,7 @@ TEST(gSpMatVecMulCSRAdaptive, default_value) {
 
 	unsigned int blocks_count = 0;
 	std::cout << "Compute row blocks" << std::endl;
-	unsigned int * d_row_blocks = cuAlgo::getRowBlocks(row_ptr, nrows, &blocks_count);
+	unsigned int * d_row_blocks = cuAlgo::getRowBlocks<64>(row_ptr, nrows, &blocks_count);
 
 	cuAlgo::gSpMatVecMulCSRAdaptiveInt( d_columns, d_row_ptr, d_row_blocks, d_values , d_x , d_y , nrows, blocks_count ) ;
 

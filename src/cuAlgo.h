@@ -35,8 +35,6 @@
 
 #include "internals/checkError.hpp"
 
-#include "cuAlgoSupport.hpp"
-
 namespace cuAlgo{
 
 /**
