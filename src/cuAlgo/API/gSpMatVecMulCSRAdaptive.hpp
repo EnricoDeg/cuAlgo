@@ -26,8 +26,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "cuAlgo/internals/definitions.hpp"
 #include "cuAlgo/internals/utils.hpp"
-#include "cuAlgo/internals/kernelParameters.hpp"
 
 template <
 unsigned int NumberNonZerosPerBlock,
@@ -140,7 +140,7 @@ void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * CUALGO_RESTRICT column
                     dot += values[element] * x[columns[element]];
             }
 
-            dot = warp_reduce (dot);
+            dot = warp_reduce<WarpSize>(dot);
 
             if (lane == 0 && warp_id == 0 && row < nrows)
                 y[row] = dot;
@@ -155,7 +155,7 @@ void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * CUALGO_RESTRICT column
                     dot += values[element] * x[columns[element]];
             }
 
-            dot = warp_reduce (dot);
+            dot = warp_reduce<WarpSize>(dot);
 
             if (lane == 0)
                 cache[warp_id] = dot;
@@ -168,7 +168,7 @@ void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * CUALGO_RESTRICT column
                 for (unsigned int element = lane; element < blockDim.x / WarpSize; element += WarpSize)
                     dot += cache[element];
 
-                dot = warp_reduce (dot);
+                dot = warp_reduce<WarpSize>(dot);
 
                 if (lane == 0 && row < nrows)
                     y[row] = dot;

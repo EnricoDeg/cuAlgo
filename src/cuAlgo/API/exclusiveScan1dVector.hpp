@@ -26,9 +26,13 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "cuAlgo/internals/definitions.hpp"
 #include "cuAlgo/internals/utils.hpp"
 #include "cuAlgo/internals/templateShMem.hpp"
-#include "cuAlgo/internals/kernelParameters.hpp"
+
+#define SHARED_MEMORY_BANKS 32
+#define LOG_MEM_BANKS 5
+#define CONFLICT_FREE_OFFSET(n) ((n) >> LOG_MEM_BANKS)
 
 template <typename T>
 CUALGO_GLOBAL

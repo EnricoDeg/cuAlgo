@@ -26,8 +26,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "cuAlgo/internals/definitions.hpp"
 #include "cuAlgo/internals/utils.hpp"
-#include "cuAlgo/internals/kernelParameters.hpp"
 
 template<
 unsigned int WarpSize,
@@ -53,7 +53,7 @@ void gSpMatVecMulCSRVectorKernel(const unsigned int * CUALGO_RESTRICT columns,
             sum += values[element] * x[columns[element]];
         }
     }
-    sum = warp_reduce(sum);
+    sum = warp_reduce<WarpSize>(sum);
     if (lane == 0 && row < nrows)
         y[row] = sum;
 }

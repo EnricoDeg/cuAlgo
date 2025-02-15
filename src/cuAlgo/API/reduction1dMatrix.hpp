@@ -26,9 +26,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <cmath>
+#include "cuAlgo/internals/definitions.hpp"
 #include "cuAlgo/internals/utils.hpp"
-#include "cuAlgo/internals/kernelParameters.hpp"
 
 #define COMPUTE_PER_THREAD 16
 

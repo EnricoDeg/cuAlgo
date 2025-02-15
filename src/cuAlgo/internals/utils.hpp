@@ -35,32 +35,12 @@
 #include <cuda.h>
 #include <cuda_bf16.h>
 #include <mma.h>
+
+#include "cuAlgo/internals/definitions.hpp"
 #include "cuAlgo/internals/checkError.hpp"
-#include "cuAlgo/internals/kernelParameters.hpp"
 
-using namespace std::chrono;
-
-#define FULL_WARP_MASK 0xffffffff
-
-#define CUALGO_GLOBAL __global__
-#define CUALGO_DEVICE __device__
-#define CUALGO_RESTRICT __restrict__
-#define CUALGO_HOST __host__
-#define CUALGO_SHMEM __shared__
-#define CUALGO_FORCE_INLINE __forceinline__
-#define CUALGO_LAUNCH_BOUNDS(N) __launch_bounds__(N)
-
-#define CUALGO_WARPSIZE 32
-
-#define CUALGO_UNROLL _Pragma("unroll")
-#define CUALGO_NO_UNROLL _Pragma("nounroll")
-
-#define CUALGO_KERNEL_NAME(...) __VA_ARGS__
-
-// __device__ __host__ int div_ceil(int numerator, int denominator) ;
-__device__ __host__ int div_ceil(int numerator, int denominator)
+CUALGO_HOST_DEVICE int div_ceil(int numerator, int denominator)
 {
-
     return (numerator % denominator != 0) ?
            (numerator / denominator+ 1  ) :
            (numerator / denominator     ) ;
@@ -85,15 +65,14 @@ size_t getSmem(size_t K) {
     return smem_max_size;
 }
 
-__device__ int warp_reduce(int val) {
-
-    for (size_t offset = WARP_SIZE / 2; offset > 0; offset /= 2)
+template<unsigned int WarpSize>
+CUALGO_DEVICE int warp_reduce(int val) {
+    for (size_t offset = WarpSize / 2; offset > 0; offset /= 2)
         val += __shfl_down_sync(FULL_WARP_MASK, val, offset);
     return val;
 }
 
-__device__ unsigned int prev_power_of_2 (unsigned int n) {
-
+CUALGO_DEVICE unsigned int prev_power_of_2 (unsigned int n) {
     while (n & n - 1)
         n = n & n - 1;
     return n;

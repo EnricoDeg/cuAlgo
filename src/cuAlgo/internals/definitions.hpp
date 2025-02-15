@@ -1,5 +1,5 @@
 /*
- * @file kernelParameters.hpp
+ * @file definitions.hpp
  *
  * @copyright Copyright (C) 2024 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -26,25 +26,35 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#ifndef KERNELPARAMETERS_HPP
-#define KERNELPARAMETERS_HPP
+#ifndef DEFINITIONS_HPP
+#define DEFINITIONS_HPP
 
-#define WARP_SIZE 32
-#define WARPS_PER_BLOCK 32
-#define THREADS_PER_BLOCK 1024
+#include <cstdlib>
+#include <iostream>
+#include <chrono>
+#include <cmath>
+#include <cuda.h>
+#include <cuda_bf16.h>
+#include <mma.h>
 
-#define THREADS_PER_BLOCK_X 32
-#define THREADS_PER_BLOCK_Y 32
+using namespace std::chrono;
 
-#define TILE_DIM 32
+#define FULL_WARP_MASK 0xffffffff
 
-#define SHARED_MEMORY_BANKS 32
-#define LOG_MEM_BANKS 5
-#define CONFLICT_FREE_OFFSET(n) ((n) >> LOG_MEM_BANKS)
+#define CUALGO_GLOBAL __global__
+#define CUALGO_DEVICE __device__
+#define CUALGO_RESTRICT __restrict__
+#define CUALGO_HOST __host__
+#define CUALGO_HOST_DEVICE __host__ __device__
+#define CUALGO_SHMEM __shared__
+#define CUALGO_FORCE_INLINE __forceinline__
+#define CUALGO_LAUNCH_BOUNDS(N) __launch_bounds__(N)
 
-#define NNZ_PER_WG 64
+#define CUALGO_WARPSIZE 32
 
+#define CUALGO_UNROLL _Pragma("unroll")
+#define CUALGO_NO_UNROLL _Pragma("nounroll")
 
-
+#define CUALGO_KERNEL_NAME(...) __VA_ARGS__
 
 #endif

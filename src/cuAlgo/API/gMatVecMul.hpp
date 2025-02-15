@@ -26,17 +26,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "cuAlgo/internals/definitions.hpp"
 #include "cuAlgo/internals/utils.hpp"
 #include "cuAlgo/internals/templateShMem.hpp"
-#include "cuAlgo/internals/kernelParameters.hpp"
-
-__device__ int div_ceil_device(int numerator, int denominator)
-{
-
-    return (numerator % denominator != 0) ?
-           (numerator / denominator+ 1  ) :
-           (numerator / denominator     ) ;
-}
 
 template <
 unsigned int BlockSize,
@@ -56,7 +48,7 @@ void gMatVecMulKernel(const T * CUALGO_RESTRICT A,
     SharedMemory<T> smem;
     T * A_smem = smem.getPointer();
 
-    unsigned int A_smem_iters = div_ceil_device(K, BlockSize);
+    unsigned int A_smem_iters = div_ceil(K, BlockSize);
 
     CUALGO_UNROLL
     for (unsigned int i = 0; i < A_smem_iters; ++i) {
@@ -70,7 +62,7 @@ void gMatVecMulKernel(const T * CUALGO_RESTRICT A,
     if (warp_col >= N)
         return;
 
-    const unsigned int K_iters = div_ceil_device(K, WarpSize);
+    const unsigned int K_iters = div_ceil(K, WarpSize);
     const unsigned int lane_id = threadIdx.x % WarpSize;
 
     T tmp = 0.0;
@@ -111,7 +103,7 @@ void gMatVecMulKernel1(const T * CUALGO_RESTRICT A,
     SharedMemory<T> smem;
     T * A_smem = smem.getPointer();
 
-    unsigned int A_smem_iters = div_ceil_device(K, BlockSize);
+    unsigned int A_smem_iters = div_ceil(K, BlockSize);
 
     CUALGO_UNROLL
     for (unsigned int i = 0; i < A_smem_iters; ++i) {
@@ -125,7 +117,7 @@ void gMatVecMulKernel1(const T * CUALGO_RESTRICT A,
     if (group_col >= N)
         return;
 
-    const unsigned int K_iters = div_ceil_device(K, GroupSize);
+    const unsigned int K_iters = div_ceil(K, GroupSize);
     const unsigned int group_lane_id = threadIdx.x % GroupSize;
 
     T tmp = 0.0;

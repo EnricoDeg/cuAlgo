@@ -26,9 +26,9 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "cuAlgo/internals/templateShMem.hpp"
+ #include "cuAlgo/internals/definitions.hpp"
+ #include "cuAlgo/internals/templateShMem.hpp"
 #include "cuAlgo/internals/utils.hpp"
-#include "cuAlgo/internals/kernelParameters.hpp"
 
 template <typename T>
 CUALGO_GLOBAL
