@@ -30,11 +30,12 @@
 #include "cuAlgo/internals/kernelParameters.hpp"
 
 template<typename T, unsigned int BinSize>
-__global__ void histogram_kernel(T * __restrict__ data,
-                                 unsigned int size,
-                                 unsigned int * __restrict__ histo) {
+CUALGO_GLOBAL
+void histogram_kernel(T * CUALGO_RESTRICT data,
+                      unsigned int size,
+                      unsigned int * CUALGO_RESTRICT histo) {
 
-    __shared__ unsigned int temp[BinSize];
+    CUALGO_SHMEM unsigned int temp[BinSize];
     temp[threadIdx.x] = 0;
     __syncthreads();
 
@@ -52,14 +53,17 @@ __global__ void histogram_kernel(T * __restrict__ data,
 
 namespace cuAlgo {
 
-    template<typename T, unsigned int BinSize>
+    template<
+    unsigned int BlockSize,
+    typename T,
+    unsigned int BinSize>
     void histogram(T *data,
                    unsigned int size,
                    unsigned int *histo,
                    cudaStream_t  stream = 0,
                    bool          async = false) {
 
-        unsigned int tpb = THREADS_PER_BLOCK > BinSize ? BinSize : THREADS_PER_BLOCK;
+        unsigned int tpb = BlockSize > BinSize ? BinSize : BlockSize;
         dim3 threadsPerBlock(tpb);
         dim3 blocksPerGrid(div_ceil(size, tpb));
         print_kernel_config(threadsPerBlock, blocksPerGrid);

@@ -31,55 +31,58 @@
 #include "cuAlgo/API/normL1Vector.hpp"
 
 template<typename T>
-__global__ void normalizeKernel(T            * __restrict__ data,
-                                T            * __restrict__ norm,
-                                unsigned int                size) {
+CUALGO_GLOBAL
+void normalizeKernel(T * CUALGO_RESTRICT data,
+                     T * CUALGO_RESTRICT norm,
+                     unsigned int size) {
 
-	unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
-	while (i < size) {
-
-		data[i] /= (*norm);
-		i += gridDim.x * blockDim.x;
-	}
+    unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+    while (i < size) {
+        data[i] /= (*norm);
+        i += gridDim.x * blockDim.x;
+    }
 }
 
 namespace cuAlgo {
 
     /**
- * @brief   Normalize a vector
- * 
- * @details Each element of the vector is divided by the L1 norm
- *          of the vector
- * 
- * @param[inout]  idata pointer to input vector which will be normalized
- * @param[in]     size  size of the input vector
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-	template<typename T>
-	void normalizeVector(T            *g_idata,
-	                     unsigned int  size   ,
-	                     cudaStream_t  stream = 0,
-	                     bool          async = false) {
+    * @brief   Normalize a vector
+    * 
+    * @details Each element of the vector is divided by the L1 norm
+    *          of the vector
+    * 
+    * @param[inout]  idata pointer to input vector which will be normalized
+    * @param[in]     size  size of the input vector
+    * @param[in]  stream CUDA stream where the kernels are launched.
+    *                    Default is stream 0 (default stream)
+    * @param[in]  async  bool to define if kernels are launched asynchronously
+    *                    (without synchronization).
+    *                    Default is false (device is synchronized after each kernel launched)
+    * 
+    * @ingroup algo
+    */
+    template<
+    unsigned int BlockSize,
+    unsigned int ItemsPerThread,
+    typename T>
+    void normalizeVector(T *g_idata,
+                         unsigned int size,
+                         cudaStream_t stream = 0,
+                         bool async = false) {
 
-		T * g_odata;
-		check_cuda( cudaMalloc(&g_odata, sizeof(T)) );
+        T * g_odata;
+        check_cuda( cudaMalloc(&g_odata, sizeof(T)) );
 
-		normL1Vector<T, 1024, 1>(g_idata, g_odata, size, stream, async);
+        normL1Vector<T, BlockSize, ItemsPerThread>(g_idata, g_odata, size, stream, async);
 
-		dim3 threadsPerBlock(THREADS_PER_BLOCK);
-		dim3 blocksPerGrid(div_ceil(size, THREADS_PER_BLOCK));
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
+        dim3 threadsPerBlock(BlockSize);
+        dim3 blocksPerGrid(div_ceil(size, BlockSize));
+        print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-		TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-		     normalizeKernel<T>,
-		     g_idata, g_odata, size);
+        TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+             normalizeKernel<T>,
+             g_idata, g_odata, size);
 
-		check_cuda( cudaFree ( g_odata ) );
-	}
+        check_cuda( cudaFree ( g_odata ) );
+    }
 }

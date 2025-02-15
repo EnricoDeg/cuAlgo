@@ -80,7 +80,7 @@ TEST(upsample1dMatrix, default_dim0) {
 
     check_cuda( cudaMemcpy ( d_idata, idata, mRows * mCols * sizeof(float), cudaMemcpyHostToDevice ) );
 
-    cuAlgo::upsample1dMatrix<float>(d_idata, d_odata, 0, nzeros, mRows, mCols);
+    cuAlgo::upsample1dMatrix<32, 32, float>(d_idata, d_odata, 0, nzeros, mRows, mCols);
 
     for (unsigned int i = 0 ; i < mRowsUp * mCols ; ++i)
         solution[i] = 0;
@@ -123,7 +123,7 @@ TEST(upsample1dMatrix, default_dim1) {
 
     check_cuda( cudaMemcpy ( d_idata, idata, mRows * mCols * sizeof(float), cudaMemcpyHostToDevice ) );
 
-    cuAlgo::upsample1dMatrix<float>(d_idata, d_odata, 1, nzeros, mRows, mCols);
+    cuAlgo::upsample1dMatrix<32, 32, float>(d_idata, d_odata, 1, nzeros, mRows, mCols);
 
     for (unsigned int i = 0 ; i < mRows * mColsUp ; ++i)
         solution[i] = 0;
@@ -165,11 +165,11 @@ TEST(upsample1dMatrix, performance_dim0) {
     check_cuda( cudaMemcpy ( d_idata, idata, mRows * mCols * sizeof(float), cudaMemcpyHostToDevice ) );
 
     // warm-up
-    cuAlgo::upsample1dMatrix<float>(d_idata, d_odata, 0, nzeros, mRows, mCols);
+    cuAlgo::upsample1dMatrix<32, 32, float>(d_idata, d_odata, 0, nzeros, mRows, mCols);
 
     auto start = high_resolution_clock::now();
     for (unsigned int i = 0; i < iterations; ++i)
-        cuAlgo::upsample1dMatrix<float>(d_idata, d_odata, 0, nzeros, mRows, mCols);
+        cuAlgo::upsample1dMatrix<32, 32, float>(d_idata, d_odata, 0, nzeros, mRows, mCols);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
     std::cout << duration.count() / iterations << std::endl;

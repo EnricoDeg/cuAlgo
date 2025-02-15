@@ -102,7 +102,7 @@ TEST(gSpMatVecMulCSRVector, default_value) {
     check_cuda( cudaMemcpy ( d_row_ptr, row_ptr, ( nrows + 1 ) * sizeof(unsigned int), cudaMemcpyHostToDevice ) );
     check_cuda( cudaMemcpy ( d_x      , x      ,   nrows       * sizeof(         int), cudaMemcpyHostToDevice ) );
 
-    cuAlgo::gSpMatVecMulCSRVector<int>( d_columns, d_row_ptr, d_values , d_x , d_y , nrows ) ;
+    cuAlgo::gSpMatVecMulCSRVector<1024, 32, int>( d_columns, d_row_ptr, d_values , d_x , d_y , nrows ) ;
 
     check_cuda( cudaMemcpy ( y        , d_y    ,   nrows       * sizeof(         int), cudaMemcpyDeviceToHost ) );
 

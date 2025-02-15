@@ -89,7 +89,7 @@ TEST(gSpMatVecMulELL, default_value) {
     check_cuda( cudaMemcpy ( d_values , values ,   nrows * nnz * sizeof(         int), cudaMemcpyHostToDevice ) );
     check_cuda( cudaMemcpy ( d_x      , x      ,   nrows       * sizeof(         int), cudaMemcpyHostToDevice ) );
 
-    cuAlgo::gSpMatVecMulELL<int>( d_columns, d_values , d_x , d_y , nrows, nnz ) ;
+    cuAlgo::gSpMatVecMulELL<1024, int>( d_columns, d_values , d_x , d_y , nrows, nnz ) ;
 
     check_cuda( cudaMemcpy ( y        , d_y    ,   nrows       * sizeof(         int), cudaMemcpyDeviceToHost ) );
 

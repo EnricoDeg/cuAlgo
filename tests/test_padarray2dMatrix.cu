@@ -73,7 +73,7 @@ TEST(padarray2dMatrix, default_float) {
 
     check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
 
-    cuAlgo::padarray2dMatrix<float>(d_input, d_output, nRows, nCols, mRows, mCols);
+    cuAlgo::padarray2dMatrix<32, 32, float>(d_input, d_output, nRows, nCols, mRows, mCols);
 
     padarray_CPU<float>(input, solution, nRows, nCols, mRows, mCols);
 
@@ -113,7 +113,7 @@ TEST(padarray2dMatrix, default_complex_float) {
 
     check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(thrust::complex<float>), cudaMemcpyHostToDevice ) );
 
-    cuAlgo::padarray2dMatrix<thrust::complex<float>>(d_input, d_output, nRows, nCols, mRows, mCols);
+    cuAlgo::padarray2dMatrix<32, 32, thrust::complex<float>>(d_input, d_output, nRows, nCols, mRows, mCols);
 
     padarray_CPU<thrust::complex<float>>(input, solution, nRows, nCols, mRows, mCols);
 
@@ -155,11 +155,11 @@ TEST(padarray2dMatrix, performance) {
     check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
 
     // warm-up
-    cuAlgo::padarray2dMatrix<float>(d_input, d_output, nRows, nCols, mRows, mCols);
+    cuAlgo::padarray2dMatrix<32, 32, float>(d_input, d_output, nRows, nCols, mRows, mCols);
 
     auto start = high_resolution_clock::now();
     for (unsigned int i = 0; i < iterations; ++i)
-        cuAlgo::padarray2dMatrix<float>(d_input, d_output, nRows, nCols, mRows, mCols);
+        cuAlgo::padarray2dMatrix<32, 32, float>(d_input, d_output, nRows, nCols, mRows, mCols);
     auto stop = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(stop - start);
     std::cout << duration.count() / iterations << std::endl;

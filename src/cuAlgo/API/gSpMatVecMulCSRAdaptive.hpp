@@ -29,7 +29,10 @@
 #include "cuAlgo/internals/utils.hpp"
 #include "cuAlgo/internals/kernelParameters.hpp"
 
-template <typename T>
+template <
+unsigned int NumberNonZerosPerBlock,
+unsigned int WarpSize,
+typename T>
 CUALGO_GLOBAL
 void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * CUALGO_RESTRICT columns,
                                      const unsigned int * CUALGO_RESTRICT row_ptr,
@@ -43,7 +46,7 @@ void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * CUALGO_RESTRICT column
     const unsigned int block_row_end = row_blocks[blockIdx.x + 1];
     const unsigned int nnz = row_ptr[block_row_end] - row_ptr[block_row_begin];
 
-    CUALGO_SHMEM T cache[NNZ_PER_WG];
+    CUALGO_SHMEM T cache[NumberNonZerosPerBlock];
 
     if (block_row_end - block_row_begin > 1) {
 
@@ -56,7 +59,8 @@ void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * CUALGO_RESTRICT column
             cache[i] = values[thread_data_begin] * x[columns[thread_data_begin]];
         __syncthreads ();
 
-        const unsigned int threads_for_reduction = prev_power_of_2 (blockDim.x / (block_row_end - block_row_begin));
+        const unsigned int threads_for_reduction = prev_power_of_2(
+            blockDim.x / (block_row_end - block_row_begin));
 
         if (threads_for_reduction > 1) {
 
@@ -86,7 +90,7 @@ void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * CUALGO_RESTRICT column
                 // Reduce for each row
                 __syncthreads ();
 
-                const bool use_result = thread_in_block < j && i + j < NNZ_PER_WG;
+                const bool use_result = thread_in_block < j && i + j < NumberNonZerosPerBlock;
                 if (use_result)
                     dot += cache[i + j];
                 __syncthreads ();
@@ -112,19 +116,19 @@ void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * CUALGO_RESTRICT column
                 }
 
                 y[local_row] = dot;
-                local_row += NNZ_PER_WG;
+                local_row += NumberNonZerosPerBlock;
             }
         }
 
     } else {
 
         const unsigned int row     = block_row_begin;
-        const unsigned int warp_id = threadIdx.x / WARP_SIZE;
-        const unsigned int lane    = threadIdx.x % WARP_SIZE;
+        const unsigned int warp_id = threadIdx.x / WarpSize;
+        const unsigned int lane    = threadIdx.x % WarpSize;
 
         T dot = 0;
 
-        if (nnz <= 64 || NNZ_PER_WG <= 32) {
+        if (nnz <= 64 || NumberNonZerosPerBlock <= 32) {
 
             // CSR-Vector case
             if (row < nrows) {
@@ -132,7 +136,7 @@ void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * CUALGO_RESTRICT column
                 const unsigned int row_start = row_ptr[row];
                 const unsigned int row_end   = row_ptr[row + 1];
 
-                for (unsigned int element = row_start + lane; element < row_end; element += WARP_SIZE)
+                for (unsigned int element = row_start + lane; element < row_end; element += WarpSize)
                     dot += values[element] * x[columns[element]];
             }
 
@@ -161,7 +165,7 @@ void gSpMatVecMulCSRAdaptiveKernel ( const unsigned int * CUALGO_RESTRICT column
 
                 dot = 0.0;
 
-                for (unsigned int element = lane; element < blockDim.x / 32; element += 32)
+                for (unsigned int element = lane; element < blockDim.x / WarpSize; element += WarpSize)
                     dot += cache[element];
 
                 dot = warp_reduce (dot);
@@ -209,7 +213,10 @@ namespace cuAlgo {
     * 
     * @ingroup algo
     */
-    template <typename T>
+    template <
+    unsigned int NumberNonZerosPerBlock,
+    unsigned int WarpSize,
+    typename T>
     void gSpMatVecMulCSRAdaptive(unsigned int *columns,
                                  unsigned int *row_ptr,
                                  unsigned int *row_blocks,
@@ -221,12 +228,12 @@ namespace cuAlgo {
                                  cudaStream_t stream = 0,
                                  bool async = false) {
 
-        dim3 threadsPerBlock(NNZ_PER_WG);
+        dim3 threadsPerBlock(NumberNonZerosPerBlock);
         dim3 blocksPerGrid(blocks_count);
         print_kernel_config(threadsPerBlock, blocksPerGrid);
 
         TIME( blocksPerGrid, threadsPerBlock, 0, stream, async,
-              gSpMatVecMulCSRAdaptiveKernel<T>,
+              CUALGO_KERNEL_NAME(gSpMatVecMulCSRAdaptiveKernel<NumberNonZerosPerBlock, WarpSize, T>),
               columns, row_ptr, row_blocks, values, x, y, nrows );
     }
 }

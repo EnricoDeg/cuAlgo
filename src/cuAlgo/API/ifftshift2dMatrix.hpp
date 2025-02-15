@@ -30,75 +30,77 @@
 #include "cuAlgo/internals/kernelParameters.hpp"
 
 template <typename T>
-__global__ void ifftshiftMatrixKernelEvenEven(T * __restrict__  data ,
-                                              unsigned int     mRows ,
-                                              unsigned int     mCols )
+CUALGO_GLOBAL
+void ifftshiftMatrixKernelEvenEven(T * CUALGO_RESTRICT data,
+                                   unsigned int mRows,
+                                   unsigned int mCols)
 {
 
-	const unsigned int tidx = blockIdx.x * blockDim.x + threadIdx.x;
-	const unsigned int tidy = blockIdx.y * blockDim.y + threadIdx.y;
-	if (tidx < mCols / 2 && tidy < mRows / 2) {
+    const unsigned int tidx = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int tidy = blockIdx.y * blockDim.y + threadIdx.y;
+    if (tidx < mCols / 2 && tidy < mRows / 2) {
+        // first columns swap
+        T tmp = data[tidy * mCols + tidx + mCols / 2];
+        data[tidy * mCols + tidx + mCols / 2] = data[tidy * mCols + tidx];
+        data[tidy * mCols + tidx            ] = tmp;
 
-		// first columns swap
-		T tmp = data[tidy * mCols + tidx + mCols / 2];
-		data[tidy * mCols + tidx + mCols / 2] = data[tidy * mCols + tidx];
-		data[tidy * mCols + tidx            ] = tmp;
+        // second columns swap
+        tmp = data[(tidy + mRows / 2) * mCols + tidx + mCols / 2];
+        data[(tidy + mRows / 2) * mCols + tidx + mCols / 2] = data[(tidy + mRows / 2) * mCols + tidx];
+        data[(tidy + mRows / 2) * mCols + tidx            ] = tmp;
 
-		// second columns swap
-		tmp = data[(tidy + mRows / 2) * mCols + tidx + mCols / 2];
-		data[(tidy + mRows / 2) * mCols + tidx + mCols / 2] = data[(tidy + mRows / 2) * mCols + tidx];
-		data[(tidy + mRows / 2) * mCols + tidx            ] = tmp;
+        // first rows swap
+        tmp = data[(tidy + mRows / 2) * mCols + tidx];
+        data[(tidy + mRows / 2) * mCols + tidx] = data[tidy * mCols + tidx];
+        data[ tidy * mCols + tidx            ] = tmp;
 
-		// first rows swap
-		tmp = data[(tidy + mRows / 2) * mCols + tidx];
-		data[(tidy + mRows / 2) * mCols + tidx] = data[tidy * mCols + tidx];
-		data[ tidy * mCols + tidx            ] = tmp;
-
-		// second rows swap
-		tmp = data[(tidy + mRows / 2) * mCols + tidx + mCols / 2];
-		data[(tidy + mRows / 2) * mCols + tidx + mCols / 2] = data[tidy * mCols + tidx + mCols / 2];
-		data[ tidy * mCols              + tidx + mCols / 2] = tmp;
-	}
+        // second rows swap
+        tmp = data[(tidy + mRows / 2) * mCols + tidx + mCols / 2];
+        data[(tidy + mRows / 2) * mCols + tidx + mCols / 2] = data[tidy * mCols + tidx + mCols / 2];
+        data[ tidy * mCols              + tidx + mCols / 2] = tmp;
+    }
 }
 
 namespace cuAlgo {
 
-/**
- * @brief   Perform ifftshift on a matrix in place
- * 
- * @details The ifftshift operation is performed on both
- *          dimensions
- * 
- * @param[inout] data  pointer to matrix to be shifted
- * @param[in]    mRows non-contiguous dimension of the matrix
- * @param[in]    mCols contiguous dimension of the matrix
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-	template<typename T>
-	void ifftshift2dMatrix(T            *data  ,
-	                       unsigned int  mRows ,
-	                       unsigned int  mCols ,
-	                       cudaStream_t  stream = 0,
-	                       bool          async = false) {
+    /**
+    * @brief   Perform ifftshift on a matrix in place
+    * 
+    * @details The ifftshift operation is performed on both
+    *          dimensions
+    * 
+    * @param[inout] data  pointer to matrix to be shifted
+    * @param[in]    mRows non-contiguous dimension of the matrix
+    * @param[in]    mCols contiguous dimension of the matrix
+    * @param[in]  stream CUDA stream where the kernels are launched.
+    *                    Default is stream 0 (default stream)
+    * @param[in]  async  bool to define if kernels are launched asynchronously
+    *                    (without synchronization).
+    *                    Default is false (device is synchronized after each kernel launched)
+    * 
+    * @ingroup algo
+    */
+    template<
+    unsigned int BlockSizeX,
+    unsigned int BlockSizeY,
+    typename T>
+    void ifftshift2dMatrix(T *data,
+                           unsigned int mRows,
+                           unsigned int mCols,
+                           cudaStream_t stream = 0,
+                           bool async = false) {
 
-		if (mRows % 2 == 0 && mCols % 2 == 0) {
+        if (mRows % 2 == 0 && mCols % 2 == 0) {
+            {
+                dim3 threadsPerBlock(BlockSizeX, BlockSizeY);
+                dim3 blocksPerGrid(div_ceil(mCols / 2, BlockSizeX),
+                                   div_ceil(mRows / 2, BlockSizeY));
+                print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-			{
-
-				dim3 threadsPerBlock(THREADS_PER_BLOCK_X, THREADS_PER_BLOCK_Y);
-				dim3 blocksPerGrid(div_ceil(mCols / 2, THREADS_PER_BLOCK_X), div_ceil(mRows / 2, THREADS_PER_BLOCK_Y));
-				print_kernel_config(threadsPerBlock, blocksPerGrid);
-
-				TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
-				     ifftshiftMatrixKernelEvenEven<T>,
-				     data, mRows, mCols);
-			}
-		}
-	}
+                TIME(blocksPerGrid, threadsPerBlock, 0, stream, async,
+                     ifftshiftMatrixKernelEvenEven<T>,
+                     data, mRows, mCols);
+            }
+        }
+    }
 }

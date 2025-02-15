@@ -75,7 +75,7 @@ TEST(ifftshift2dMatrix, default_even_even) {
 
     check_cuda( cudaMemcpy ( d_input, input, mRows * mCols *sizeof(float), cudaMemcpyHostToDevice ) );
 
-    cuAlgo::ifftshift2dMatrix<float>(d_input, mRows, mCols);
+    cuAlgo::ifftshift2dMatrix<32, 32, float>(d_input, mRows, mCols);
 
     ifftshiftMatrixCPU(input, solution, mRows, mCols);
 

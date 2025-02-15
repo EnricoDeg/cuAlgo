@@ -30,26 +30,24 @@
 #include "cuAlgo/internals/kernelParameters.hpp"
 
 template <typename T>
-__global__ void gSpMatVecMulELLKernel( const unsigned int * __restrict__ columns         ,
-                                       const T            * __restrict__ values          ,
-                                       const T            * __restrict__ x               ,
-                                             T            * __restrict__ y               ,
-                                             unsigned int                nrows           ,
-                                             unsigned int                elements_in_rows)
+CUALGO_GLOBAL
+void gSpMatVecMulELLKernel(const unsigned int * CUALGO_RESTRICT columns,
+                           const T * CUALGO_RESTRICT values,
+                           const T * CUALGO_RESTRICT x,
+                           T * CUALGO_RESTRICT y,
+                           unsigned int nrows,
+                           unsigned int elements_in_rows)
 {
 
-	unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
-
-	if (row < nrows) {
-
-		T sum = 0;
-		for (unsigned int element = 0; element < elements_in_rows; ++element) {
-
-			const unsigned int offset = row + element * nrows;
-			sum += values[offset] * x[columns[offset]];
-		}
-		y[row] = sum;
-	}
+    unsigned int row = blockIdx.x * blockDim.x + threadIdx.x;
+    if (row < nrows) {
+        T sum = 0;
+        for (unsigned int element = 0; element < elements_in_rows; ++element) {
+            const unsigned int offset = row + element * nrows;
+            sum += values[offset] * x[columns[offset]];
+        }
+        y[row] = sum;
+    }
 }
 
 namespace cuAlgo {
@@ -86,22 +84,24 @@ namespace cuAlgo {
     * 
     * @ingroup algo
     */
-	template <typename T>
-	void gSpMatVecMulELL(unsigned int *columns         ,
-	                     T            *values          ,
-	                     T            *x               ,
-	                     T            *y               ,
-	                     unsigned int  nrows           ,
-	                     unsigned int  elements_in_rows,
-	                     cudaStream_t  stream = 0,
-	                     bool          async = false) {
+    template <
+    unsigned int BlockSize,
+    typename T>
+    void gSpMatVecMulELL(unsigned int *columns,
+                         T *values,
+                         T *x,
+                         T *y,
+                         unsigned int nrows,
+                         unsigned int elements_in_rows,
+                         cudaStream_t stream = 0,
+                         bool async = false) {
 
-		dim3 threadsPerBlock(THREADS_PER_BLOCK);
-		dim3 blocksPerGrid(div_ceil(nrows, THREADS_PER_BLOCK));
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
+        dim3 threadsPerBlock(BlockSize);
+        dim3 blocksPerGrid(div_ceil(nrows, BlockSize));
+        print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-		TIME( threadsPerBlock, blocksPerGrid, 0, stream, async,
-		      gSpMatVecMulELLKernel<T>,
-		      columns, values, x, y, nrows, elements_in_rows );
-	}
+        TIME( threadsPerBlock, blocksPerGrid, 0, stream, async,
+              gSpMatVecMulELLKernel<T>,
+              columns, values, x, y, nrows, elements_in_rows );
+    }
 }

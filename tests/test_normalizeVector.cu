@@ -48,7 +48,7 @@ TEST(normalizeVector, default_value) {
 
     check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(float), cudaMemcpyHostToDevice ) );
 
-    cuAlgo::normalizeVector<float>(d_input, size);
+    cuAlgo::normalizeVector<1024, 1, float>(d_input, size);
 
     float norm = 0;
     for(unsigned int i = 0; i < size; ++i)

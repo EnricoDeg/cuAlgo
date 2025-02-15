@@ -29,31 +29,33 @@
 #include "cuAlgo/internals/utils.hpp"
 #include "cuAlgo/internals/kernelParameters.hpp"
 
-template<typename T>
-__global__ void gSpMatVecMulCSRVectorKernel(const unsigned int * __restrict__ columns,
-                                            const unsigned int * __restrict__ row_ptr,
-                                            const T            * __restrict__ values ,
-                                            const T            * __restrict__ x      ,
-                                                  T            * __restrict__ y      ,
-                                                  unsigned int                nrows  ) {
+template<
+unsigned int WarpSize,
+typename T>
+CUALGO_GLOBAL
+void gSpMatVecMulCSRVectorKernel(const unsigned int * CUALGO_RESTRICT columns,
+                                 const unsigned int * CUALGO_RESTRICT row_ptr,
+                                 const T * CUALGO_RESTRICT values,
+                                 const T * CUALGO_RESTRICT x,
+                                 T * CUALGO_RESTRICT y,
+                                 unsigned int nrows) {
 
-	const unsigned int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
-	const unsigned int warp_id   = thread_id / WARP_SIZE;
-	const unsigned int lane      = thread_id % WARP_SIZE;
+    const unsigned int thread_id = blockIdx.x * blockDim.x + threadIdx.x;
+    const unsigned int warp_id   = thread_id / WarpSize;
+    const unsigned int lane      = thread_id % WarpSize;
 
-	const unsigned int row = warp_id;
-	T sum = 0;
-	if (row < nrows) {
-
-		const unsigned int row_start = row_ptr[row    ];
-		const unsigned int row_end   = row_ptr[row + 1];
-		for (unsigned int element = row_start + lane; element < row_end; element+=WARP_SIZE) {
-			sum += values[element] * x[columns[element]];
-		}
-	}
-	sum = warp_reduce(sum);
-	if (lane == 0 && row < nrows)
-		y[row] = sum;
+    const unsigned int row = warp_id;
+    T sum = 0;
+    if (row < nrows) {
+        const unsigned int row_start = row_ptr[row    ];
+        const unsigned int row_end   = row_ptr[row + 1];
+        for (unsigned int element = row_start + lane; element < row_end; element+=WarpSize) {
+            sum += values[element] * x[columns[element]];
+        }
+    }
+    sum = warp_reduce(sum);
+    if (lane == 0 && row < nrows)
+        y[row] = sum;
 }
 
 namespace cuAlgo {
@@ -83,22 +85,25 @@ namespace cuAlgo {
     * 
     * @ingroup algo
     */
-	template<typename T>
-	void gSpMatVecMulCSRVector(unsigned int *columns,
-	                           unsigned int *row_ptr,
-	                           T            *values ,
-	                           T            *x      ,
-	                           T            *y      ,
-	                           unsigned int  nrows  ,
-	                           cudaStream_t  stream = 0,
-	                           bool          async = false) {
+    template<
+    unsigned int BlockSize,
+    unsigned int WarpSize,
+    typename T>
+    void gSpMatVecMulCSRVector(unsigned int *columns,
+                               unsigned int *row_ptr,
+                               T *values,
+                               T *x,
+                               T *y,
+                               unsigned int nrows,
+                               cudaStream_t stream = 0,
+                               bool async = false) {
 
-		dim3 threadsPerBlock(THREADS_PER_BLOCK);
-		dim3 blocksPerGrid(div_ceil(nrows, WARPS_PER_BLOCK));
-		print_kernel_config(threadsPerBlock, blocksPerGrid);
+        dim3 threadsPerBlock(BlockSize);
+        dim3 blocksPerGrid(div_ceil(nrows, BlockSize / WarpSize));
+        print_kernel_config(threadsPerBlock, blocksPerGrid);
 
-		TIME( threadsPerBlock, blocksPerGrid, 0, stream, async,
-		      gSpMatVecMulCSRVectorKernel<T>,
-		      columns, row_ptr, values, x, y, nrows );
-	}
+        TIME( threadsPerBlock, blocksPerGrid, 0, stream, async,
+              CUALGO_KERNEL_NAME(gSpMatVecMulCSRVectorKernel<WarpSize, T>),
+              columns, row_ptr, values, x, y, nrows );
+    }
 }

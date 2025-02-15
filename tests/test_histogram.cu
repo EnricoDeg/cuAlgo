@@ -57,7 +57,7 @@ TEST(histogram, basic_unsigned_char) {
 
     check_cuda( cudaMemcpy ( d_data, data, size * sizeof(unsigned char), cudaMemcpyHostToDevice ) );
 
-    cuAlgo::histogram<unsigned char, bin_size>(d_data, size, d_histo);
+    cuAlgo::histogram<1024, unsigned char, bin_size>(d_data, size, d_histo);
 
     for (unsigned int i = 0 ; i < bin_size ; ++i)
         solution[i] = 0;

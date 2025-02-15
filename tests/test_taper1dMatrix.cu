@@ -75,7 +75,7 @@ TEST(taper1dMatrix, default_value) {
     check_cuda( cudaMemcpy ( d_startIndices, startIndices, N           *     sizeof(unsigned int), cudaMemcpyHostToDevice ) );
     check_cuda( cudaMemcpy ( d_endIndices  , endIndices  , N           *     sizeof(unsigned int), cudaMemcpyHostToDevice ) );
 
-    cuAlgo::taper1dMatrix<int>(d_A, d_taper, d_startIndices, d_endIndices, M, N, taperLength);
+    cuAlgo::taper1dMatrix<32, 32, int>(d_A, d_taper, d_startIndices, d_endIndices, M, N, taperLength);
 
     check_cuda( cudaMemcpy ( A, d_A, M * N * sizeof(int), cudaMemcpyDeviceToHost ) );
 

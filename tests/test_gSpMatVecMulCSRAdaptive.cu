@@ -107,7 +107,7 @@ TEST(gSpMatVecMulCSRAdaptive, default_value) {
     std::cout << "Compute row blocks" << std::endl;
     unsigned int * d_row_blocks = cuAlgo::getRowBlocks<64>(row_ptr, nrows, &blocks_count);
 
-    cuAlgo::gSpMatVecMulCSRAdaptive<int>( d_columns, d_row_ptr, d_row_blocks, d_values , d_x , d_y , nrows, blocks_count ) ;
+    cuAlgo::gSpMatVecMulCSRAdaptive<64, 32, int>( d_columns, d_row_ptr, d_row_blocks, d_values , d_x , d_y , nrows, blocks_count ) ;
 
     check_cuda( cudaMemcpy ( y        , d_y    ,   nrows       * sizeof(         int), cudaMemcpyDeviceToHost ) );
 
