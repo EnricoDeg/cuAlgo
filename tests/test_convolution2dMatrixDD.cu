@@ -29,9 +29,8 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
-#include "src/API/convolution2dMatrixDD.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/convolution2dMatrixDD.hpp"
 
 void convolution2DMatrixCC_CPU(float * result, float * data, float * filter,
                                unsigned int mRows, unsigned int mCols,

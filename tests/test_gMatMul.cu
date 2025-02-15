@@ -28,152 +28,147 @@
  */
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
-#include <cuda_bf16.h>
-#include "src/API/gMatMul.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/gMatMul.hpp"
 
 TEST(gMatMul, default_value) {
 
-	int N     = 1024;
-	int M     = N;
-	int K     = N;
-	int T     = 32;
-	int alpha = 1;
-	int beta  = 0;
+    int N     = 1024;
+    int M     = N;
+    int K     = N;
+    int T     = 32;
+    int alpha = 1;
+    int beta  = 0;
 
-	int * A        = (int *)malloc(N * N * sizeof(int));
-	int * B        = (int *)malloc(N * N * sizeof(int));
-	int * C        = (int *)malloc(N * N * sizeof(int));
-	int * solution = (int *)malloc(N * N * sizeof(int));
+    int * A        = (int *)malloc(N * N * sizeof(int));
+    int * B        = (int *)malloc(N * N * sizeof(int));
+    int * C        = (int *)malloc(N * N * sizeof(int));
+    int * solution = (int *)malloc(N * N * sizeof(int));
 
-	for(int i = 0; i < N; ++i)
-		for (int j = 0; j < N ; ++j)
-			A[j + i * N] = j;
+    for(int i = 0; i < N; ++i)
+        for (int j = 0; j < N ; ++j)
+            A[j + i * N] = j;
 
-	for(int i = 0; i < N; ++i)
-		for (int j = 0; j < N ; ++j)
-			B[j + i * N] = i;
+    for(int i = 0; i < N; ++i)
+        for (int j = 0; j < N ; ++j)
+            B[j + i * N] = i;
 
-	for(int i = 0; i < N; ++i)
-		for (int j = 0; j < N ; ++j)
-			C[j + i * N] = 1;
+    for(int i = 0; i < N; ++i)
+        for (int j = 0; j < N ; ++j)
+            C[j + i * N] = 1;
 
-	for(int i = 0; i < N; ++i)
-		for (int j = 0; j < N ; ++j)
-			solution[j + i * N] = 0;
+    for(int i = 0; i < N; ++i)
+        for (int j = 0; j < N ; ++j)
+            solution[j + i * N] = 0;
 
-	for (int m = 0; m < M; m += T) {
-		for (int n = 0; n < N; n += T) {
-			for (int k = 0; k < K; k += T) {
+    for (int m = 0; m < M; m += T) {
+        for (int n = 0; n < N; n += T) {
+            for (int k = 0; k < K; k += T) {
 
-				const int minMt = std::min(m + T, M);
-				const int minNt = std::min(n + T, N);
-				const int minKt = std::min(k + T, K);
+                const int minMt = std::min(m + T, M);
+                const int minNt = std::min(n + T, N);
+                const int minKt = std::min(k + T, K);
 
-				for (int mt = m; mt < minMt; mt++) {
-					for (int nt = n; nt < minNt; nt++) {
-						for (int kt = k; kt < minKt; kt++) {
-							solution[mt * M + nt] += A[mt * M + kt] * B[kt * K + nt];
-						}
-					}
-				}
-			}
-		}
-	}
+                for (int mt = m; mt < minMt; mt++) {
+                    for (int nt = n; nt < minNt; nt++) {
+                        for (int kt = k; kt < minKt; kt++) {
+                            solution[mt * M + nt] += A[mt * M + kt] * B[kt * K + nt];
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-	for(int i = 0; i < N; ++i)
-		for (int j = 0; j < N ; ++j)
-			solution[j + i * N] = alpha * solution[j + i * N] + beta * C[j + i * N];
+    for(int i = 0; i < N; ++i)
+        for (int j = 0; j < N ; ++j)
+            solution[j + i * N] = alpha * solution[j + i * N] + beta * C[j + i * N];
 
-	int *d_A;
-	check_cuda( cudaMalloc(&d_A, N*N*sizeof(int)) );
+    int *d_A;
+    check_cuda( cudaMalloc(&d_A, N*N*sizeof(int)) );
 
-	int *d_B;
-	check_cuda( cudaMalloc(&d_B, N*N*sizeof(int)) );
+    int *d_B;
+    check_cuda( cudaMalloc(&d_B, N*N*sizeof(int)) );
 
-	int *d_C;
-	check_cuda( cudaMalloc(&d_C, N*N*sizeof(int)) );
+    int *d_C;
+    check_cuda( cudaMalloc(&d_C, N*N*sizeof(int)) );
 
-	check_cuda( cudaMemcpy ( d_A, A, (size_t)N*N*sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_A, A, (size_t)N*N*sizeof(int), cudaMemcpyHostToDevice ) );
 
-	check_cuda( cudaMemcpy ( d_B, B, (size_t)N*N*sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_B, B, (size_t)N*N*sizeof(int), cudaMemcpyHostToDevice ) );
 
-	check_cuda( cudaMemcpy ( d_C, C, (size_t)N*N*sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_C, C, (size_t)N*N*sizeof(int), cudaMemcpyHostToDevice ) );
 
-	for (int i = 0; i < 5; ++i)
-		cuAlgo::gMatMul<int>(alpha, d_A, d_B, beta, d_C, N, N, N);
+    for (int i = 0; i < 5; ++i)
+        cuAlgo::gMatMul<int>(alpha, d_A, d_B, beta, d_C, N, N, N);
 
-	check_cuda( cudaMemcpy ( C, d_C, N*N*sizeof(int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( C, d_C, N*N*sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	for(int i = 0; i < N; ++i)
-		for (int j = 0; j < N ; ++j) {
-			ASSERT_EQ(solution[j + i * N] , C[j + i * N]);
-		}
+    for(int i = 0; i < N; ++i)
+        for (int j = 0; j < N ; ++j) {
+            ASSERT_EQ(solution[j + i * N] , C[j + i * N]);
+        }
 
-	check_cuda( cudaFree(d_A) );
-	check_cuda( cudaFree(d_B) );
-	check_cuda( cudaFree(d_C) );
-	free(A);
-	free(B);
-	free(C);
-	free(solution);
+    check_cuda( cudaFree(d_A) );
+    check_cuda( cudaFree(d_B) );
+    check_cuda( cudaFree(d_C) );
+    free(A);
+    free(B);
+    free(C);
+    free(solution);
 }
 
 TEST(gMatMul, default_value_bf16) {
 
-	int N     = 1024;
-	// int M     = N;
-	// int K     = N;
-	// int T     = 32;
-	float alpha = 1.0;
-	float beta  = 0.0;
+    int N     = 1024;
+    float alpha = 1.0;
+    float beta  = 0.0;
 
-	__nv_bfloat16 * A        = (__nv_bfloat16 *)malloc(N * N * sizeof(__nv_bfloat16));
-	__nv_bfloat16 * B        = (__nv_bfloat16 *)malloc(N * N * sizeof(__nv_bfloat16));
-	float * C        = (float *)malloc(N * N * sizeof(float));
+    __nv_bfloat16 * A        = (__nv_bfloat16 *)malloc(N * N * sizeof(__nv_bfloat16));
+    __nv_bfloat16 * B        = (__nv_bfloat16 *)malloc(N * N * sizeof(__nv_bfloat16));
+    float * C        = (float *)malloc(N * N * sizeof(float));
 
-	for(int i = 0; i < N; ++i)
-		for (int j = 0; j < N ; ++j)
-			A[j + i * N] = 1;
+    for(int i = 0; i < N; ++i)
+        for (int j = 0; j < N ; ++j)
+            A[j + i * N] = 1;
 
-	for(int i = 0; i < N; ++i)
-		for (int j = 0; j < N ; ++j)
-			B[j + i * N] = 1;
+    for(int i = 0; i < N; ++i)
+        for (int j = 0; j < N ; ++j)
+            B[j + i * N] = 1;
 
-	for(int i = 0; i < N; ++i)
-		for (int j = 0; j < N ; ++j)
-			C[j + i * N] = 0;
+    for(int i = 0; i < N; ++i)
+        for (int j = 0; j < N ; ++j)
+            C[j + i * N] = 0;
 
-	__nv_bfloat16 *d_A;
-	check_cuda( cudaMalloc(&d_A, N*N*sizeof(__nv_bfloat16)) );
+    __nv_bfloat16 *d_A;
+    check_cuda( cudaMalloc(&d_A, N*N*sizeof(__nv_bfloat16)) );
 
-	__nv_bfloat16 *d_B;
-	check_cuda( cudaMalloc(&d_B, N*N*sizeof(__nv_bfloat16)) );
+    __nv_bfloat16 *d_B;
+    check_cuda( cudaMalloc(&d_B, N*N*sizeof(__nv_bfloat16)) );
 
-	float *d_C;
-	check_cuda( cudaMalloc(&d_C, N*N*sizeof(float)) );
+    float *d_C;
+    check_cuda( cudaMalloc(&d_C, N*N*sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_A, A, (size_t)N*N*sizeof(__nv_bfloat16), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_A, A, (size_t)N*N*sizeof(__nv_bfloat16), cudaMemcpyHostToDevice ) );
 
-	check_cuda( cudaMemcpy ( d_B, B, (size_t)N*N*sizeof(__nv_bfloat16), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_B, B, (size_t)N*N*sizeof(__nv_bfloat16), cudaMemcpyHostToDevice ) );
 
-	check_cuda( cudaMemcpy ( d_C, C, (size_t)N*N*sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_C, C, (size_t)N*N*sizeof(float), cudaMemcpyHostToDevice ) );
 
-	for (int i = 0; i < 5; ++i)
-		cuAlgo::gMatMulWMMA<__nv_bfloat16, float>(alpha, d_A, d_B, beta, d_C, N, N, N);
+    for (int i = 0; i < 5; ++i)
+        cuAlgo::gMatMulWMMA<__nv_bfloat16, float>(alpha, d_A, d_B, beta, d_C, N, N, N);
 
-	check_cuda( cudaMemcpy ( C, d_C, N*N*sizeof(float), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( C, d_C, N*N*sizeof(float), cudaMemcpyDeviceToHost ) );
 
-	for(int i = 0; i < N; ++i)
-		for (int j = 0; j < N ; ++j) {
-			ASSERT_EQ(1024 , C[j + i * N]);
-		}
+    for(int i = 0; i < N; ++i)
+        for (int j = 0; j < N ; ++j) {
+            ASSERT_EQ(1024 , C[j + i * N]);
+        }
 
-	check_cuda( cudaFree(d_A) );
-	check_cuda( cudaFree(d_B) );
-	check_cuda( cudaFree(d_C) );
-	free(A);
-	free(B);
-	free(C);
+    check_cuda( cudaFree(d_A) );
+    check_cuda( cudaFree(d_B) );
+    check_cuda( cudaFree(d_C) );
+    free(A);
+    free(B);
+    free(C);
 }

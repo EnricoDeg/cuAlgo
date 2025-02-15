@@ -30,9 +30,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <chrono>
-#include "src/cuAlgo.h"
-#include "src/API/fliplr1dMatrix.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/fliplr1dMatrix.hpp"
 
 using namespace std::chrono;
 

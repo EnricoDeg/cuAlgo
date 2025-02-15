@@ -29,9 +29,8 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
-#include "src/API/transposeMatrix.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/transposeMatrix.hpp"
 
 TEST(transposeMatrix, default_value) {
 

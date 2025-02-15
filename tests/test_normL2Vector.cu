@@ -28,42 +28,41 @@
  */
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
-#include "src/API/normL2Vector.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/normL2Vector.hpp"
 
 TEST(normL2Vector, default_value) {
 
-	unsigned int nblocks = 1024;
-	unsigned int size = 1024*nblocks;
-	float * input = (float *)malloc(size * sizeof(float));
-	float * output = (float *)malloc(sizeof(float));
-	float * solution = (float *)malloc(sizeof(float));
-	for(unsigned int i = 0; i < nblocks; ++i)
-		for (unsigned int j = 0; j < 1024 ; ++j)
-		input[j + i*1024] = -j;
+    unsigned int nblocks = 1024;
+    unsigned int size = 1024*nblocks;
+    float * input = (float *)malloc(size * sizeof(float));
+    float * output = (float *)malloc(sizeof(float));
+    float * solution = (float *)malloc(sizeof(float));
+    for(unsigned int i = 0; i < nblocks; ++i)
+        for (unsigned int j = 0; j < 1024 ; ++j)
+            input[j + i*1024] = -j;
 
-	float *d_input;
-	check_cuda( cudaMalloc(&d_input, size*sizeof(float)) );
+    float *d_input;
+    check_cuda( cudaMalloc(&d_input, size*sizeof(float)) );
 
-	float *d_output;
-	check_cuda( cudaMalloc(&d_output, sizeof(float)) );
+    float *d_output;
+    check_cuda( cudaMalloc(&d_output, sizeof(float)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(float), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(float), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::normL2Vector<float, 1024, 1>(d_input, d_output, size);
+    cuAlgo::normL2Vector<float, 1024, 1>(d_input, d_output, size);
 
-	solution[0] = 0;
-	for(unsigned int i = 0; i < size; ++i)
-		solution[0] += input[i] * input[i];
+    solution[0] = 0;
+    for(unsigned int i = 0; i < size; ++i)
+        solution[0] += input[i] * input[i];
 
-	check_cuda( cudaMemcpy ( output, d_output, sizeof(float), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( output, d_output, sizeof(float), cudaMemcpyDeviceToHost ) );
 
-	ASSERT_TRUE(std::abs(solution[0] - output[0]) / solution[0] < 1e-6);
+    ASSERT_TRUE(std::abs(solution[0] - output[0]) / solution[0] < 1e-6);
 
-	check_cuda( cudaFree(d_input ) );
-	check_cuda( cudaFree(d_output) );
-	free(input);
-	free(output);
-	free(solution);
+    check_cuda( cudaFree(d_input ) );
+    check_cuda( cudaFree(d_output) );
+    free(input);
+    free(output);
+    free(solution);
 }

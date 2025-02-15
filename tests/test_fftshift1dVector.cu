@@ -29,9 +29,8 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
-#include "src/API/fftshift1dVector.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/fftshift1dVector.hpp"
 
 #define BLOCKSIZE 1024
 

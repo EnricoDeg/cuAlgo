@@ -29,82 +29,81 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/taper1dMatrix.hpp"
 
 TEST(taper1dMatrix, default_value) {
 
-	unsigned int M = 4096;
-	unsigned int N = 2048;
-	unsigned int taperLength = 32;
+    unsigned int M = 4096;
+    unsigned int N = 2048;
+    unsigned int taperLength = 32;
 
-	int          * A            = (         int *)malloc(N           * M * sizeof(         int));
-	int          * taper        = (         int *)malloc(taperLength *     sizeof(         int));
-	unsigned int * startIndices = (unsigned int *)malloc(N           *     sizeof(unsigned int));
-	unsigned int * endIndices   = (unsigned int *)malloc(N           *     sizeof(unsigned int));
-	int          * solution     = (         int *)malloc(N           * M * sizeof(         int));
+    int          * A            = (         int *)malloc(N           * M * sizeof(         int));
+    int          * taper        = (         int *)malloc(taperLength *     sizeof(         int));
+    unsigned int * startIndices = (unsigned int *)malloc(N           *     sizeof(unsigned int));
+    unsigned int * endIndices   = (unsigned int *)malloc(N           *     sizeof(unsigned int));
+    int          * solution     = (         int *)malloc(N           * M * sizeof(         int));
 
-	for (unsigned int i = 0 ; i < N ; ++i)
-		for (unsigned int j = 0 ; j < M ; ++j) {
-			A       [j + i * M] = j + i * M;
-			solution[j + i * M] = j + i * M;
-		}
+    for (unsigned int i = 0 ; i < N ; ++i)
+        for (unsigned int j = 0 ; j < M ; ++j) {
+            A       [j + i * M] = j + i * M;
+            solution[j + i * M] = j + i * M;
+        }
 
-	for (unsigned int i = 0 ; i < N ; ++i) {
-		startIndices[i] =     64;
-		endIndices  [i] = M - 64;
-	}
+    for (unsigned int i = 0 ; i < N ; ++i) {
+        startIndices[i] =     64;
+        endIndices  [i] = M - 64;
+    }
 
-	for (unsigned int i = 0 ; i < taperLength ; ++i)
-		taper[i] = i;
+    for (unsigned int i = 0 ; i < taperLength ; ++i)
+        taper[i] = i;
 
-	int *d_A;
-	check_cuda( cudaMalloc(&d_A           , M           * N * sizeof(         int)) );
+    int *d_A;
+    check_cuda( cudaMalloc(&d_A           , M           * N * sizeof(         int)) );
 
-	int *d_taper;
-	check_cuda( cudaMalloc(&d_taper       , taperLength *     sizeof(         int)) );
+    int *d_taper;
+    check_cuda( cudaMalloc(&d_taper       , taperLength *     sizeof(         int)) );
 
-	unsigned int *d_startIndices;
-	check_cuda( cudaMalloc(&d_startIndices, N           *     sizeof(unsigned int)) );
+    unsigned int *d_startIndices;
+    check_cuda( cudaMalloc(&d_startIndices, N           *     sizeof(unsigned int)) );
 
-	unsigned int *d_endIndices;
-	check_cuda( cudaMalloc(&d_endIndices  , N           *     sizeof(unsigned int)) );
+    unsigned int *d_endIndices;
+    check_cuda( cudaMalloc(&d_endIndices  , N           *     sizeof(unsigned int)) );
 
-	check_cuda( cudaMemcpy ( d_A           , A           , M           * N * sizeof(         int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_taper       , taper       , taperLength *     sizeof(         int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_startIndices, startIndices, N           *     sizeof(unsigned int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_endIndices  , endIndices  , N           *     sizeof(unsigned int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_A           , A           , M           * N * sizeof(         int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_taper       , taper       , taperLength *     sizeof(         int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_startIndices, startIndices, N           *     sizeof(unsigned int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_endIndices  , endIndices  , N           *     sizeof(unsigned int), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::taper1dMatrixInt(d_A, d_taper, d_startIndices, d_endIndices, M, N, taperLength);
+    cuAlgo::taper1dMatrix<int>(d_A, d_taper, d_startIndices, d_endIndices, M, N, taperLength);
 
-	check_cuda( cudaMemcpy ( A, d_A, M * N * sizeof(int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( A, d_A, M * N * sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	for (unsigned int j = 0 ; j < N ; ++j) {
+    for (unsigned int j = 0 ; j < N ; ++j) {
+        for (unsigned int i = 0; i < startIndices[j]; ++i)
+            solution[i + j * M] = 0;
 
-		for (unsigned int i = 0; i < startIndices[j]; ++i)
-			solution[i + j * M] = 0;
+        for (unsigned int i = startIndices[j]; i < startIndices[j]+taperLength ; ++i)
+            solution[i + j * M] *= taper[i-startIndices[j]];
 
-		for (unsigned int i = startIndices[j]; i < startIndices[j]+taperLength ; ++i)
-			solution[i + j * M] *= taper[i-startIndices[j]];
+        for (unsigned int i = endIndices[j] - taperLength + 1 ; i < endIndices[j] + 1 ; ++i)
+            solution[i + j * M] *= taper[ taperLength - 1 - ( i - ( endIndices[j] - taperLength + 1 ) ) ];
 
-		for (unsigned int i = endIndices[j] - taperLength + 1 ; i < endIndices[j] + 1 ; ++i)
-			solution[i + j * M] *= taper[ taperLength - 1 - ( i - ( endIndices[j] - taperLength + 1 ) ) ];
+        for (unsigned int i = endIndices[j]+1; i < M ; ++i)
+            solution[i + j * M] = 0;
+    }
 
-		for (unsigned int i = endIndices[j]+1; i < M ; ++i)
-			solution[i + j * M] = 0;
-	}
+    for (unsigned int j = 0 ; j < N ; ++j)
+        for (unsigned int i = 0 ; i < M ; ++i)
+            ASSERT_EQ(solution[i + j * M], A[i + j * M]);
 
-	for (unsigned int j = 0 ; j < N ; ++j)
-		for (unsigned int i = 0 ; i < M ; ++i)
-			ASSERT_EQ(solution[i + j * M], A[i + j * M]);
-
-	check_cuda( cudaFree(d_A) );
-	check_cuda( cudaFree(d_taper) );
-	check_cuda( cudaFree(d_startIndices) );
-	check_cuda( cudaFree(d_endIndices) );
-	free(A);
-	free(taper);
-	free(startIndices);
-	free(endIndices);
-	free(solution);
+    check_cuda( cudaFree(d_A) );
+    check_cuda( cudaFree(d_taper) );
+    check_cuda( cudaFree(d_startIndices) );
+    check_cuda( cudaFree(d_endIndices) );
+    free(A);
+    free(taper);
+    free(startIndices);
+    free(endIndices);
+    free(solution);
 }

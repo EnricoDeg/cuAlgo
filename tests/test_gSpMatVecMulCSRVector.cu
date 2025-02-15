@@ -28,96 +28,96 @@
  */
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/gSpMatVecMulCSRVector.hpp"
 
 TEST(gSpMatVecMulCSRVector, default_value) {
 
-	srand((unsigned)time(0)); 
+    srand((unsigned)time(0)); 
 
-	const unsigned int nrows = 1024;
-	const unsigned int nnz   = 128 ;
+    const unsigned int nrows = 1024;
+    const unsigned int nnz   = 128 ;
 
-	// Allocate enough storage for the matix.  We allocate more than
-	// is needed in order to simplify the code
-	unsigned int * columns  = (unsigned int *)malloc(   nrows * nnz  * sizeof(unsigned int));
-	int          * values   = (         int *)malloc(   nrows * nnz  * sizeof(         int));
-	unsigned int * row_ptr  = (unsigned int *)malloc( ( nrows + 1 )  * sizeof(unsigned int));
-	int          * x        = (         int *)malloc(   nrows        * sizeof(         int));
-	int          * y        = (         int *)malloc(   nrows        * sizeof(         int));
-	int          * solution = (         int *)malloc(   nrows        * sizeof(         int));
+    // Allocate enough storage for the matix.  We allocate more than
+    // is needed in order to simplify the code
+    unsigned int * columns  = (unsigned int *)malloc(   nrows * nnz  * sizeof(unsigned int));
+    int          * values   = (         int *)malloc(   nrows * nnz  * sizeof(         int));
+    unsigned int * row_ptr  = (unsigned int *)malloc( ( nrows + 1 )  * sizeof(unsigned int));
+    int          * x        = (         int *)malloc(   nrows        * sizeof(         int));
+    int          * y        = (         int *)malloc(   nrows        * sizeof(         int));
+    int          * solution = (         int *)malloc(   nrows        * sizeof(         int));
 
-	// Create a sparse matrix with nnz non zeros per row constant.
-	// The non zero location and values are set randomly
-	for (unsigned int i = 0 ; i < nrows ; ++i) {
+    // Create a sparse matrix with nnz non zeros per row constant.
+    // The non zero location and values are set randomly
+    for (unsigned int i = 0 ; i < nrows ; ++i) {
 
-		int start = rand() % nrows / nnz;
-		columns[i * nnz] = start;
-		values [i * nnz] = rand() % 100;
-		for (unsigned int j = 1 ; j < nnz ; ++j) {
+        int start = rand() % nrows / nnz;
+        columns[i * nnz] = start;
+        values [i * nnz] = rand() % 100;
+        for (unsigned int j = 1 ; j < nnz ; ++j) {
 
-			columns[i * nnz + j] = columns[i * nnz + j - 1] + rand() % nrows / nnz + 1;
-			values [i * nnz + j] = rand() % 100;
-		}
-		row_ptr[i] = i * nnz ;
-	}
-	row_ptr[nrows] = row_ptr[nrows-1] + nnz ;
+            columns[i * nnz + j] = columns[i * nnz + j - 1] + rand() % nrows / nnz + 1;
+            values [i * nnz + j] = rand() % 100;
+        }
+        row_ptr[i] = i * nnz ;
+    }
+    row_ptr[nrows] = row_ptr[nrows-1] + nnz ;
 
-	// Create the source (x) vector
-	for (unsigned int i = 0; i < nrows; ++i)
-		x[i] = 1;
+    // Create the source (x) vector
+    for (unsigned int i = 0; i < nrows; ++i)
+        x[i] = 1;
 
-	// sanity check
-	for (unsigned int i = 0; i < nrows; ++i)
-		for (unsigned int idx=row_ptr[i]; idx<row_ptr[i+1]; ++idx)
-			if (columns[idx] > nrows)
-				printf("column = %d\n", columns[idx]);
+    // sanity check
+    for (unsigned int i = 0; i < nrows; ++i)
+        for (unsigned int idx=row_ptr[i]; idx<row_ptr[i+1]; ++idx)
+            if (columns[idx] > nrows)
+                printf("column = %d\n", columns[idx]);
 
-	for (unsigned int i = 0; i < nrows; ++i)
-		for (unsigned int idx=row_ptr[i]; idx<row_ptr[i+1]; ++idx)
-			if (idx > nrows*nnz-1)
-				printf("idx = %d\n", idx);
+    for (unsigned int i = 0; i < nrows; ++i)
+        for (unsigned int idx=row_ptr[i]; idx<row_ptr[i+1]; ++idx)
+            if (idx > nrows*nnz-1)
+                printf("idx = %d\n", idx);
 
-	// Perform a matrix-vector multiply: y = A*x
-	for (unsigned int i = 0; i < nrows; ++i) {
-		int sum = 0;
-		for (unsigned int idx=row_ptr[i]; idx<row_ptr[i+1]; ++idx)
-			sum += values[idx] * x[columns[idx]];
-		solution[i] = sum;
-	}
+    // Perform a matrix-vector multiply: y = A*x
+    for (unsigned int i = 0; i < nrows; ++i) {
+        int sum = 0;
+        for (unsigned int idx=row_ptr[i]; idx<row_ptr[i+1]; ++idx)
+            sum += values[idx] * x[columns[idx]];
+        solution[i] = sum;
+    }
 
-	unsigned int *d_columns;
-	check_cuda( cudaMalloc(&d_columns,   nrows * nnz * sizeof(unsigned int)) );
-	int *d_values;
-	check_cuda( cudaMalloc(&d_values ,   nrows * nnz * sizeof(         int)) );
-	unsigned int *d_row_ptr;
-	check_cuda( cudaMalloc(&d_row_ptr, ( nrows + 1 ) * sizeof(unsigned int)) );
-	int *d_x;
-	check_cuda( cudaMalloc(&d_x      ,   nrows       * sizeof(         int)) );
-	int *d_y;
-	check_cuda( cudaMalloc(&d_y      ,   nrows       * sizeof(         int)) );
+    unsigned int *d_columns;
+    check_cuda( cudaMalloc(&d_columns,   nrows * nnz * sizeof(unsigned int)) );
+    int *d_values;
+    check_cuda( cudaMalloc(&d_values ,   nrows * nnz * sizeof(         int)) );
+    unsigned int *d_row_ptr;
+    check_cuda( cudaMalloc(&d_row_ptr, ( nrows + 1 ) * sizeof(unsigned int)) );
+    int *d_x;
+    check_cuda( cudaMalloc(&d_x      ,   nrows       * sizeof(         int)) );
+    int *d_y;
+    check_cuda( cudaMalloc(&d_y      ,   nrows       * sizeof(         int)) );
 
-	check_cuda( cudaMemcpy ( d_columns, columns,   nrows * nnz * sizeof(unsigned int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_values , values ,   nrows * nnz * sizeof(         int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_row_ptr, row_ptr, ( nrows + 1 ) * sizeof(unsigned int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_x      , x      ,   nrows       * sizeof(         int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_columns, columns,   nrows * nnz * sizeof(unsigned int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_values , values ,   nrows * nnz * sizeof(         int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_row_ptr, row_ptr, ( nrows + 1 ) * sizeof(unsigned int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_x      , x      ,   nrows       * sizeof(         int), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::gSpMatVecMulCSRVectorInt( d_columns, d_row_ptr, d_values , d_x , d_y , nrows ) ;
+    cuAlgo::gSpMatVecMulCSRVector<int>( d_columns, d_row_ptr, d_values , d_x , d_y , nrows ) ;
 
-	check_cuda( cudaMemcpy ( y        , d_y    ,   nrows       * sizeof(         int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( y        , d_y    ,   nrows       * sizeof(         int), cudaMemcpyDeviceToHost ) );
 
-	for (int j = 0; j < nrows ; ++j)
-		ASSERT_EQ(solution[j], y[j]);
+    for (int j = 0; j < nrows ; ++j)
+        ASSERT_EQ(solution[j], y[j]);
 
-	check_cuda( cudaFree(d_columns) );
-	check_cuda( cudaFree(d_values) );
-	check_cuda( cudaFree(d_row_ptr) );
-	check_cuda( cudaFree(d_x) );
-	check_cuda( cudaFree(d_y) );
-	free(columns);
-	free(values);
-	free(row_ptr);
-	free(x);
-	free(y);
-	free(solution);
+    check_cuda( cudaFree(d_columns) );
+    check_cuda( cudaFree(d_values) );
+    check_cuda( cudaFree(d_row_ptr) );
+    check_cuda( cudaFree(d_x) );
+    check_cuda( cudaFree(d_y) );
+    free(columns);
+    free(values);
+    free(row_ptr);
+    free(x);
+    free(y);
+    free(solution);
 }

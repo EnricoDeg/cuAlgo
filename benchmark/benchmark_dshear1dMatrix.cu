@@ -29,8 +29,9 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include "API/dshear1dMatrix.hpp"
-#include "config/dshear1dMatrix_config.hpp"
+#include "cuAlgo/internals/checkError.hpp"
+#include "cuAlgo/API/dshear1dMatrix.hpp"
+#include "cuAlgo/config/dshear1dMatrix_config.hpp"
 
 template<
 typename T,

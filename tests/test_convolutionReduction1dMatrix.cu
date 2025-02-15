@@ -29,9 +29,8 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
-#include "src/API/convolutionReduction1dMatrix.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/convolutionReduction1dMatrix.hpp"
 
 TEST(convolutionReduction1dMatrix, default_values) {
 

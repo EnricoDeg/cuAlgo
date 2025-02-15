@@ -28,9 +28,8 @@
  */
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
-#include "src/API/reduction1dMatrix.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/reduction1dMatrix.hpp"
 
 TEST(reduction1dMatrix, default_value) {
 

@@ -28,9 +28,8 @@
  */
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
-#include "src/API/grad2dMatrix.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/grad2dMatrix.hpp"
 
 TEST(grad2dMatrix, default_value) {
 

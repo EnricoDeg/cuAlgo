@@ -28,9 +28,8 @@
  */
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
-#include "src/API/gMatVecMul.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/gMatVecMul.hpp"
 
 TEST(gMatVecMul, default_value) {
 

@@ -29,10 +29,9 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
-#include "src/API/dshear1dMatrix.hpp"
-#include "src/config/dshear1dMatrix_config.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/config/dshear1dMatrix_config.hpp"
+#include "cuAlgo/API/dshear1dMatrix.hpp"
 
 void dshear1dMatrix_CPU(float * idata, float *odata,
                         long int k, unsigned int dim,

@@ -28,54 +28,53 @@
  */
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
-#include "src/API/dotProduct1dVector.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/dotProduct1dVector.hpp"
 
 TEST(dotProduct1dVector, default_value) {
 
-	unsigned int nblocks = 4096;
-	unsigned int size = 1024*nblocks;
-	int * input1 = (int *)malloc(size * sizeof(int));
-	int * input2 = (int *)malloc(size * sizeof(int));
-	int * output = (int *)malloc(sizeof(int));
-	int * solution = (int *)malloc(sizeof(int));
+    unsigned int nblocks = 4096;
+    unsigned int size = 1024*nblocks;
+    int * input1 = (int *)malloc(size * sizeof(int));
+    int * input2 = (int *)malloc(size * sizeof(int));
+    int * output = (int *)malloc(sizeof(int));
+    int * solution = (int *)malloc(sizeof(int));
 
-	for(unsigned int i = 0; i < nblocks; ++i)
-		for (unsigned int j = 0; j < 1024 ; ++j)
-		input1[j + i*1024] = j;
+    for(unsigned int i = 0; i < nblocks; ++i)
+        for (unsigned int j = 0; j < 1024 ; ++j)
+            input1[j + i*1024] = j;
 
-	for(unsigned int i = 0; i < nblocks; ++i)
-		for (unsigned int j = 0; j < 1024 ; ++j)
-		input2[j + i*1024] = j;
+    for(unsigned int i = 0; i < nblocks; ++i)
+        for (unsigned int j = 0; j < 1024 ; ++j)
+            input2[j + i*1024] = j;
 
-	int *d_input1;
-	check_cuda( cudaMalloc(&d_input1, size*sizeof(int)) );
+    int *d_input1;
+    check_cuda( cudaMalloc(&d_input1, size*sizeof(int)) );
 
-	int *d_input2;
-	check_cuda( cudaMalloc(&d_input2, size*sizeof(int)) );
+    int *d_input2;
+    check_cuda( cudaMalloc(&d_input2, size*sizeof(int)) );
 
-	int *d_output;
-	check_cuda( cudaMalloc(&d_output, sizeof(int)) );
+    int *d_output;
+    check_cuda( cudaMalloc(&d_output, sizeof(int)) );
 
-	check_cuda( cudaMemcpy ( d_input1, input1, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_input2, input2, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input1, input1, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input2, input2, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::dotProduct1dVector<int, 1024, 2>(d_input1, d_input2, d_output, size);
+    cuAlgo::dotProduct1dVector<int, 1024, 2>(d_input1, d_input2, d_output, size);
 
-	solution[0] = 0;
-	for(unsigned int i = 0; i < size; ++i)
-		solution[0] += input1[i] * input2[i];
+    solution[0] = 0;
+    for(unsigned int i = 0; i < size; ++i)
+        solution[0] += input1[i] * input2[i];
 
-	check_cuda( cudaMemcpy ( output, d_output, sizeof(int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( output, d_output, sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	ASSERT_EQ(solution[0], output[0]);
+    ASSERT_EQ(solution[0], output[0]);
 
-	check_cuda( cudaFree(d_input1) );
-	check_cuda( cudaFree(d_input2) );
-	check_cuda( cudaFree(d_output) );
-	free(input1);
-	free(input2);
-	free(output);
-	free(solution);
+    check_cuda( cudaFree(d_input1) );
+    check_cuda( cudaFree(d_input2) );
+    check_cuda( cudaFree(d_output) );
+    free(input1);
+    free(input2);
+    free(output);
+    free(solution);
 }

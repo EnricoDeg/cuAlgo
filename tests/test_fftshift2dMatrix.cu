@@ -30,9 +30,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <chrono>
-#include "src/cuAlgo.h"
-#include "src/API/fftshift2dMatrix.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/fftshift2dMatrix.hpp"
 
 using namespace std::chrono;
 

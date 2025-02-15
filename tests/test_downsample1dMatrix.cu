@@ -29,9 +29,8 @@
 
 #include <iostream>
 #include <cstring>
-#include "src/cuAlgo.h"
-#include "src/API/downsample1dMatrix.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/downsample1dMatrix.hpp"
 
 void downsample1dMatrix_CPU( float * idata, float * odata,
                              unsigned int dim, int stride,

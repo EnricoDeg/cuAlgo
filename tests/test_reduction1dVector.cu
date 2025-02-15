@@ -28,44 +28,44 @@
  */
 #include <iostream>
 #include <stdlib.h>
-#include "src/API/reduction1dVector.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/reduction1dVector.hpp"
 
 TEST(reduction1dVector, default_value) {
 
-	unsigned int nblocks = 4096;
-	unsigned int size = 1024*nblocks;
-	int * input = (int *)malloc(size * sizeof(int));
-	int * output = (int *)malloc(sizeof(int));
-	int * solution = (int *)malloc(sizeof(int));
-	for(unsigned int i = 0; i < nblocks; ++i)
-		for (unsigned int j = 0; j < 1024 ; ++j)
-		input[j + i*1024] = j;
+    unsigned int nblocks = 4096;
+    unsigned int size = 1024*nblocks;
+    int * input = (int *)malloc(size * sizeof(int));
+    int * output = (int *)malloc(sizeof(int));
+    int * solution = (int *)malloc(sizeof(int));
+    for(unsigned int i = 0; i < nblocks; ++i)
+        for (unsigned int j = 0; j < 1024 ; ++j)
+            input[j + i*1024] = j;
 
-	output[0] = 0;
+    output[0] = 0;
 
-	int *d_input;
-	check_cuda( cudaMalloc(&d_input, size*sizeof(int)) );
+    int *d_input;
+    check_cuda( cudaMalloc(&d_input, size*sizeof(int)) );
 
-	int *d_output;
-	check_cuda( cudaMalloc(&d_output, sizeof(int)) );
+    int *d_output;
+    check_cuda( cudaMalloc(&d_output, sizeof(int)) );
 
-	check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
-	check_cuda( cudaMemcpy ( d_output, output, sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_input, input, (unsigned int)size*sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_output, output, sizeof(int), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::reduction1dVector2<int, 1024, 2>(d_input, d_output, size);
+    cuAlgo::reduction1dVector2<int, 1024, 2>(d_input, d_output, size);
 
-	solution[0] = 0;
-	for(unsigned int i = 0; i < size; ++i)
-		solution[0] += input[i];
+    solution[0] = 0;
+    for(unsigned int i = 0; i < size; ++i)
+        solution[0] += input[i];
 
-	check_cuda( cudaMemcpy ( output, d_output, sizeof(int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( output, d_output, sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	ASSERT_EQ(solution[0], output[0]);
+    ASSERT_EQ(solution[0], output[0]);
 
-	check_cuda( cudaFree(d_input ) );
-	check_cuda( cudaFree(d_output) );
-	free(input);
-	free(output);
-	free(solution);
+    check_cuda( cudaFree(d_input ) );
+    check_cuda( cudaFree(d_output) );
+    free(input);
+    free(output);
+    free(solution);
 }

@@ -29,9 +29,8 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include "src/cuAlgo.h"
-#include "src/API/exclusiveScan1dVector.hpp"
 #include <gtest/gtest.h>
+#include "cuAlgo/API/exclusiveScan1dVector.hpp"
 
 TEST(exclusiveScan1dVector, default_values) {
 
