@@ -12,7 +12,6 @@ set(SOURCE_EXE  internals/utils.cu
                 API/gSpMatVecMulCSRVector.cu
                 API/gSpMatVecMulCSRAdaptive.cu
                 API/gSpMatVecMulELL.cu
-                API/grad2dMatrix.cu
                 API/histogram.cu
                 API/taper1dMatrix.cu
                 API/normalizeVector.cu

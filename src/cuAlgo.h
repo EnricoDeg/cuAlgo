@@ -38,58 +38,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   Compute the matrix gradient using floats.
- * 
- * @details The gradient is computed using first order
- *          accuracy.
- * 
- * @param[in]  A input matrix of size {N,M}
- * @param[out] Ax output matrix with x derivative.
- *             The matrix has the same size of A.
- * @param[out] Ay output matrix with y derivative.
- *             The matrix has the same size of A.
- * @param[in]  M size of contiguous dimension
- * @param[in]  N size of non-contiguous dimension
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algoC
- */
-void grad2dMatrixFloat(float        *A            ,
-                       float        *Ax           ,
-                       float        *Ay           ,
-                       unsigned int  M            ,
-                       unsigned int  N            ,
-                       cudaStream_t  stream = 0   ,
-                       bool          async = false);
-
-/**
- * @brief   Compute the matrix gradient using doubles.
- * 
- * @details See documentation of gradMatrixFloat().
- * 
- * @ingroup algoC
- */
-void grad2dMatrixDouble(double       *A            ,
-                        double       *Ax           ,
-                        double       *Ay           ,
-                        unsigned int  M            ,
-                        unsigned int  N            ,
-                        cudaStream_t  stream = 0   ,
-                        bool          async = false);
-
-void grad2dMatrixInt(int          *A            ,
-                     int          *Ax           ,
-                     int          *Ay           ,
-                     unsigned int  M            ,
-                     unsigned int  N            ,
-                     cudaStream_t  stream = 0   ,
-                     bool          async = false);
-
-/**
  * @brief   Perform sparse matrix-vector multiplication with an 
  *          adaptive method using floats.
  * 

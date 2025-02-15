@@ -36,36 +36,6 @@
 namespace cuAlgo{
 
 /**
- * @brief   Compute the matrix gradient
- * 
- * @details The gradient is computed using first order
- *          accuracy.
- * 
- * @param[in]  A input matrix of size {N,M}
- * @param[out] Ax output matrix with x derivative.
- *             The matrix has the same size of A.
- * @param[out] Ay output matrix with y derivative.
- *             The matrix has the same size of A.
- * @param[in]  M size of contiguous dimension
- * @param[in]  N size of non-contiguous dimension
- * @param[in]  stream CUDA stream where the kernels are launched.
- *                    Default is stream 0 (default stream)
- * @param[in]  async  bool to define if kernels are launched asynchronously
- *                    (without synchronization).
- *                    Default is false (device is synchronized after each kernel launched)
- * 
- * @ingroup algo
- */
-template<typename T>
-void grad2dMatrix(T        *A            ,
-                  T        *Ax           ,
-                  T        *Ay           ,
-                       unsigned int  M            ,
-                       unsigned int  N            ,
-                       cudaStream_t  stream = 0   ,
-                       bool          async = false);
-
-/**
  * @brief   Perform sparse matrix-vector multiplication with an 
  *          adaptive method.
  * 

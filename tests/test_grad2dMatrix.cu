@@ -29,66 +29,67 @@
 #include <iostream>
 #include <stdlib.h>
 #include "src/cuAlgo.h"
+#include "src/API/grad2dMatrix.hpp"
 #include <gtest/gtest.h>
 
 TEST(grad2dMatrix, default_value) {
 
-	unsigned int M = 4096;
-	unsigned int N = 2048;
+    unsigned int M = 4096;
+    unsigned int N = 2048;
 
-	int * A         = (int *)malloc(N * M * sizeof(int));
-	int * Ax        = (int *)malloc(N * M * sizeof(int));
-	int * Ay        = (int *)malloc(N * M * sizeof(int));
-	int * solutionx = (int *)malloc(N * M * sizeof(int));
-	int * solutiony = (int *)malloc(N * M * sizeof(int));
+    int * A         = (int *)malloc(N * M * sizeof(int));
+    int * Ax        = (int *)malloc(N * M * sizeof(int));
+    int * Ay        = (int *)malloc(N * M * sizeof(int));
+    int * solutionx = (int *)malloc(N * M * sizeof(int));
+    int * solutiony = (int *)malloc(N * M * sizeof(int));
 
-	for (unsigned int i = 0 ; i < N ; ++i)
-		for (unsigned int j = 0 ; j < M ; ++j)
-			A [j + i * M] = j + i * M;
+    for (unsigned int i = 0 ; i < N ; ++i)
+        for (unsigned int j = 0 ; j < M ; ++j)
+            A [j + i * M] = j + i * M;
 
-	int *d_A;
-	check_cuda( cudaMalloc(&d_A, M * N * sizeof(int)) );
+    int *d_A;
+    check_cuda( cudaMalloc(&d_A, M * N * sizeof(int)) );
 
-	int *d_Ax;
-	check_cuda( cudaMalloc(&d_Ax, M * N * sizeof(int)) );
+    int *d_Ax;
+    check_cuda( cudaMalloc(&d_Ax, M * N * sizeof(int)) );
 
-	int *d_Ay;
-	check_cuda( cudaMalloc(&d_Ay, M * N * sizeof(int)) );
+    int *d_Ay;
+    check_cuda( cudaMalloc(&d_Ay, M * N * sizeof(int)) );
 
-	check_cuda( cudaMemcpy ( d_A, A, M * N *sizeof(int), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy ( d_A, A, M * N *sizeof(int), cudaMemcpyHostToDevice ) );
 
-	cuAlgo::grad2dMatrixInt(d_A, d_Ax, d_Ay, M, N);
+    cuAlgo::grad2dMatrix<32, 32, int>(d_A, d_Ax, d_Ay, M, N);
 
-	for (unsigned int j = 0 ; j < M ; ++j)
-		solutionx[j] = A[j];
+    for (unsigned int j = 0 ; j < M ; ++j)
+        solutionx[j] = A[j];
 
-	for (unsigned int i = 1 ; i < N ; ++i)
-		for (unsigned int j = 0 ; j < M ; ++j)
-			solutionx[j + i * M] = A[j + i * M] - A[j + (i - 1) * M];
+    for (unsigned int i = 1 ; i < N ; ++i)
+        for (unsigned int j = 0 ; j < M ; ++j)
+            solutionx[j + i * M] = A[j + i * M] - A[j + (i - 1) * M];
 
-	for (unsigned int i = 0 ; i < N ; ++i) {
-		solutiony[i * M] = A[i * M];
-		for (unsigned int j = 1 ; j < M ; ++j)
-			solutiony[j + i * M] = A[j + i * M] - A[j - 1 + i * M];
-	}
+    for (unsigned int i = 0 ; i < N ; ++i) {
+        solutiony[i * M] = A[i * M];
+        for (unsigned int j = 1 ; j < M ; ++j)
+            solutiony[j + i * M] = A[j + i * M] - A[j - 1 + i * M];
+    }
 
-	check_cuda( cudaMemcpy ( Ax, d_Ax, M * N * sizeof(int), cudaMemcpyDeviceToHost ) );
-	check_cuda( cudaMemcpy ( Ay, d_Ay, M * N * sizeof(int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( Ax, d_Ax, M * N * sizeof(int), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( Ay, d_Ay, M * N * sizeof(int), cudaMemcpyDeviceToHost ) );
 
-	for (unsigned int j = 0 ; j < N ; ++j)
-		for (unsigned int i = 0 ; i < M ; ++i)
-			ASSERT_EQ(solutionx[i + j * M], Ax[i + j * M]);
+    for (unsigned int j = 0 ; j < N ; ++j)
+        for (unsigned int i = 0 ; i < M ; ++i)
+            ASSERT_EQ(solutionx[i + j * M], Ax[i + j * M]);
 
-	for (unsigned int j = 0 ; j < N ; ++j)
-		for (unsigned int i = 0 ; i < M ; ++i)
-			ASSERT_EQ(solutiony[i + j * M] , Ay[i + j * M]);
+    for (unsigned int j = 0 ; j < N ; ++j)
+        for (unsigned int i = 0 ; i < M ; ++i)
+            ASSERT_EQ(solutiony[i + j * M] , Ay[i + j * M]);
 
-	check_cuda( cudaFree(d_A ) );
-	check_cuda( cudaFree(d_Ax) );
-	check_cuda( cudaFree(d_Ay) );
-	free(A);
-	free(Ax);
-	free(Ay);
-	free(solutionx);
-	free(solutiony);
+    check_cuda( cudaFree(d_A ) );
+    check_cuda( cudaFree(d_Ax) );
+    check_cuda( cudaFree(d_Ay) );
+    free(A);
+    free(Ax);
+    free(Ay);
+    free(solutionx);
+    free(solutiony);
 }
