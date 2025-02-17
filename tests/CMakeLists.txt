@@ -1,5 +1,4 @@
-# GoogleTest requires at least C++14
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Avoid warning about DOWNLOAD_EXTRACT_TIMESTAMP in CMake 3.24:
@@ -25,6 +24,13 @@ if (CUALGO_VERBOSE)
 endif()
 
 enable_testing()
+
+# batchNormFwdTraining
+add_executable( test_batchNormFwdTraining
+                test_batchNormFwdTraining.cu
+              )
+target_include_directories(test_batchNormFwdTraining PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(test_batchNormFwdTraining GTest::gtest_main)
 
 # convolution1dMatrix
 add_executable( test_convolution1dMatrix
