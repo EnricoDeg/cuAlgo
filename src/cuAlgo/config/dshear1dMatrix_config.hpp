@@ -92,6 +92,25 @@ struct default_dshear_config<
     : dshear_config<32, 32, 2>
 {};
 
+template<class value_type>
+struct default_dshear_config<
+    80,
+    value_type,
+    std::enable_if_t<(bool(std::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 8) && (sizeof(value_type) > 4))>>
+    : dshear_config<32, 32, 2>
+{};
+
+// Based on value_type = float
+template<class value_type>
+struct default_dshear_config<
+    80,
+    value_type,
+    std::enable_if_t<(bool(std::is_floating_point<value_type>::value)
+                      && (sizeof(value_type) <= 4) && (sizeof(value_type) > 2))>>
+    : dshear_config<32, 32, 2>
+{};
+
 template<typename DshearConfig, typename>
 struct wrapped_dshear_config
 {
