@@ -45,38 +45,56 @@ CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE float2 cmul(float2 a, float2 b) {
     );
 }
 
+CUALGO_DEVICE CUALGO_FORCE_INLINE
+unsigned int base2_reverse(unsigned x, int log2N)
+{
+    unsigned r = 0;
+    #pragma unroll
+    for (int i = 0; i < log2N; ++i) {
+        r = (r << 1) | (x & 1);
+        x >>= 1;
+    }
+    return r;
+}
+
+CUALGO_DEVICE CUALGO_FORCE_INLINE
+unsigned int base4_reverse(unsigned x, int log4N)
+{
+    unsigned r = 0;
+    #pragma unroll
+    for (int i = 0; i < log4N; ++i) {
+        r = (r << 2) | (x & 0x3);
+        x >>= 2;
+    }
+    return r;
+}
+
 template <unsigned int FFTSize, typename T, typename HandleType>
 CUALGO_GLOBAL
-void fft1dCTKernel(T * CUALGO_RESTRICT idata,
+void fft1dCTKernelRadix2(T * CUALGO_RESTRICT idata,
                    T * CUALGO_RESTRICT odata)
 {
     extern CUALGO_SHMEM T sdata[];
 
     int tid = threadIdx.x;
-
-    // Load to shared memory
-    if (tid < FFTSize)
-        sdata[tid] = idata[tid];
-    __syncthreads();
-
-    // Bit-reversal permutation
-    unsigned int x = tid;
-    unsigned int j = 0;
     const int LOGN = __ffs(FFTSize) - 1;
 
-    for (int i = 0; i < LOGN; ++i) {
-        j = (j << 1) | (x & 1);
-        x >>= 1;
-    }
-
-    if (j > tid) {
-        T tmp = sdata[tid];
-        sdata[tid] = sdata[j];
-        sdata[j] = tmp;
+    // ------------------------------------------------
+    // 1. Load + Base-2 digit-reversed store
+    // ------------------------------------------------
+    if (tid < FFTSize / 2)
+    {
+        unsigned int r;
+        r = base2_reverse(2 * tid, LOGN);
+        sdata[r] = idata[2 * tid];
+        r = base2_reverse(2 * tid + 1, LOGN);
+        sdata[r] = idata[2 * tid + 1];
     }
     __syncthreads();
 
-    // FFT stages
+    // ------------------------------------------------
+    // 2. radix-2 stages
+    // ------------------------------------------------
     for (int len = 2; len <= FFTSize; len <<= 1) {
         int half = len >> 1;
         int block = tid >> (__ffs(len) - 2); // tid / half;
@@ -96,10 +114,88 @@ void fft1dCTKernel(T * CUALGO_RESTRICT idata,
         __syncthreads();
     }
 
-    // Store back
+    // ------------------------------------------------
+    // 3. Store (natural order)
+    // ------------------------------------------------
     if (tid < FFTSize)
-        odata[tid] = sdata[tid];
+    {
+        odata[2 * tid]     = sdata[2 * tid];
+        odata[2 * tid + 1] = sdata[2 * tid + 1];
+    }
 }
+
+template <unsigned int FFTSize, typename T, typename HandleType>
+CUALGO_GLOBAL
+void fft1dCTKernelRadix4(T * CUALGO_RESTRICT idata,
+                   T * CUALGO_RESTRICT odata)
+{
+    extern __shared__ float2 smem[];
+    int tid = threadIdx.x;
+    constexpr int LOG2N = __builtin_ctz(FFTSize);
+    constexpr int log4N = LOG2N >> 1;
+
+    // ------------------------------------------------
+    // 1. Load + Base-4 digit-reversed store
+    // ------------------------------------------------
+    unsigned r = base4_reverse(4 * tid, log4N);
+    smem[r] = idata[4 * tid];
+    r = base4_reverse(4 * tid + 1, log4N);
+    smem[r] = idata[4 * tid + 1];
+    r = base4_reverse(4 * tid + 2, log4N);
+    smem[r] = idata[4 * tid + 2];
+    r = base4_reverse(4 * tid + 3, log4N);
+    smem[r] = idata[4 * tid + 3];
+    __syncthreads();
+
+    // ------------------------------------------------
+    // 2. radix-4 stages
+    // ------------------------------------------------
+    for (int stage = 0, m = 4; stage < log4N; ++stage, m <<= 2) {
+
+        int quarter = m >> 2;
+        int j = tid % quarter;
+        int k = tid / quarter;
+
+        int p = k * m + j;
+
+        float angle = -2.0f * M_PI * j / m;
+        float s, c;
+        __sincosf(angle, &s, &c);
+        float2 W1 = make_float2(c, s);
+        float2 W2 = cmul(W1, W1);
+        float2 W3 = cmul(W2, W1);
+
+        float2 x0 = smem[p + 0 * quarter];
+        float2 x1 = cmul(W1, smem[p + 1 * quarter]);
+        float2 x2 = cmul(W2, smem[p + 2 * quarter]);
+        float2 x3 = cmul(W3, smem[p + 3 * quarter]);
+
+        float2 t0 = cadd(x0, x2);
+        float2 t1 = cadd(x1, x3);
+        float2 t2 = csub(x0, x2);
+        float2 t3 = csub(x1, x3);
+
+        smem[p + 0 * quarter] = cadd(t0, t1);
+        smem[p + 2 * quarter] = csub(t0, t1);
+
+        smem[p + 1 * quarter] =
+            make_float2(t2.x + t3.y, t2.y - t3.x);
+        smem[p + 3 * quarter] =
+            make_float2(t2.x - t3.y, t2.y + t3.x);
+
+        __syncthreads();
+    }
+
+    // ------------------------------------------------
+    // 3. Store (natural order)
+    // ------------------------------------------------
+    odata[4 * tid] = smem[4 * tid];
+    odata[4 * tid + 1] = smem[4 * tid + 1];
+    odata[4 * tid + 2] = smem[4 * tid + 2];
+    odata[4 * tid + 3] = smem[4 * tid + 3];
+}
+
+
 
 namespace cuAlgo {
 
@@ -133,6 +229,18 @@ namespace cuAlgo {
                            (BlockSize/2) * sizeof(float2));
     }
 
+    template<unsigned int N>
+    constexpr bool is_power_of_two()
+    {
+        return N && ((N & (N - 1)) == 0);
+    }
+
+    template<unsigned int N>
+    constexpr bool is_power_of_four()
+    {
+        return (N & 0x55555555u) && is_power_of_two<N>();
+    }
+
     /**
     * @brief   Perform 1d C2C fft
     * 
@@ -150,24 +258,48 @@ namespace cuAlgo {
     * @ingroup algo
     */
     template <
-    unsigned int BlockSize,
+    unsigned int FFTSize,
     typename T>
     void fft1dCT(T *idata ,
                  T *odata ,
                  cudaStream_t stream = 0,
-                 bool async = false) {
+                 bool async = false)
+    {
+        if constexpr(is_power_of_four<FFTSize>())
+        {
+            std::cout << "Running Radix4\n";
+            constexpr unsigned int RadixValue = 4;
 
-        dim3 blocksPerGrid3(1, 1, 1);
-        dim3 threadsPerBlock3(BlockSize, 1, 1);
+            dim3 blocksPerGrid3(1, 1, 1);
+            dim3 threadsPerBlock3(FFTSize / RadixValue, 1, 1);
 
-        print_kernel_config(threadsPerBlock3, blocksPerGrid3);
+            print_kernel_config(threadsPerBlock3, blocksPerGrid3);
 
-        int shmem_size = BlockSize * sizeof(T);
+            int shmem_size = FFTSize * sizeof(T);
 
-        fft1dCT_plan<BlockSize>();
+            fft1dCT_plan<FFTSize>();
 
-        TIME(blocksPerGrid3, threadsPerBlock3, shmem_size, stream, async, 
-             CUALGO_KERNEL_NAME(fft1dCTKernel<BlockSize, T, fftHandle<BlockSize>>),
-             idata, odata);
+            TIME(blocksPerGrid3, threadsPerBlock3, shmem_size, stream, async, 
+                 CUALGO_KERNEL_NAME(fft1dCTKernelRadix4<FFTSize, T, fftHandle<FFTSize>>),
+                 idata, odata);
+        }
+        else if constexpr(is_power_of_two<FFTSize>())
+        {
+            std::cout << "Running Radix2\n";
+            constexpr unsigned int RadixValue = 2;
+
+            dim3 blocksPerGrid3(1, 1, 1);
+            dim3 threadsPerBlock3(FFTSize / RadixValue, 1, 1);
+
+            print_kernel_config(threadsPerBlock3, blocksPerGrid3);
+
+            int shmem_size = FFTSize * sizeof(T);
+
+            fft1dCT_plan<FFTSize>();
+
+            TIME(blocksPerGrid3, threadsPerBlock3, shmem_size, stream, async, 
+                 CUALGO_KERNEL_NAME(fft1dCTKernelRadix2<FFTSize, T, fftHandle<FFTSize>>),
+                 idata, odata);
+        }
     }
 }

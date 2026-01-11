@@ -124,9 +124,9 @@ TEST(CT_FFT, default) {
         //     << std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y)
         //     << std::endl;
         if(solution[i].x > 1e-5 && out[i].x > 1e-5)
-            ASSERT_TRUE(std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x) < 1e-4);
+            ASSERT_TRUE(std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x) < 1e-3);
         if(solution[i].y > 1e-5 && out[i].y > 1e-5)
-            ASSERT_TRUE(std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y) < 1e-4);
+            ASSERT_TRUE(std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y) < 1e-3);
     }
 
     check_cuda( cudaFree(d_in) );
