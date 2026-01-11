@@ -60,6 +60,13 @@ add_executable( test_convolutionReduction1dMatrix
 target_include_directories(test_convolutionReduction1dMatrix PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(test_convolutionReduction1dMatrix GTest::gtest_main)
 
+# CT FFT
+add_executable( test_fft1dCT
+                test_fft1dCT.cu
+              )
+target_include_directories(test_fft1dCT PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(test_fft1dCT GTest::gtest_main)
+
 # dotProduct1dVector
 add_executable( test_dotProduct1dVector
                 test_dotProduct1dVector.cu
