@@ -110,7 +110,7 @@ void run_single_test()
     fft_cpu(solution, Size);
 
     // GPU
-    cuAlgo::fft1dCT<Size>(d_in, d_out);
+    cuAlgo::fft1dCT<Size, 256>(d_in, d_out);
 
     check_cuda( cudaMemcpy ( out, d_out, Size * sizeof(float2), cudaMemcpyDeviceToHost ) );
 
@@ -144,5 +144,11 @@ TEST(CT_FFT, size_1024) {
 TEST(CT_FFT, size_512) {
 
     constexpr unsigned int size = 512;
+    run_single_test<size>();
+}
+
+TEST(CT_FFT, size_2048) {
+
+    constexpr unsigned int size = 2048;
     run_single_test<size>();
 }

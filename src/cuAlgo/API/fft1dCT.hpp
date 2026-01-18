@@ -34,7 +34,12 @@
 #include "cuAlgo/internals/utils.hpp"
 #include "cuAlgo/internals/fft.hpp"
 
-template <unsigned int FFTSize, typename T, typename HandleType>
+template<
+unsigned int FFTSize,
+unsigned int BlockSize,
+typename T,
+typename HandleType
+>
 CUALGO_GLOBAL
 void fft1dCTKernelRadix2(T * CUALGO_RESTRICT idata,
                          T * CUALGO_RESTRICT odata)
@@ -47,13 +52,10 @@ void fft1dCTKernelRadix2(T * CUALGO_RESTRICT idata,
     // ------------------------------------------------
     // 1. Load + Base-2 digit-reversed store
     // ------------------------------------------------
-    if (tid < FFTSize / 2)
+    for (int idx = tid; idx < FFTSize; idx += BlockSize)
     {
-        unsigned int r;
-        r = base2_reverse(2 * tid, LOGN);
-        sdata[r] = idata[2 * tid];
-        r = base2_reverse(2 * tid + 1, LOGN);
-        sdata[r] = idata[2 * tid + 1];
+        unsigned int r = base2_reverse(idx, LOGN);
+        sdata[r] = idata[idx];
     }
     __syncthreads();
 
@@ -62,19 +64,21 @@ void fft1dCTKernelRadix2(T * CUALGO_RESTRICT idata,
     // ------------------------------------------------
     for (int len = 2; len <= FFTSize; len <<= 1) {
         int half = len >> 1;
-        int block = tid >> (__ffs(len) - 2); // tid / half;
-        int k = tid & (half - 1); //tid % half;
-        int i = block * len + k;
+        for (int tidx = tid; tidx < FFTSize / 2; tidx += BlockSize)
+        {
+            int block = tidx >> (__ffs(len) - 2); // tidx / half;
+            int k = tidx & (half - 1); //tidx % half;
+            int i = block * len + k;
 
-        if (i + half < FFTSize) {
-            int twiddle_idx = (k * FFTSize) / len;
-            T w = HandleType::twiddles()[twiddle_idx];
+            if (i + half < FFTSize) {
+                int twiddle_idx = (k * FFTSize) / len;
+                T w = HandleType::twiddles()[twiddle_idx];
+                T u = sdata[i];
+                T v = cmul(w, sdata[i + half]);
 
-            T u = sdata[i];
-            T v = cmul(w, sdata[i + half]);
-
-            sdata[i]       = cadd(u, v);
-            sdata[i + half]= csub(u, v);
+                sdata[i]       = cadd(u, v);
+                sdata[i + half]= csub(u, v);
+            }
         }
         __syncthreads();
     }
@@ -82,10 +86,9 @@ void fft1dCTKernelRadix2(T * CUALGO_RESTRICT idata,
     // ------------------------------------------------
     // 3. Store (natural order)
     // ------------------------------------------------
-    if (tid < FFTSize)
+    for (int idx = tid; idx < FFTSize; idx += BlockSize)
     {
-        odata[2 * tid]     = sdata[2 * tid];
-        odata[2 * tid + 1] = sdata[2 * tid + 1];
+        odata[idx] = sdata[idx];
     }
 }
 
@@ -210,17 +213,13 @@ namespace cuAlgo {
     */
     template <
     unsigned int FFTSize,
+    unsigned int BlockSize,
     typename T>
     void fft1dCT(T *idata ,
                  T *odata ,
                  cudaStream_t stream = 0,
                  bool async = false)
     {
-        dim3 blocksPerGrid3(1, 1, 1);
-        dim3 threadsPerBlock3(FFTSize, 1, 1);
-
-        print_kernel_config(threadsPerBlock3, blocksPerGrid3);
-
         if constexpr(is_power_of_four<FFTSize>())
         {
             std::cout << "Running Radix4\n";
@@ -242,10 +241,9 @@ namespace cuAlgo {
         else if constexpr(is_power_of_two<FFTSize>())
         {
             std::cout << "Running Radix2\n";
-            constexpr unsigned int RadixValue = 2;
 
             dim3 blocksPerGrid3(1, 1, 1);
-            dim3 threadsPerBlock3(FFTSize / RadixValue, 1, 1);
+            dim3 threadsPerBlock3(BlockSize, 1, 1);
 
             print_kernel_config(threadsPerBlock3, blocksPerGrid3);
 
@@ -254,7 +252,8 @@ namespace cuAlgo {
             fft1dCT_plan<FFTSize>();
 
             TIME(blocksPerGrid3, threadsPerBlock3, shmem_size, stream, async, 
-                 CUALGO_KERNEL_NAME(fft1dCTKernelRadix2<FFTSize, T, fftHandle<FFTSize>>),
+                 CUALGO_KERNEL_NAME(
+                    fft1dCTKernelRadix2<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
                  idata, odata);
         }
     }
