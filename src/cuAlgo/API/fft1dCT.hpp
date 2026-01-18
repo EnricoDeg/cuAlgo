@@ -102,36 +102,43 @@ unsigned int BlockSize,
 typename T,
 typename HandleType>
 CUALGO_GLOBAL
-void fft1dCTKernelRadix4(T * CUALGO_RESTRICT input_data,
-                         T * CUALGO_RESTRICT output_data,
-                         int batch_size)
+void fft1dCTKernelMixedRadix(T * CUALGO_RESTRICT input_data,
+                             T * CUALGO_RESTRICT output_data,
+                             int batch_size)
 {
     CUALGO_SHMEM T smem[FFTSize];
-    int tid = threadIdx.x;
-    int batch_id = blockIdx.x;
-    T* idata = input_data + batch_id * FFTSize;
-    T* odata = output_data + batch_id * FFTSize;
+
     constexpr int LOG2N = __builtin_ctz(FFTSize);
     constexpr int log4N = LOG2N >> 1;
+    constexpr bool isMixedRadix = (LOG2N & 1) != 0;
+
+    int tid = threadIdx.x;
+    int batch_id = blockIdx.x;
+
+    // Pointer shift to correct batch
+    T* idata = input_data + batch_id * FFTSize;
+    T* odata = output_data + batch_id * FFTSize;
 
     // ------------------------------------------------
     // 1. Load + Base-4 digit-reversed store
     // ------------------------------------------------
     for (int base = tid; base < FFTSize; base += BlockSize) {
-        unsigned r = base4_reverse(base, log4N);
+        unsigned r = isMixedRadix ?
+                     mixed_radix_reverse(base, log4N) :
+                     base4_reverse(base, log4N);
         smem[r] = idata[base];
     }
     __syncthreads();
 
     // ------------------------------------------------
-    // 2. radix-4 stages
+    // 2a. radix-4 stages
     // ------------------------------------------------
     for (int stage = 0, m = 4; stage < log4N; ++stage, m <<= 2)
     {
 
         int quarter = m >> 2;
 
-        for (int base = tid; base < FFTSize / 4; base += BlockSize)
+        for (int base = tid; base < FFTSize >> 2; base += BlockSize)
         {
             int j = base % quarter;
             int k = base / quarter;
@@ -159,6 +166,30 @@ void fft1dCTKernelRadix4(T * CUALGO_RESTRICT input_data,
                 make(t2.x + t3.y, t2.y - t3.x);
             smem[p + 3 * quarter] =
                 make(t2.x - t3.y, t2.y + t3.x);
+        }
+
+        __syncthreads();
+    }
+
+    // ------------------------------------------------
+    // 2b. final radix-2 stage (only if FFTSize has odd log2)
+    // ------------------------------------------------
+    if constexpr(isMixedRadix) {
+
+        constexpr int half = FFTSize >> 1;
+
+        for (int k = tid; k < half; k += BlockSize) {
+
+            T a = smem[k];
+            T b = smem[k + half];
+
+            // Twiddle W_N^k
+            T w = HandleType::twiddles()[k];
+
+            T t = cmul(w, b);
+
+            smem[k]        = cadd(a, t);
+            smem[k + half] = csub(a, t);
         }
 
         __syncthreads();
@@ -230,32 +261,16 @@ namespace cuAlgo {
                  cudaStream_t stream = 0,
                  bool async = false)
     {
-        if constexpr(is_power_of_four<FFTSize>())
-        {
-            static_assert(BlockSize <= FFTSize / 4);
+        static_assert(is_power_of_two<FFTSize>());
 
-            dim3 blocksPerGrid3(batch_size, 1, 1);
-            dim3 threadsPerBlock3(BlockSize, 1, 1);
-            print_kernel_config(threadsPerBlock3, blocksPerGrid3);
+        dim3 blocksPerGrid3(batch_size, 1, 1);
+        dim3 threadsPerBlock3(BlockSize, 1, 1);
+        print_kernel_config(threadsPerBlock3, blocksPerGrid3);
 
-            TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
-                 CUALGO_KERNEL_NAME(
-                    fft1dCTKernelRadix4<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
-                 idata, odata, batch_size);
-        }
-        else if constexpr(is_power_of_two<FFTSize>())
-        {
-            static_assert(BlockSize <= FFTSize / 2);
-
-            dim3 blocksPerGrid3(batch_size, 1, 1);
-            dim3 threadsPerBlock3(BlockSize, 1, 1);
-            print_kernel_config(threadsPerBlock3, blocksPerGrid3);
-
-            TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
-                 CUALGO_KERNEL_NAME(
-                    fft1dCTKernelRadix2<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
-                 idata, odata, batch_size);
-        }
+        TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
+             CUALGO_KERNEL_NAME(
+                fft1dCTKernelMixedRadix<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
+             idata, odata, batch_size);
     }
 }
 

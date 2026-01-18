@@ -81,4 +81,41 @@ unsigned int base4_reverse(unsigned x, int log4N)
     return r;
 }
 
+CUALGO_DEVICE CUALGO_FORCE_INLINE
+unsigned int base_reverse(unsigned x, int log4N)
+{
+    unsigned r = 0;
+    #pragma unroll
+    for (int i = 0; i < log4N; ++i) {
+        r = (r << 2) | (x & 0x3);
+        x >>= 2;
+    }
+    return r;
+}
+
+CUALGO_DEVICE CUALGO_FORCE_INLINE
+unsigned int mixed_radix_reverse(unsigned x, int log4N)
+{
+    // total bits = 2*k + 1
+    unsigned out = 0;
+    unsigned bitpos = 2 * log4N;  // MSB position in output
+
+    // 1) extract radix-2 digit (LSB)
+    unsigned d0 = x & 0x1;
+    out |= d0 << bitpos;
+    bitpos -= 2;
+
+    // 2) extract and reverse radix-4 digits
+    x >>= 1;  // consume radix-2 digit
+
+    for (int s = 0; s < log4N; ++s) {
+        unsigned d = x & 0x3;   // radix-4 digit
+        out |= d << bitpos;
+        bitpos -= 2;
+        x >>= 2;
+    }
+
+    return out;
+}
+
 #endif
