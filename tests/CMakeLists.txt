@@ -67,6 +67,13 @@ add_executable( test_fft1dCT
 target_include_directories(test_fft1dCT PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(test_fft1dCT GTest::gtest_main)
 
+# Stockham FFT
+add_executable( test_fft1dStockham
+                test_fft1dStockham.cu
+              )
+target_include_directories(test_fft1dStockham PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(test_fft1dStockham GTest::gtest_main)
+
 # dotProduct1dVector
 add_executable( test_dotProduct1dVector
                 test_dotProduct1dVector.cu
