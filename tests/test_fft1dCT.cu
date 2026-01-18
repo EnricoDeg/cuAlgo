@@ -75,7 +75,7 @@ void fft_cpu(float2* a, unsigned int N)
     }
 }
 
-template<unsigned int Size>
+template<unsigned int Size, unsigned int BlockSize>
 void run_single_test()
 {
     float2 * in  = (float2*)malloc(Size * sizeof(float2));
@@ -110,7 +110,8 @@ void run_single_test()
     fft_cpu(solution, Size);
 
     // GPU
-    cuAlgo::fft1dCT<Size, 256>(d_in, d_out);
+    cuAlgo::fft1dCT_plan<Size>();
+    cuAlgo::fft1dCT<Size, BlockSize>(d_in, d_out, 1);
 
     check_cuda( cudaMemcpy ( out, d_out, Size * sizeof(float2), cudaMemcpyDeviceToHost ) );
 
@@ -136,19 +137,19 @@ void run_single_test()
 }
 
 TEST(CT_FFT, size_1024) {
-
+    // Radix4
     constexpr unsigned int size = 1024;
-    run_single_test<size>();
+    run_single_test<size, 128>();
 }
 
 TEST(CT_FFT, size_512) {
-
+    // Radix2
     constexpr unsigned int size = 512;
-    run_single_test<size>();
+    run_single_test<size, 256>();
 }
 
 TEST(CT_FFT, size_2048) {
-
+    // Radix2
     constexpr unsigned int size = 2048;
-    run_single_test<size>();
+    run_single_test<size, 256>();
 }
