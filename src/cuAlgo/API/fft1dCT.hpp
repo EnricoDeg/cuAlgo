@@ -33,6 +33,7 @@
 #include "cuAlgo/internals/definitions.hpp"
 #include "cuAlgo/internals/utils.hpp"
 #include "cuAlgo/internals/fft.hpp"
+#include "cuAlgo/API/fft1dPlan.hpp"
 
 template<
 unsigned int FFTSize,
@@ -204,36 +205,6 @@ void fft1dCTKernelMixedRadix(T * CUALGO_RESTRICT input_data,
 }
 
 namespace cuAlgo {
-
-    template <unsigned int N>
-    __device__ __constant__ float2 fft_twiddles[N / 2];
-
-    template<unsigned int N>
-    struct fftHandle
-    {
-        __device__ static const float2* twiddles() {
-            return fft_twiddles<N>;
-        }
-    };
-
-    void create_twiddles(float2* h_twiddles, int N)
-    {
-        for (int k = 0; k < N / 2; k++) {
-            float angle = -2.0f * M_PI * k / N;
-            h_twiddles[k].x = cosf(angle);
-            h_twiddles[k].y = sinf(angle);
-        }
-    }
-
-    template<unsigned int BlockSize>
-    void fft1dCT_plan()
-    {
-        float2* h_twiddles = new float2[BlockSize/2];
-        create_twiddles(h_twiddles, BlockSize);
-        cudaMemcpyToSymbol(fft_twiddles<BlockSize>,
-                           h_twiddles,
-                           (BlockSize/2) * sizeof(float2));
-    }
 
     /**
     * @brief   Perform 1d C2C fft
