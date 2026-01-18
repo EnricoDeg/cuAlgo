@@ -46,7 +46,7 @@ void stockham_fft(float2 * x, unsigned int N)
     assert((N & (N - 1)) == 0); // power of 2
 
     int log2N = 0;
-    while ((1 << log2N) < N) log2N++;
+    while ((1u << log2N) < N) log2N++;
 
     std::vector<float2> y(N);
 
@@ -54,17 +54,15 @@ void stockham_fft(float2 * x, unsigned int N)
     float2* out = y.data();
 
     for (int s = 0; s < log2N; ++s) {
-        int m  = 1 << (s + 1);   // FFT size this stage
+        int m  = 1 << (s + 1);
         int mh = m >> 1;
 
         for (int k = 0; k < N; k += m) {
             for (int j = 0; j < mh; ++j) {
 
-                // ---------
-                // INPUT PERMUTATION (this is the Stockham part)
-                // ---------
-                int i0 = k / 2 + j;
-                int i1 = i0 + N / 2;
+                // Stockham input permutation
+                int i0 = (k / m) * mh + j;
+                int i1 = i0 + (N >> 1);
 
                 float2 a = in[i0];
                 float2 b = in[i1];
@@ -72,9 +70,6 @@ void stockham_fft(float2 * x, unsigned int N)
                 float2 w = twiddle_cpu(j, m);
                 float2 t = cmul(b, w);
 
-                // ---------
-                // OUTPUT IS WRITTEN LINEARLY
-                // ---------
                 out[k + j]      = cadd(a, t);
                 out[k + j + mh] = csub(a, t);
             }
@@ -83,7 +78,6 @@ void stockham_fft(float2 * x, unsigned int N)
         std::swap(in, out);
     }
 
-    // Final result may be in temp buffer
     if (in != x) {
         for (int i = 0; i < N; ++i)
             x[i] = in[i];
@@ -125,12 +119,19 @@ void run_single_test()
     stockham_fft(solution, Size);
 
     // GPU
-    cuAlgo::fft1dStockham<Size>(d_in, d_out);
+    cuAlgo::fft1dCT_plan<Size>();
+    cuAlgo::fft1dStockham<Size>(d_in, d_out, 1);
 
     check_cuda( cudaMemcpy ( out, d_out, Size * sizeof(float2), cudaMemcpyDeviceToHost ) );
 
     for (unsigned int i = 0; i < Size; ++i)
     {
+        // std::cout << i << ": " << solution[i].x << " --- " << out[i].x << " --- "
+        //     << std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x)
+        //     << std::endl;
+        // std::cout << i << ": " << solution[i].y << " --- " << out[i].y << " --- "
+        //     << std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y)
+        //     << std::endl;
         if(solution[i].x > 1e-5 && out[i].x > 1e-5)
             ASSERT_TRUE(std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x) < 1e-3);
         if(solution[i].y > 1e-5 && out[i].y > 1e-5)

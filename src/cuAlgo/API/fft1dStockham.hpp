@@ -33,70 +33,68 @@
 #include "cuAlgo/internals/definitions.hpp"
 #include "cuAlgo/internals/utils.hpp"
 #include "cuAlgo/internals/fft.hpp"
+#include "cuAlgo/API/fft1dPlan.hpp"
 
-template <unsigned int N, typename T>
-CUALGO_GLOBAL
-void fft1dStockhamKernel(T * CUALGO_RESTRICT idata,
-                         T * CUALGO_RESTRICT odata)
+template <
+unsigned int N,
+typename T,
+typename HandleType>
+__global__
+void fft1dStockhamKernel(T* __restrict__ input_data,
+                         T* __restrict__ output_data,
+                         int batch_size)
 {
-    extern CUALGO_SHMEM T smem[];
+    __shared__ T smem[2 * N];
+
+    T* idata = input_data  + blockIdx.x * N;
+    T* odata = output_data + blockIdx.x * N;
 
     T* buf0 = smem;
     T* buf1 = smem + N;
 
-    int tid = threadIdx.x;
+    int tid = threadIdx.x; // 0 .. N/2-1
 
-    // Load input to shared memory
-    if (tid < N) {
-        buf0[tid] = idata[tid];
-    }
+    // ---- Load 2 elements per thread ----
+    int i = tid;
+    buf0[i]       = idata[i];
+    buf0[i + N/2] = idata[i + N/2];
     __syncthreads();
 
     T* in  = buf0;
     T* out = buf1;
 
-    int log2N = 0;
-    while ((1 << log2N) < N) log2N++;
+    constexpr int log2N = __builtin_ctz(N);
 
-    // -------- Stockham stages --------
     for (int s = 0; s < log2N; ++s) {
         int m  = 1 << (s + 1);
         int mh = m >> 1;
 
-        // Each thread computes exactly one output element
-        if (tid < N) {
-            int group = tid / m;
-            int j     = tid % mh;
+        int group = tid / mh;
+        int j     = tid % mh;
 
-            // ---- INPUT PERMUTATION (autosort) ----
-            int i0 = group * mh + j;
-            int i1 = i0 + N / 2;
+        int i0 = group * mh + j;
+        int i1 = i0 + N / 2;
 
-            T a = in[i0];
-            T b = in[i1];
+        T a = in[i0];
+        T b = in[i1];
 
-            T w = twiddle(j, m);
-            T t = cmul(b, w);
+        int tw = (j * N) / m;
+        T w = HandleType::twiddles()[tw];
+        T t = cmul(b, w);
 
-            // ---- LINEAR OUTPUT WRITE ----
-            if ((tid % m) < mh)
-                out[tid] = cadd(a, t);
-            else
-                out[tid] = csub(a, t);
-        }
+        int o0 = group * m + j;
+        int o1 = o0 + mh;
+
+        out[o0] = cadd(a, t);
+        out[o1] = csub(a, t);
 
         __syncthreads();
-
-        // Ping-pong buffers
-        T* tmp = in;
-        in = out;
-        out = tmp;
+        T* tmp = in; in = out; out = tmp;
     }
 
-    // Write back to global memory
-    if (tid < N) {
-        odata[tid] = in[tid];
-    }
+    // ---- Store 2 elements per thread ----
+    odata[i]       = in[i];
+    odata[i + N/2] = in[i + N/2];
 }
 
 namespace cuAlgo {
@@ -122,19 +120,17 @@ namespace cuAlgo {
     typename T>
     void fft1dStockham(T *idata ,
                        T *odata ,
+                       int batch_size,
                        cudaStream_t stream = 0,
                        bool async = false)
     {
-        dim3 blocksPerGrid3(1, 1, 1);
-        dim3 threadsPerBlock3(FFTSize, 1, 1);
-
+        dim3 blocksPerGrid3(batch_size, 1, 1);
+        dim3 threadsPerBlock3(FFTSize / 2, 1, 1);
         print_kernel_config(threadsPerBlock3, blocksPerGrid3);
 
-        int shmem_size = 2 * FFTSize * sizeof(T);
-
-        TIME(blocksPerGrid3, threadsPerBlock3, shmem_size, stream, async, 
-             CUALGO_KERNEL_NAME(fft1dStockhamKernel<FFTSize>),
-             idata, odata);
+        TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
+             CUALGO_KERNEL_NAME(fft1dStockhamKernel<FFTSize, T, fftHandle<FFTSize>>),
+             idata, odata, batch_size);
     }
 }
 
