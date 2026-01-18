@@ -35,6 +35,76 @@
 #include "cuAlgo/internals/fft.hpp"
 #include "cuAlgo/API/fft1dPlan.hpp"
 
+__device__ __forceinline__ int log8N(int N)
+{
+    int log8 = 0;
+    while (N > 1) {
+        N >>= 3;   // divide by 8
+        log8++;
+    }
+    return log8;
+}
+
+template<
+unsigned int FFTSize,
+unsigned int BlockSize,
+typename T,
+typename HandleType
+>
+CUALGO_GLOBAL
+void fft1dCTKernelRadix8(T * CUALGO_RESTRICT input_data,
+                         T * CUALGO_RESTRICT output_data,
+                         int batch_size)
+{
+    CUALGO_SHMEM T smem[FFTSize];
+
+    int tid = threadIdx.x;
+    int batch_id = blockIdx.x;
+
+    T* idata = input_data  + batch_id * FFTSize;
+    T* odata = output_data + batch_id * FFTSize;
+
+    const int log8N_val = log8N(FFTSize);
+
+    // --------------------------------------------------
+    // 1) Load global -> shared + Base-8 digit reversal
+    // --------------------------------------------------
+    for (int i = tid; i < FFTSize; i += BlockSize) {
+        unsigned int r = base8_reverse(i, log8N_val);
+        smem[r] = idata[i];
+    }
+    __syncthreads();
+
+    // --------------------------------------------------
+    // 2) Radix-8 FFT stages
+    // --------------------------------------------------
+    for (int span = 8; span <= FFTSize; span *= 8) {
+
+        int stride  = span >> 3;
+        int butterflies = (FFTSize / span) * stride;
+        int tw_step = FFTSize / span;
+        for (int base = tid; base < FFTSize >> 3; base += BlockSize)
+        {
+            if (base < butterflies) {
+                int group = base / stride;
+                int k     = base % stride;
+                int base  = group * span + k;
+                int tw    = k * tw_step;
+
+                radix8_butterfly<HandleType>(&smem[base], stride, tw, FFTSize);
+            }
+        }
+        __syncthreads();
+    }
+
+    // --------------------------------------------------
+    // 3) Store shared -> global
+    // --------------------------------------------------
+    for (int i = tid; i < FFTSize; i += BlockSize) {
+        odata[i] = smem[i];
+    }
+}
+
 template<
 unsigned int FFTSize,
 unsigned int BlockSize,
@@ -238,10 +308,20 @@ namespace cuAlgo {
         dim3 threadsPerBlock3(BlockSize, 1, 1);
         print_kernel_config(threadsPerBlock3, blocksPerGrid3);
 
-        TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
-             CUALGO_KERNEL_NAME(
-                fft1dCTKernelMixedRadix<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
-             idata, odata, batch_size);
+        if constexpr(is_power_of_eight<FFTSize>() && FFTSize <= 512)
+        {
+            TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
+                CUALGO_KERNEL_NAME(
+                    fft1dCTKernelRadix8<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
+                idata, odata, batch_size);
+        }
+        else
+        {
+            TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
+                CUALGO_KERNEL_NAME(
+                    fft1dCTKernelMixedRadix<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
+                idata, odata, batch_size);
+        }
     }
 }
 

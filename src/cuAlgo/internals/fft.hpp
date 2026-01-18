@@ -33,6 +33,8 @@
 #include "cuAlgo/internals/definitions.hpp"
 #include "cuAlgo/internals/utils.hpp"
 
+#define SQRT1_2 0.7071067811865476f
+
 CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE float2 make(float a, float b) {
     return make_float2(a, b);
 }
@@ -52,7 +54,26 @@ CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE float2 cmul(float2 a, float2 b) {
     );
 }
 
-__device__ __forceinline__ float2 twiddle(int k, int m) {
+CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE float2 mul_neg_j(float2 a) {
+    return make_float2(a.y, -a.x);
+}
+
+CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE float2 mul_W8_1(float2 a) {
+    return make_float2(
+        SQRT1_2 * (a.x + a.y),
+        SQRT1_2 * (a.y - a.x)
+    );
+}
+
+CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE float2 mul_W8_3(float2 a) {
+    return make_float2(
+        -SQRT1_2 * (a.x - a.y),
+        -SQRT1_2 * (a.x + a.y)
+    );
+}
+
+CUALGO_DEVICE CUALGO_FORCE_INLINE
+float2 twiddle(int k, int m) {
     float angle = -2.0f * M_PI * k / m;
     return make_float2(cosf(angle), sinf(angle));
 }
@@ -77,6 +98,18 @@ unsigned int base4_reverse(unsigned x, int log4N)
     for (int i = 0; i < log4N; ++i) {
         r = (r << 2) | (x & 0x3);
         x >>= 2;
+    }
+    return r;
+}
+
+CUALGO_DEVICE CUALGO_FORCE_INLINE
+unsigned int base8_reverse(unsigned x, int log8N)
+{
+    unsigned r = 0;
+    #pragma unroll
+    for (int i = 0; i < log8N; ++i) {
+        r = (r << 3) | (x & 0x7);
+        x >>= 3;
     }
     return r;
 }
@@ -116,6 +149,53 @@ unsigned int mixed_radix_reverse(unsigned x, int log4N)
     }
 
     return out;
+}
+
+template<typename HandleType>
+CUALGO_DEVICE CUALGO_FORCE_INLINE
+void radix8_butterfly(
+    float2* x,
+    int stride,
+    int tw,
+    int N)
+{
+    float2 a0 = x[0];
+    float2 a1 = cmul(x[stride],     HandleType::twiddles()[tw * 1]);
+    float2 a2 = cmul(x[2 * stride], HandleType::twiddles()[tw * 2]);
+    float2 a3 = cmul(x[3 * stride], HandleType::twiddles()[tw * 3]);
+    float2 a4 = cmul(x[4 * stride], HandleType::twiddles()[tw * 4]);
+    float2 a5 = cmul(x[5 * stride], HandleType::twiddles()[tw * 5]);
+    float2 a6 = cmul(x[6 * stride], HandleType::twiddles()[tw * 6]);
+    float2 a7 = cmul(x[7 * stride], HandleType::twiddles()[tw * 7]);
+
+    float2 s0 = cadd(a0, a4);
+    float2 s1 = cadd(a1, a5);
+    float2 s2 = cadd(a2, a6);
+    float2 s3 = cadd(a3, a7);
+
+    float2 d0 = csub(a0, a4);
+    float2 d1 = csub(a1, a5);
+    float2 d2 = csub(a2, a6);
+    float2 d3 = csub(a3, a7);
+
+    float2 t0 = cadd(s0, s2);
+    float2 t1 = cadd(s1, s3);
+    float2 t2 = csub(s0, s2);
+    float2 t3 = mul_neg_j(csub(s1, s3));
+
+    float2 u0 = cadd(d0, mul_neg_j(d2));
+    float2 u1 = cadd(d1, mul_neg_j(d3));
+    float2 u2 = csub(d0, mul_neg_j(d2));
+    float2 u3 = csub(d1, mul_neg_j(d3));
+
+    x[0]           = cadd(t0, t1);
+    x[stride]      = cadd(u0, mul_W8_1(u1));
+    x[2 * stride]  = cadd(t2, t3);
+    x[3 * stride]  = cadd(u2, mul_W8_3(u3));
+    x[4 * stride]  = csub(t0, t1);
+    x[5 * stride]  = csub(u0, mul_W8_1(u1));
+    x[6 * stride]  = csub(t2, t3);
+    x[7 * stride]  = csub(u2, mul_W8_3(u3));
 }
 
 #endif

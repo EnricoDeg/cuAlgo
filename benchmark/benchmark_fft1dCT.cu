@@ -107,6 +107,7 @@ int main() {
     run_benchmark<1024, 256 >(total_size / 1024); // Radix4
     run_benchmark<2048, 256 >(total_size / 2048); // MixedRadix
     run_benchmark<4096, 512 >(total_size / 4096); // Radix4
+    run_benchmark< 512,  64 >(total_size /  512); // Radix8
 
     return 0;
 }

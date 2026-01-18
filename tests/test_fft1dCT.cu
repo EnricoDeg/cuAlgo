@@ -143,13 +143,13 @@ TEST(CT_FFT, size_1024) {
 }
 
 TEST(CT_FFT, size_512) {
-    // Radix2
+    // Radix8
     constexpr unsigned int size = 512;
-    run_single_test<size, 256>();
+    run_single_test<size, 64>();
 }
 
 TEST(CT_FFT, size_2048) {
-    // Radix2
+    // Mixed Radix
     constexpr unsigned int size = 2048;
     run_single_test<size, 256>();
 }

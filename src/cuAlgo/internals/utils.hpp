@@ -58,6 +58,12 @@ constexpr bool is_power_of_four()
     return (N & 0x55555555u) && is_power_of_two<N>();
 }
 
+template<unsigned int N>
+constexpr bool is_power_of_eight()
+{
+    return N > 0 && (N & (N - 1)) == 0 && (N % 8 == 0);
+}
+
 template <typename T>
 size_t getSmem(size_t K) {
 

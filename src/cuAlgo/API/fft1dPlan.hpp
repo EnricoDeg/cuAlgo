@@ -33,7 +33,7 @@
 namespace cuAlgo {
 
     template <unsigned int N>
-    __device__ __constant__ float2 fft_twiddles[N / 2];
+    __device__ __constant__ float2 fft_twiddles[N];
 
     template<unsigned int N>
     struct fftHandle
@@ -45,7 +45,7 @@ namespace cuAlgo {
 
     void create_twiddles(float2* h_twiddles, int N)
     {
-        for (int k = 0; k < N / 2; k++) {
+        for (int k = 0; k < N; k++) {
             float angle = -2.0f * M_PI * k / N;
             h_twiddles[k].x = cosf(angle);
             h_twiddles[k].y = sinf(angle);
@@ -55,11 +55,11 @@ namespace cuAlgo {
     template<unsigned int FFTSize>
     void fft1dCT_plan()
     {
-        float2* h_twiddles = new float2[FFTSize/2];
+        float2* h_twiddles = new float2[FFTSize];
         create_twiddles(h_twiddles, FFTSize);
         cudaMemcpyToSymbol(fft_twiddles<FFTSize>,
                            h_twiddles,
-                           (FFTSize/2) * sizeof(float2));
+                           (FFTSize) * sizeof(float2));
     }
 }
 
