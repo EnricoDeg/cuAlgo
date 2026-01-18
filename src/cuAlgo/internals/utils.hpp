@@ -46,6 +46,18 @@ CUALGO_HOST_DEVICE int div_ceil(int numerator, int denominator)
            (numerator / denominator     ) ;
 }
 
+template<unsigned int N>
+constexpr bool is_power_of_two()
+{
+    return N && ((N & (N - 1)) == 0);
+}
+
+template<unsigned int N>
+constexpr bool is_power_of_four()
+{
+    return (N & 0x55555555u) && is_power_of_two<N>();
+}
+
 template <typename T>
 size_t getSmem(size_t K) {
 

@@ -1,7 +1,7 @@
 /*
  * @file test_fft1dCT.cu
  *
- * @copyright Copyright (C) 2025 Enrico Degregori <enrico.degregori@gmail.com>
+ * @copyright Copyright (C) 2026 Enrico Degregori <enrico.degregori@gmail.com>
  *
  * @author Enrico Degregori <enrico.degregori@gmail.com>
  * 
@@ -29,7 +29,6 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include <chrono>
 #include <cmath>
 #include <vector>
 #include <random>
@@ -76,14 +75,12 @@ void fft_cpu(float2* a, unsigned int N)
     }
 }
 
-using namespace std::chrono;
-TEST(CT_FFT, default) {
-
-    constexpr unsigned int size = 1024;
-
-    float2 * in  = (float2*)malloc(size * sizeof(float2));
-    float2 * out = (float2*)malloc(size * sizeof(float2));
-    float2 * solution = (float2 *)malloc(size * sizeof(float2));
+template<unsigned int Size>
+void run_single_test()
+{
+    float2 * in  = (float2*)malloc(Size * sizeof(float2));
+    float2 * out = (float2*)malloc(Size * sizeof(float2));
+    float2 * solution = (float2 *)malloc(Size * sizeof(float2));
 
     // First create an instance of an engine.
     // std::random_device rnd_device;
@@ -94,28 +91,30 @@ TEST(CT_FFT, default) {
 
     auto gen = [&]() { return dist(mersenne_engine); };
 
-    std::generate((float *)in, (float*)in + 2 * size, gen);
+    std::generate((float *)in, (float*)in + 2 * Size, gen);
 
     float2 *d_in;
-    check_cuda( cudaMalloc(&d_in, size * sizeof(float2)) );
+    check_cuda( cudaMalloc(&d_in, Size * sizeof(float2)) );
 
     float2 *d_out;
-    check_cuda( cudaMalloc(&d_out, size * sizeof(float2)) );
+    check_cuda( cudaMalloc(&d_out, Size * sizeof(float2)) );
 
-    check_cuda( cudaMemcpy(d_in , in , size * sizeof(float2), cudaMemcpyHostToDevice ) );
+    check_cuda( cudaMemcpy(d_in , in , Size * sizeof(float2), cudaMemcpyHostToDevice ) );
 
-    for(int i = 0; i < size; ++i)
+    for(int i = 0; i < Size; ++i)
     {
         solution[i] = in[i];
     }
 
-    fft_cpu(solution, size);
+    // CPU reference
+    fft_cpu(solution, Size);
 
-    cuAlgo::fft1dCT<size>(d_in, d_out);
+    // GPU
+    cuAlgo::fft1dCT<Size>(d_in, d_out);
 
-    check_cuda( cudaMemcpy ( out, d_out, size * sizeof(float2), cudaMemcpyDeviceToHost ) );
+    check_cuda( cudaMemcpy ( out, d_out, Size * sizeof(float2), cudaMemcpyDeviceToHost ) );
 
-    for (unsigned int i = 0; i < size; ++i)
+    for (unsigned int i = 0; i < Size; ++i)
     {
         // std::cout << i << ": " << solution[i].x << " --- " << out[i].x << " --- "
         //     << std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x)
@@ -134,4 +133,16 @@ TEST(CT_FFT, default) {
     free(in);
     free(out);
     free(solution);
+}
+
+TEST(CT_FFT, size_1024) {
+
+    constexpr unsigned int size = 1024;
+    run_single_test<size>();
+}
+
+TEST(CT_FFT, size_512) {
+
+    constexpr unsigned int size = 512;
+    run_single_test<size>();
 }

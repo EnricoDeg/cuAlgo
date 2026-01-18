@@ -1,7 +1,7 @@
 /*
  * @file fft1dCT.hpp
  *
- * @copyright Copyright (C) 2025 Enrico Degregori <enrico.degregori@gmail.com>
+ * @copyright Copyright (C) 2026 Enrico Degregori <enrico.degregori@gmail.com>
  *
  * @author Enrico Degregori <enrico.degregori@gmail.com>
  * 
@@ -26,53 +26,18 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+
+#ifndef FFT1DCT_HPP
+#define FFT1DCT_HPP
+
 #include "cuAlgo/internals/definitions.hpp"
 #include "cuAlgo/internals/utils.hpp"
-
-
-CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE float2 cadd(float2 a, float2 b) {
-    return make_float2(a.x + b.x, a.y + b.y);
-}
-
-CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE float2 csub(float2 a, float2 b) {
-    return make_float2(a.x - b.x, a.y - b.y);
-}
-
-CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE float2 cmul(float2 a, float2 b) {
-    return make_float2(
-        a.x * b.x - a.y * b.y,
-        a.x * b.y + a.y * b.x
-    );
-}
-
-CUALGO_DEVICE CUALGO_FORCE_INLINE
-unsigned int base2_reverse(unsigned x, int log2N)
-{
-    unsigned r = 0;
-    #pragma unroll
-    for (int i = 0; i < log2N; ++i) {
-        r = (r << 1) | (x & 1);
-        x >>= 1;
-    }
-    return r;
-}
-
-CUALGO_DEVICE CUALGO_FORCE_INLINE
-unsigned int base4_reverse(unsigned x, int log4N)
-{
-    unsigned r = 0;
-    #pragma unroll
-    for (int i = 0; i < log4N; ++i) {
-        r = (r << 2) | (x & 0x3);
-        x >>= 2;
-    }
-    return r;
-}
+#include "cuAlgo/internals/fft.hpp"
 
 template <unsigned int FFTSize, typename T, typename HandleType>
 CUALGO_GLOBAL
 void fft1dCTKernelRadix2(T * CUALGO_RESTRICT idata,
-                   T * CUALGO_RESTRICT odata)
+                         T * CUALGO_RESTRICT odata)
 {
     extern CUALGO_SHMEM T sdata[];
 
@@ -127,9 +92,9 @@ void fft1dCTKernelRadix2(T * CUALGO_RESTRICT idata,
 template <unsigned int FFTSize, typename T, typename HandleType>
 CUALGO_GLOBAL
 void fft1dCTKernelRadix4(T * CUALGO_RESTRICT idata,
-                   T * CUALGO_RESTRICT odata)
+                         T * CUALGO_RESTRICT odata)
 {
-    extern __shared__ float2 smem[];
+    extern CUALGO_SHMEM T smem[];
     int tid = threadIdx.x;
     constexpr int LOG2N = __builtin_ctz(FFTSize);
     constexpr int log4N = LOG2N >> 1;
@@ -161,27 +126,27 @@ void fft1dCTKernelRadix4(T * CUALGO_RESTRICT idata,
         float angle = -2.0f * M_PI * j / m;
         float s, c;
         __sincosf(angle, &s, &c);
-        float2 W1 = make_float2(c, s);
-        float2 W2 = cmul(W1, W1);
-        float2 W3 = cmul(W2, W1);
+        T W1 = make(c, s);
+        T W2 = cmul(W1, W1);
+        T W3 = cmul(W2, W1);
 
-        float2 x0 = smem[p + 0 * quarter];
-        float2 x1 = cmul(W1, smem[p + 1 * quarter]);
-        float2 x2 = cmul(W2, smem[p + 2 * quarter]);
-        float2 x3 = cmul(W3, smem[p + 3 * quarter]);
+        T x0 = smem[p + 0 * quarter];
+        T x1 = cmul(W1, smem[p + 1 * quarter]);
+        T x2 = cmul(W2, smem[p + 2 * quarter]);
+        T x3 = cmul(W3, smem[p + 3 * quarter]);
 
-        float2 t0 = cadd(x0, x2);
-        float2 t1 = cadd(x1, x3);
-        float2 t2 = csub(x0, x2);
-        float2 t3 = csub(x1, x3);
+        T t0 = cadd(x0, x2);
+        T t1 = cadd(x1, x3);
+        T t2 = csub(x0, x2);
+        T t3 = csub(x1, x3);
 
         smem[p + 0 * quarter] = cadd(t0, t1);
         smem[p + 2 * quarter] = csub(t0, t1);
 
         smem[p + 1 * quarter] =
-            make_float2(t2.x + t3.y, t2.y - t3.x);
+            make(t2.x + t3.y, t2.y - t3.x);
         smem[p + 3 * quarter] =
-            make_float2(t2.x - t3.y, t2.y + t3.x);
+            make(t2.x - t3.y, t2.y + t3.x);
 
         __syncthreads();
     }
@@ -194,8 +159,6 @@ void fft1dCTKernelRadix4(T * CUALGO_RESTRICT idata,
     odata[4 * tid + 2] = smem[4 * tid + 2];
     odata[4 * tid + 3] = smem[4 * tid + 3];
 }
-
-
 
 namespace cuAlgo {
 
@@ -229,18 +192,6 @@ namespace cuAlgo {
                            (BlockSize/2) * sizeof(float2));
     }
 
-    template<unsigned int N>
-    constexpr bool is_power_of_two()
-    {
-        return N && ((N & (N - 1)) == 0);
-    }
-
-    template<unsigned int N>
-    constexpr bool is_power_of_four()
-    {
-        return (N & 0x55555555u) && is_power_of_two<N>();
-    }
-
     /**
     * @brief   Perform 1d C2C fft
     * 
@@ -265,6 +216,11 @@ namespace cuAlgo {
                  cudaStream_t stream = 0,
                  bool async = false)
     {
+        dim3 blocksPerGrid3(1, 1, 1);
+        dim3 threadsPerBlock3(FFTSize, 1, 1);
+
+        print_kernel_config(threadsPerBlock3, blocksPerGrid3);
+
         if constexpr(is_power_of_four<FFTSize>())
         {
             std::cout << "Running Radix4\n";
@@ -303,3 +259,5 @@ namespace cuAlgo {
         }
     }
 }
+
+#endif
