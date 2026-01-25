@@ -1,5 +1,5 @@
 /*
- * @file fft1dCTr2c.hpp
+ * @file ifft1dCTc2r.hpp
  *
  * @copyright Copyright (C) 2026 Enrico Degregori <enrico.degregori@gmail.com>
  *
@@ -27,8 +27,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef FFT1DCTR2C_HPP
-#define FFT1DCTR2C_HPP
+#ifndef IFFT1DCTC2R_HPP
+#define IFFT1DCTC2R_HPP
 
 #include "cuAlgo/internals/definitions.hpp"
 #include "cuAlgo/internals/utils.hpp"
@@ -42,9 +42,9 @@ typename T,
 typename HandleType
 >
 CUALGO_GLOBAL
-void fft1dCTr2cKernelRadix2(T * CUALGO_RESTRICT input_data,
-                            T * CUALGO_RESTRICT output_data,
-                            int batch_size)
+void ifft1dCTc2rKernelRadix2(T * CUALGO_RESTRICT input_data,
+                             T * CUALGO_RESTRICT output_data,
+                             int batch_size)
 {
     constexpr int halfN = FFTSize / 2;
 
@@ -52,19 +52,31 @@ void fft1dCTr2cKernelRadix2(T * CUALGO_RESTRICT input_data,
 
     int tid = threadIdx.x;
     int batch_id = blockIdx.x;
-    T* idata = input_data  + batch_id * (2 * FFTSize);
-    T* odata = output_data + batch_id * (2 * FFTSize + 2);
+    T* idata = input_data  + batch_id * (2 * FFTSize + 2);
+    T* odata = output_data + batch_id * (2 * FFTSize);
     const int LOGN = __ffs(halfN) - 1;
 
     // ------------------------------------------------
-    // 1. Load + Base-2 digit-reversed store
+    // 2. Preprocess input and prefer for CT stages
     // ------------------------------------------------
     for (int idx = tid; idx < halfN; idx += BlockSize)
     {
-        float2 val = make(idata[2 * idx], idata[2 * idx + 1]);
+        float2 Zk;
+        float2 Ck      = make(idata[2 * idx], idata[2 * idx + 1]);
+        float2 Cmir    = conjf2(make(idata[2 * (halfN - idx)], idata[2 * (halfN - idx) + 1]));      // mirror element
+        // Compute E and O
+        float2 E = make(0.5f * (Ck.x + Cmir.x), 0.5f * (Ck.y + Cmir.y));
+        float2 O = make(0.5f * (Ck.x - Cmir.x), 0.5f * (Ck.y - Cmir.y));
+        // Twiddle
+        float ang = 2.0f * M_PI * idx / FFTSize;
+        float2 W  = make(cosf(ang), sinf(ang));
+        float2 W1 = make(-W.y, W.x);
+        Zk = cadd(E,cmul(W1,O));
+        // Store Zk in length-N/2 array
         unsigned int r = base2_reverse(idx, LOGN);
-        sdata[r] = val;
+        sdata[r] = Zk;
     }
+
     __syncthreads();
 
     // ------------------------------------------------
@@ -75,24 +87,16 @@ void fft1dCTr2cKernelRadix2(T * CUALGO_RESTRICT input_data,
     // ------------------------------------------------
     // 3. Store (natural order)
     // ------------------------------------------------
-    for (int idx = tid; idx <= halfN; idx += BlockSize)
-    {
-        float2 Zk          = sdata[idx % halfN];
-        float2 Zk_conj     = conjf2(sdata[(halfN - idx) % halfN]);
-        float2 E           = make(0.5f * (Zk.x + Zk_conj.x), 0.5f * (Zk.y + Zk_conj.y));
-        float2 O           = make(0.5f * (Zk.y - Zk_conj.y), 0.5f * (Zk_conj.x - Zk.x));
-        float ang          = -2.0f * M_PI * idx / FFTSize;
-        float2 W           = make(cosf(ang), sinf(ang));
-        float2 res         = cadd(E, cmul(W, O));
-        odata[2 * idx]     = res.x;
-        odata[2 * idx + 1] = res.y;
+    for (int idx = tid; idx < halfN; idx += BlockSize) {
+        odata[2*idx]     = sdata[idx].x / (FFTSize / 2);  // even samples, scale
+        odata[2*idx + 1] = sdata[idx].y / (FFTSize / 2);  // odd samples
     }
 }
 
 namespace cuAlgo {
 
     /**
-    * @brief   Perform 1d R2C fft
+    * @brief   Perform 1d C2R ifft
     * 
     * @details The input vector has dimension {size} and 
     *          the output vector has dimension {size}
@@ -111,11 +115,11 @@ namespace cuAlgo {
     unsigned int FFTSize,
     unsigned int BlockSize,
     typename T>
-    void fft1dCTr2c(T *idata,
-                    T *odata,
-                    int batch_size,
-                    cudaStream_t stream = 0,
-                    bool async = false)
+    void ifft1dCTc2r(T *idata,
+                     T *odata,
+                     int batch_size,
+                     cudaStream_t stream = 0,
+                     bool async = false)
     {
         static_assert(is_power_of_two<FFTSize>());
 
@@ -125,7 +129,7 @@ namespace cuAlgo {
 
         TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
             CUALGO_KERNEL_NAME(
-                fft1dCTr2cKernelRadix2<FFTSize, BlockSize, T, fftHandle<FFTSize / 2>>),
+                ifft1dCTc2rKernelRadix2<FFTSize, BlockSize, T, ifftHandle<FFTSize / 2>>),
             idata, odata, batch_size);
     }
 }

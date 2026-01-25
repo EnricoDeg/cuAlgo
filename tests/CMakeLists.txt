@@ -81,6 +81,13 @@ add_executable( test_ifft1dCT
 target_include_directories(test_ifft1dCT PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(test_ifft1dCT GTest::gtest_main)
 
+# CT inverse FFT c2r
+add_executable( test_ifft1dCTc2r
+                test_ifft1dCTc2r.cu
+              )
+target_include_directories(test_ifft1dCTc2r PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(test_ifft1dCTc2r GTest::gtest_main)
+
 # Stockham FFT
 add_executable( test_fft1dStockham
                 test_fft1dStockham.cu
