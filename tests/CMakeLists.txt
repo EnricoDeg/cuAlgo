@@ -67,6 +67,13 @@ add_executable( test_fft1dCT
 target_include_directories(test_fft1dCT PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(test_fft1dCT GTest::gtest_main)
 
+# CT FFT r2c
+add_executable( test_fft1dCTr2c
+                test_fft1dCTr2c.cu
+              )
+target_include_directories(test_fft1dCTr2c PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(test_fft1dCTr2c GTest::gtest_main)
+
 # CT inverse FFT
 add_executable( test_ifft1dCT
                 test_ifft1dCT.cu
