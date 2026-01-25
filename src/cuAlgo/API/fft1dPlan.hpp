@@ -43,10 +43,22 @@ namespace cuAlgo {
         }
     };
 
+    template <unsigned int N>
+    __device__ __constant__ float2 ifft_twiddles[N];
+
+    template<unsigned int N>
+    struct ifftHandle
+    {
+        __device__ static const float2* twiddles() {
+            return ifft_twiddles<N>;
+        }
+    };
+
+    template<int Factor>
     void create_twiddles(float2* h_twiddles, int N)
     {
         for (int k = 0; k < N; k++) {
-            float angle = -2.0f * M_PI * k / N;
+            float angle = Factor * 2.0f * M_PI * k / N;
             h_twiddles[k].x = cosf(angle);
             h_twiddles[k].y = sinf(angle);
         }
@@ -56,8 +68,18 @@ namespace cuAlgo {
     void fft1dCT_plan()
     {
         float2* h_twiddles = new float2[FFTSize];
-        create_twiddles(h_twiddles, FFTSize);
+        create_twiddles<-1>(h_twiddles, FFTSize);
         cudaMemcpyToSymbol(fft_twiddles<FFTSize>,
+                           h_twiddles,
+                           (FFTSize) * sizeof(float2));
+    }
+
+    template<unsigned int FFTSize>
+    void ifft1dCT_plan()
+    {
+        float2* h_twiddles = new float2[FFTSize];
+        create_twiddles<1>(h_twiddles, FFTSize);
+        cudaMemcpyToSymbol(ifft_twiddles<FFTSize>,
                            h_twiddles,
                            (FFTSize) * sizeof(float2));
     }

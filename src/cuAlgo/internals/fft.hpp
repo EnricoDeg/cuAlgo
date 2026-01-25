@@ -198,4 +198,38 @@ void radix8_butterfly(
     x[7 * stride]  = csub(u2, mul_W8_3(u3));
 }
 
+template<
+unsigned int FFTSize,
+unsigned int BlockSize,
+typename T,
+typename HandleType
+>
+CUALGO_DEVICE CUALGO_FORCE_INLINE
+void radix2_CT(T* sdata, int tid, const int LOGN)
+{
+    // ------------------------------------------------
+    // 2. radix-2 stages
+    // ------------------------------------------------
+    for (int stage = 0, len = 2; stage < LOGN; ++stage, len <<= 1) {
+
+        int half = len >> 1;
+
+        for (int tidx = tid; tidx < FFTSize / 2; tidx += BlockSize)
+        {
+            int block = tidx / half; //>> (__ffs(len) - 2); // tidx / half;
+            int k = tidx % half; //& (half - 1); //tidx % half;
+            int i = block * len + k;
+
+            int twiddle_idx = (k * FFTSize) / len;
+            T w = HandleType::twiddles()[twiddle_idx];
+            T u = sdata[i];
+            T v = cmul(w, sdata[i + half]);
+
+            sdata[i]       = cadd(u, v);
+            sdata[i + half]= csub(u, v);
+        }
+        __syncthreads();
+    }
+}
+
 #endif
