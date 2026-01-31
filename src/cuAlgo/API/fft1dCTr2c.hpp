@@ -89,6 +89,124 @@ void fft1dCTr2cKernelRadix2(T * CUALGO_RESTRICT input_data,
     }
 }
 
+template<
+unsigned int FFTSize,
+unsigned int BlockSize,
+typename T,
+typename HandleType
+>
+CUALGO_GLOBAL
+void fft1dCTr2cKernelMixedRadix(T * CUALGO_RESTRICT input_data,
+                                T * CUALGO_RESTRICT output_data,
+                                int batch_size)
+{
+    constexpr int halfN = FFTSize / 2;
+
+    CUALGO_SHMEM float2 sdata[halfN];
+
+    int tid = threadIdx.x;
+    int batch_id = blockIdx.x;
+    T* idata = input_data  + batch_id * (2 * FFTSize);
+    T* odata = output_data + batch_id * (2 * FFTSize + 2);
+    constexpr int LOG2N = __builtin_ctz(halfN);
+    constexpr int log4N = LOG2N >> 1;
+    constexpr bool isMixedRadix = (LOG2N & 1) != 0;
+
+    // ------------------------------------------------
+    // 1. Load + Base-2 digit-reversed store
+    // ------------------------------------------------
+    for (int idx = tid; idx < halfN; idx += BlockSize)
+    {
+        float2 val = make(idata[2 * idx], idata[2 * idx + 1]);
+        unsigned int r = isMixedRadix ?
+                         mixed_radix_reverse(idx, log4N) :
+                         base4_reverse(idx, log4N);
+        sdata[r] = val;
+    }
+    __syncthreads();
+
+    // ------------------------------------------------
+    // 2a. radix-4 stages
+    // ------------------------------------------------
+    for (int stage = 0, m = 4; stage < log4N; ++stage, m <<= 2)
+    {
+
+        int quarter = m >> 2;
+
+        for (int base = tid; base < halfN >> 2; base += BlockSize)
+        {
+            int j = base % quarter;
+            int k = base / quarter;
+            int p = k * m + j;
+
+            int twiddle_idx = (j * halfN) / m;
+            float2 W1 = HandleType::twiddles()[twiddle_idx];
+            float2 W2 = cmul(W1, W1);
+            float2 W3 = cmul(W2, W1);
+
+            float2 x0 = sdata[p + 0 * quarter];
+            float2 x1 = cmul(W1, sdata[p + 1 * quarter]);
+            float2 x2 = cmul(W2, sdata[p + 2 * quarter]);
+            float2 x3 = cmul(W3, sdata[p + 3 * quarter]);
+
+            float2 t0 = cadd(x0, x2);
+            float2 t1 = cadd(x1, x3);
+            float2 t2 = csub(x0, x2);
+            float2 t3 = csub(x1, x3);
+
+            sdata[p + 0 * quarter] = cadd(t0, t1);
+            sdata[p + 2 * quarter] = csub(t0, t1);
+
+            sdata[p + 1 * quarter] =
+                make(t2.x + t3.y, t2.y - t3.x);
+            sdata[p + 3 * quarter] =
+                make(t2.x - t3.y, t2.y + t3.x);
+        }
+
+        __syncthreads();
+    }
+
+    // ------------------------------------------------
+    // 2b. final radix-2 stage (only if FFTSize has odd log2)
+    // ------------------------------------------------
+    if constexpr(isMixedRadix) {
+
+        constexpr int half = halfN >> 1;
+
+        for (int k = tid; k < half; k += BlockSize) {
+
+            float2 a = sdata[k];
+            float2 b = sdata[k + half];
+
+            // Twiddle W_N^k
+            float2 w = HandleType::twiddles()[k];
+
+            float2 t = cmul(w, b);
+
+            sdata[k]        = cadd(a, t);
+            sdata[k + half] = csub(a, t);
+        }
+
+        __syncthreads();
+    }
+
+    // ------------------------------------------------
+    // 3. Store (natural order)
+    // ------------------------------------------------
+    for (int idx = tid; idx <= halfN; idx += BlockSize)
+    {
+        float2 Zk          = sdata[idx % halfN];
+        float2 Zk_conj     = conjf2(sdata[(halfN - idx) % halfN]);
+        float2 E           = make(0.5f * (Zk.x + Zk_conj.x), 0.5f * (Zk.y + Zk_conj.y));
+        float2 O           = make(0.5f * (Zk.y - Zk_conj.y), 0.5f * (Zk_conj.x - Zk.x));
+        float ang          = -2.0f * M_PI * idx / FFTSize;
+        float2 W           = make(cosf(ang), sinf(ang));
+        float2 res         = cadd(E, cmul(W, O));
+        odata[2 * idx]     = res.x;
+        odata[2 * idx + 1] = res.y;
+    }
+}
+
 namespace cuAlgo {
 
     /**
@@ -125,7 +243,7 @@ namespace cuAlgo {
 
         TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
             CUALGO_KERNEL_NAME(
-                fft1dCTr2cKernelRadix2<FFTSize, BlockSize, T, fftHandle<FFTSize / 2>>),
+                fft1dCTr2cKernelMixedRadix<FFTSize, BlockSize, T, fftHandle<FFTSize / 2>>),
             idata, odata, batch_size);
     }
 }

@@ -62,6 +62,7 @@ void fft_cpu(float2* a, unsigned int N)
 
         for (unsigned int i = 0; i < N; i += len) {
             for (unsigned int k = 0; k < half; ++k) {
+
                 float theta = ang * k;
                 float2 w = {std::cos(theta), std::sin(theta)};
 
@@ -136,7 +137,19 @@ void run_single_test()
 }
 
 TEST(CT_FFT, size_128) {
-    // Radix2
+    // Mixed Radix
     constexpr unsigned int size = 128;
     run_single_test<size, 32>();
+}
+
+TEST(CT_FFT, size_256) {
+    // Mixed Radix
+    constexpr unsigned int size = 256;
+    run_single_test<size, 64>();
+}
+
+TEST(CT_FFT, size_1024) {
+    // Mixed Radix
+    constexpr unsigned int size = 1024;
+    run_single_test<size, 256>();
 }
