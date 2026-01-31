@@ -274,6 +274,114 @@ void fft1dCTKernelMixedRadix(T * CUALGO_RESTRICT input_data,
     }
 }
 
+template<unsigned int FFTSize, typename T>
+__global__ void bit_reverse_global(T* data)
+{
+    unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= FFTSize) return;
+
+    unsigned int r = base2_reverse(i, __ffs(FFTSize) - 1);
+
+    if (r > i) {
+        T tmp = data[i];
+        data[i] = data[r];
+        data[r] = tmp;
+    }
+}
+
+template<
+unsigned int FFTSize,
+unsigned int BlockSize,
+unsigned int Tile,
+typename T,
+typename HandleType
+>
+CUALGO_GLOBAL
+void fft1dCTKernelRadix2Stage1DIT(T * CUALGO_RESTRICT input_data,
+                         T * CUALGO_RESTRICT output_data,
+                         int batch_size)
+{
+    CUALGO_SHMEM T sdata[Tile];
+
+    int tid = threadIdx.x;
+    int batch_id = blockIdx.x;
+    T* idata = input_data + batch_id * Tile;
+    T* odata = output_data + batch_id * Tile;
+    const int LOGN = __ffs(Tile) - 1;
+
+    // ------------------------------------------------
+    // 1. Load + Base-2 digit-reversed store
+    // ------------------------------------------------
+    for (int idx = tid; idx < Tile; idx += BlockSize)
+    {
+        // unsigned int r = base2_reverse(idx, LOGN);
+        sdata[idx] = idata[idx];
+    }
+    __syncthreads();
+
+    // ------------------------------------------------
+    // 2. radix-2 stages
+    // ------------------------------------------------
+    for (int stage = 0, len = 2; stage < LOGN; ++stage, len <<= 1) {
+
+        int half = len >> 1;
+
+        for (int tidx = tid; tidx < Tile / 2; tidx += BlockSize)
+        {
+            int block = tidx / half; //>> (__ffs(len) - 2); // tidx / half;
+            int k = tidx % half; //& (half - 1); //tidx % half;
+            int i = block * len + k;
+
+            int twiddle_idx = (k * FFTSize) / len;
+            T w = HandleType::twiddles()[twiddle_idx];
+
+            T u = sdata[i];
+            T v = cmul(w, sdata[i+half]);
+
+            sdata[i]       = cadd(u,v);
+            sdata[i+half]  = csub(u,v);
+        }
+        __syncthreads();
+    }
+
+    // ------------------------------------------------
+    // 3. Store (natural order)
+    // ------------------------------------------------
+    for (int idx = tid; idx < Tile; idx += BlockSize)
+    {
+        odata[idx] = sdata[idx];
+    }
+}
+
+template<
+unsigned int N,
+unsigned int BlockSize,
+typename T,
+typename HandleType>
+CUALGO_GLOBAL
+void fft1dCTMergeKernelDIT(T* data, int stage){
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int m = 1 << stage;
+    int half = m >> 1;
+    int total = N >> 1;
+    if(tid >= total) return;
+
+    int k = tid / half;
+    int j = tid % half;
+
+    int i1 = k*m + j;
+    int i2 = i1 + half;
+
+    float angle = -2.0f * M_PI * j / m;
+    float2 w = make(cosf(angle), sinf(angle));
+
+    float2 u = data[i1];
+    float2 t = cmul(w, data[i2]);
+
+    data[i1] = cadd(u,t);
+    data[i2] = csub(u,t);
+}
+
 namespace cuAlgo {
 
     /**
@@ -304,23 +412,59 @@ namespace cuAlgo {
     {
         static_assert(is_power_of_two<FFTSize>());
 
-        dim3 blocksPerGrid3(batch_size, 1, 1);
-        dim3 threadsPerBlock3(BlockSize, 1, 1);
-        print_kernel_config(threadsPerBlock3, blocksPerGrid3);
-
-        if constexpr(is_power_of_eight<FFTSize>() && FFTSize <= 512)
+        if constexpr(FFTSize > 4096)
         {
+            constexpr unsigned int Tile = 4096;
+            constexpr int blocks_per_fft = FFTSize / Tile;
+
+            int blocks = (FFTSize + BlockSize - 1) / BlockSize;
+
+            TIME(blocks, BlockSize, 0, stream, async, 
+                CUALGO_KERNEL_NAME(
+                    bit_reverse_global<FFTSize, T>),
+                idata);
+
+            dim3 blocksPerGrid3(batch_size * blocks_per_fft, 1, 1);
+            dim3 threadsPerBlock3(BlockSize, 1, 1);
+            print_kernel_config(threadsPerBlock3, blocksPerGrid3);
+
             TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
                 CUALGO_KERNEL_NAME(
-                    fft1dCTKernelRadix8<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
+                    fft1dCTKernelRadix2Stage1DIT<FFTSize, BlockSize, Tile, T, fftHandle<FFTSize>>),
                 idata, odata, batch_size);
+
+            int total_butterflies = FFTSize / 2;
+            blocks = (total_butterflies + BlockSize - 1) / BlockSize;
+            int log2N = (int)log2f((float)FFTSize);
+            int log2Tile = (int)log2f((float)Tile);
+
+            for(int stage = log2Tile+1; stage <= log2N; stage++){
+                TIME(blocks, BlockSize, 0, stream, async, 
+                    CUALGO_KERNEL_NAME(
+                        fft1dCTMergeKernelDIT<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
+                    odata, stage);
+            }
         }
         else
         {
-            TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
-                CUALGO_KERNEL_NAME(
-                    fft1dCTKernelMixedRadix<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
-                idata, odata, batch_size);
+            dim3 blocksPerGrid3(batch_size, 1, 1);
+            dim3 threadsPerBlock3(BlockSize, 1, 1);
+            print_kernel_config(threadsPerBlock3, blocksPerGrid3);
+
+            if constexpr(is_power_of_eight<FFTSize>() && FFTSize <= 512)
+            {
+                TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
+                    CUALGO_KERNEL_NAME(
+                        fft1dCTKernelRadix8<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
+                    idata, odata, batch_size);
+            }
+            else
+            {
+                TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
+                    CUALGO_KERNEL_NAME(
+                        fft1dCTKernelMixedRadix<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
+                    idata, odata, batch_size);
+            }
         }
     }
 }

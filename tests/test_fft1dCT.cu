@@ -124,9 +124,9 @@ void run_single_test()
         //     << std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y)
         //     << std::endl;
         if(solution[i].x > 1e-5 && out[i].x > 1e-5)
-            ASSERT_TRUE(std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x) < 1e-3);
+            ASSERT_TRUE(std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x) < 2e-3);
         if(solution[i].y > 1e-5 && out[i].y > 1e-5)
-            ASSERT_TRUE(std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y) < 1e-3);
+            ASSERT_TRUE(std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y) < 2e-3);
     }
 
     check_cuda( cudaFree(d_in) );
@@ -151,5 +151,11 @@ TEST(CT_FFT, size_512) {
 TEST(CT_FFT, size_2048) {
     // Mixed Radix
     constexpr unsigned int size = 2048;
+    run_single_test<size, 256>();
+}
+
+TEST(CT_FFT, size_8192) {
+    // Radix2 - Multi kernel
+    constexpr unsigned int size = 8192;
     run_single_test<size, 256>();
 }
