@@ -35,6 +35,31 @@
 #include "cuAlgo/internals/fft.hpp"
 #include "cuAlgo/API/fft1dPlan.hpp"
 
+constexpr int STATIC_SMEM_LIMIT = 48 * 1024;
+
+template<int Bytes, bool UseStatic = (Bytes <= STATIC_SMEM_LIMIT)>
+struct SharedMemory;
+
+template<int Bytes>
+struct SharedMemory<Bytes, true>
+{
+    __device__ static float2* get()
+    {
+        __shared__ float2 smem[Bytes / sizeof(float2)];
+        return smem;
+    }
+};
+
+template<int Bytes>
+struct SharedMemory<Bytes, false>
+{
+    __device__ static float2* get()
+    {
+        extern __shared__ float2 smem[];
+        return smem;
+    }
+};
+
 template<
 unsigned int FFTSize,
 unsigned int BlockSize,
@@ -52,7 +77,7 @@ void convFFT1dCTKernelRadix2DITDIT(T * CUALGO_RESTRICT input_data1,
 {
     constexpr int halfN = FFTSize / 2;
 
-    CUALGO_SHMEM float2 sdata[2 * halfN];
+    float2* sdata = SharedMemory<FFTSize * 2 * sizeof(T)>::get();
 
     float2 *sdata1 = sdata;
     float2 *sdata2 = sdata + halfN;
@@ -208,7 +233,7 @@ void convFFT1dCTKernelMixedRadixDITDIT(T * CUALGO_RESTRICT input_data1,
 {
     constexpr int halfN = FFTSize / 2;
 
-    CUALGO_SHMEM float2 sdata[2 * halfN];
+    float2* sdata = SharedMemory<FFTSize * 2 * sizeof(T)>::get();
 
     float2 *sdata1 = sdata;
     float2 *sdata2 = sdata + halfN;
@@ -284,7 +309,55 @@ void convFFT1dCTKernelMixedRadixDITDIT(T * CUALGO_RESTRICT input_data1,
     // ------------------------------------------------
     // 2a. radix-4 stages FFT first signal
     // ------------------------------------------------
-    radix4_CT_DIT<halfN, BlockSize, float2, HandleTypeFwd, true>(sdata1, tid, log4N);
+    for (int stage = 0, m = 4; stage < log4N; ++stage, m <<= 2)
+    {
+
+        int quarter = m >> 2;
+
+        for (int base = tid; base < halfN >> 2; base += BlockSize)
+        {
+            int j = base % quarter;
+            int k = base / quarter;
+            int p = k * m + j;
+
+            int twiddle_idx = (j * halfN) / m;
+            float2 W1 = HandleTypeFwd::twiddles()[twiddle_idx];
+            float2 W2 = cmul(W1, W1);
+            float2 W3 = cmul(W2, W1);
+
+            float2 x0_1 = sdata1[p + 0 * quarter];
+            float2 x1_1 = cmul(W1, sdata1[p + 1 * quarter]);
+            float2 x2_1 = cmul(W2, sdata1[p + 2 * quarter]);
+            float2 x3_1 = cmul(W3, sdata1[p + 3 * quarter]);
+
+            float2 x0_2 = sdata2[p + 0 * quarter];
+            float2 x1_2 = cmul(W1, sdata2[p + 1 * quarter]);
+            float2 x2_2 = cmul(W2, sdata2[p + 2 * quarter]);
+            float2 x3_2 = cmul(W3, sdata2[p + 3 * quarter]);
+
+            float2 t0_1 = cadd(x0_1, x2_1);
+            float2 t1_1 = cadd(x1_1, x3_1);
+            float2 t2_1 = csub(x0_1, x2_1);
+            float2 t3_1 = csub(x1_1, x3_1);
+
+            float2 t0_2 = cadd(x0_2, x2_2);
+            float2 t1_2 = cadd(x1_2, x3_2);
+            float2 t2_2 = csub(x0_2, x2_2);
+            float2 t3_2 = csub(x1_2, x3_2);
+
+            sdata1[p + 0 * quarter] = cadd(t0_1, t1_1);
+            sdata1[p + 2 * quarter] = csub(t0_1, t1_1);
+            sdata1[p + 1 * quarter] = make(t2_1.x + t3_1.y, t2_1.y - t3_1.x);
+            sdata1[p + 3 * quarter] = make(t2_1.x - t3_1.y, t2_1.y + t3_1.x);
+
+            sdata2[p + 0 * quarter] = cadd(t0_2, t1_2);
+            sdata2[p + 2 * quarter] = csub(t0_2, t1_2);
+            sdata2[p + 1 * quarter] = make(t2_2.x + t3_2.y, t2_2.y - t3_2.x);
+            sdata2[p + 3 * quarter] = make(t2_2.x - t3_2.y, t2_2.y + t3_2.x);
+        }
+
+        __syncthreads();
+    }
 
     // ------------------------------------------------
     // 2b. final radix-2 stage (only if FFTSize has odd log2)
@@ -295,45 +368,23 @@ void convFFT1dCTKernelMixedRadixDITDIT(T * CUALGO_RESTRICT input_data1,
 
         for (int k = tid; k < half; k += BlockSize) {
 
-            float2 a = sdata1[k];
-            float2 b = sdata1[k + half];
+            float2 a1 = sdata1[k];
+            float2 b1 = sdata1[k + half];
+
+            float2 a2 = sdata2[k];
+            float2 b2 = sdata2[k + half];
 
             // Twiddle W_N^k
             float2 w = HandleTypeFwd::twiddles()[k];
 
-            float2 t = cmul(w, b);
+            float2 t1 = cmul(w, b1);
+            float2 t2 = cmul(w, b2);
 
-            sdata1[k]        = cadd(a, t);
-            sdata1[k + half] = csub(a, t);
-        }
+            sdata1[k]        = cadd(a1, t1);
+            sdata1[k + half] = csub(a1, t1);
 
-        __syncthreads();
-    }
-
-    // ------------------------------------------------
-    // 2c. radix-4 stages FFT second signal
-    // ------------------------------------------------
-    radix4_CT_DIT<halfN, BlockSize, float2, HandleTypeFwd, true>(sdata2, tid, log4N);
-
-    // ------------------------------------------------
-    // 2d. final radix-2 stage (only if FFTSize has odd log2)
-    // ------------------------------------------------
-    if constexpr(isMixedRadix) {
-
-        constexpr int half = halfN >> 1;
-
-        for (int k = tid; k < half; k += BlockSize) {
-
-            float2 a = sdata2[k];
-            float2 b = sdata2[k + half];
-
-            // Twiddle W_N^k
-            float2 w = HandleTypeFwd::twiddles()[k];
-
-            float2 t = cmul(w, b);
-
-            sdata2[k]        = cadd(a, t);
-            sdata2[k + half] = csub(a, t);
+            sdata2[k]        = cadd(a2, t2);
+            sdata2[k + half] = csub(a2, t2);
         }
 
         __syncthreads();
@@ -496,11 +547,34 @@ namespace cuAlgo {
         dim3 threadsPerBlock3(BlockSize, 1, 1);
         print_kernel_config(threadsPerBlock3, blocksPerGrid3);
 
-        TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
+        constexpr bool useConst = fitInConstantMemory<2 * FFTSize, T>();
+        using fftHandle = fftHandle<FFTSize / 2, useConst>;
+        using ifftHandle = ifftHandle<FFTSize / 2, useConst>;
+
+        constexpr int SmemBytes = FFTSize * 2 * sizeof(T);
+        if constexpr(SmemBytes > STATIC_SMEM_LIMIT)
+        {
+            check_cuda(cudaFuncSetAttribute(
+                convFFT1dCTKernelMixedRadixDITDIT<FFTSize, BlockSize, T,
+                    fftHandle, ifftHandle>,
+                cudaFuncAttributeMaxDynamicSharedMemorySize,
+                SmemBytes
+            ));
+
+            TIME(blocksPerGrid3, threadsPerBlock3, SmemBytes, stream, async, 
             CUALGO_KERNEL_NAME(
                 convFFT1dCTKernelMixedRadixDITDIT<FFTSize, BlockSize, T,
-                fftHandle<FFTSize / 2>, ifftHandle<FFTSize / 2>>),
+                fftHandle, ifftHandle>),
             idata1, idata2, odata, input1_size, input2_size, batch_size);
+        }
+        else
+        {
+            TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
+                CUALGO_KERNEL_NAME(
+                    convFFT1dCTKernelMixedRadixDITDIT<FFTSize, BlockSize, T,
+                    fftHandle, ifftHandle>),
+                idata1, idata2, odata, input1_size, input2_size, batch_size);
+        }
     }
 }
 

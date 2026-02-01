@@ -153,8 +153,7 @@ void run_single_test()
     auto solution = convolution(in1, in2, Size);
 
     // GPU
-    cuAlgo::fft1dCT_plan<OutputSize / 2>();
-    cuAlgo::ifft1dCT_plan<OutputSize / 2>();
+    cuAlgo::conv1dCT_plan<OutputSize / 2>();
     cuAlgo::convFFT1dCT<OutputSize, BlockSize>(d_in1, d_in2, d_out, Size, Size, 1);
 
     check_cuda( cudaMemcpy ( out, d_out, OutputSize * sizeof(float), cudaMemcpyDeviceToHost ) );
@@ -199,3 +198,15 @@ TEST(CT_convFFT, size_2048) {
     constexpr unsigned int size = 2048;
     run_single_test<size, 128>();
 }
+
+// TEST(CT_convFFT, size_4096) {
+//     // Radix2
+//     constexpr unsigned int size = 4096;
+//     run_single_test<size, 256>();
+// }
+
+// TEST(CT_convFFT, size_8192) {
+//     // Radix2
+//     constexpr unsigned int size = 8192;
+//     run_single_test<size, 256>();
+// }

@@ -32,25 +32,71 @@
 
 namespace cuAlgo {
 
+    constexpr int CONST_MEM_LIMIT = 64 * 1024;
+
+    template<unsigned int Size, typename T>
+    constexpr bool fitInConstantMemory()
+    {
+        return (Size * sizeof(T)) < CONST_MEM_LIMIT;
+    }
+
     template <unsigned int N>
     __device__ __constant__ float2 fft_twiddles[N];
-
-    template<unsigned int N>
-    struct fftHandle
-    {
-        __device__ static const float2* twiddles() {
-            return fft_twiddles<N>;
-        }
-    };
 
     template <unsigned int N>
     __device__ __constant__ float2 ifft_twiddles[N];
 
-    template<unsigned int N>
+    template<unsigned int N, bool IsFwd, bool UseConst>
+    struct TwiddleAccessor;
+
+    template<unsigned int N, bool IsFwd>
+    struct TwiddleAccessor<N, IsFwd, true>
+    {
+        __device__ float2 operator[](int i) const
+        {
+            if constexpr(IsFwd)
+                return fft_twiddles<N>[i];
+            else
+                return ifft_twiddles<N>[i];
+        }
+    };
+
+    template<int Factor>
+    __device__ inline float2 compute_twiddle(int k, int N)
+    {
+        float angle = Factor * 2.f * M_PI * k / N;
+        return make_float2(cosf(angle), sinf(angle));
+    }
+
+    template<unsigned int N, bool IsFwd>
+    struct TwiddleAccessor<N, IsFwd, false>
+    {
+        static constexpr int Factor = IsFwd ? -1 : 1;
+        __device__ float2 operator[](int i) const
+        {
+            return compute_twiddle<Factor>(i, N);
+        }
+    };
+
+    template<unsigned int N, bool UseConst = true>
+    struct fftHandle
+    {
+        using Accessor = TwiddleAccessor<N, true, UseConst>;
+
+        __device__ static Accessor twiddles()
+        {
+            return Accessor{};
+        }
+    };
+
+    template<unsigned int N, bool UseConst = true>
     struct ifftHandle
     {
-        __device__ static const float2* twiddles() {
-            return ifft_twiddles<N>;
+        using Accessor = TwiddleAccessor<N, false, UseConst>;
+
+        __device__ static Accessor twiddles()
+        {
+            return Accessor{};
         }
     };
 
@@ -64,24 +110,44 @@ namespace cuAlgo {
         }
     }
 
-    template<unsigned int FFTSize>
+    template<unsigned int FFTSize, bool AvoidConst = false>
     void fft1dCT_plan()
     {
-        float2* h_twiddles = new float2[FFTSize];
-        create_twiddles<-1>(h_twiddles, FFTSize);
-        cudaMemcpyToSymbol(fft_twiddles<FFTSize>,
-                           h_twiddles,
-                           (FFTSize) * sizeof(float2));
+        constexpr bool UseConst = !AvoidConst &&
+            fitInConstantMemory<FFTSize, float2>();
+        if constexpr(UseConst)
+        {
+            float2* h_twiddles = new float2[FFTSize];
+            create_twiddles<-1>(h_twiddles, FFTSize);
+            cudaMemcpyToSymbol(fft_twiddles<FFTSize>,
+                               h_twiddles,
+                              (FFTSize) * sizeof(float2));
+        }
+    }
+
+    template<unsigned int FFTSize, bool AvoidConst = false>
+    void ifft1dCT_plan()
+    {
+        constexpr bool UseConst = !AvoidConst &&
+            fitInConstantMemory<FFTSize, float2>();
+        if constexpr(UseConst)
+        {
+            float2* h_twiddles = new float2[FFTSize];
+            create_twiddles<1>(h_twiddles, FFTSize);
+            cudaMemcpyToSymbol(ifft_twiddles<FFTSize>,
+                               h_twiddles,
+                              (FFTSize) * sizeof(float2));
+        }
     }
 
     template<unsigned int FFTSize>
-    void ifft1dCT_plan()
+    void conv1dCT_plan()
     {
-        float2* h_twiddles = new float2[FFTSize];
-        create_twiddles<1>(h_twiddles, FFTSize);
-        cudaMemcpyToSymbol(ifft_twiddles<FFTSize>,
-                           h_twiddles,
-                           (FFTSize) * sizeof(float2));
+        constexpr bool useConst =
+            fitInConstantMemory<2 * FFTSize, float2>();
+
+        fft1dCT_plan<FFTSize, !useConst>();
+        ifft1dCT_plan<FFTSize, !useConst>();
     }
 }
 

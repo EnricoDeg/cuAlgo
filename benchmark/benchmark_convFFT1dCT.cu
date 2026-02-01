@@ -85,8 +85,7 @@ void run_benchmark(int batch_size)
     check_cuda( cudaMemcpy(d_in1 , in1 , Size * batch_size * sizeof(float), cudaMemcpyHostToDevice ) );
     check_cuda( cudaMemcpy(d_in2 , in2 , Size * batch_size * sizeof(float), cudaMemcpyHostToDevice ) );
 
-    cuAlgo::fft1dCT_plan<OutputSize / 2>();
-    cuAlgo::ifft1dCT_plan<OutputSize / 2>();
+    cuAlgo::conv1dCT_plan<OutputSize / 2>();
 
     // warmup
     for (unsigned int i = 0; i < warmup_size; ++i)
@@ -96,7 +95,7 @@ void run_benchmark(int batch_size)
     check_cuda(cudaEventCreate(&stop));
     check_cuda(cudaEventRecord(start, 0));
     for (unsigned int i = 0; i < repeat; ++i)
-        cuAlgo::convFFT1dCT<Size, BlockSize>(d_in1, d_in2, d_out, Size, Size, batch_size, 0, false);
+        cuAlgo::convFFT1dCT<OutputSize, BlockSize>(d_in1, d_in2, d_out, Size, Size, batch_size, 0, false);
     check_cuda( cudaStreamSynchronize(0) );
 
     check_cuda(cudaEventRecord(stop, 0));
@@ -104,7 +103,9 @@ void run_benchmark(int batch_size)
     float elapsed_mseconds;
     check_cuda(cudaEventElapsedTime(&elapsed_mseconds, start, stop));
     std::cout << "Time taken by function: "
+              << "\033[32m" // green
               << elapsed_mseconds * 1000 / repeat
+              << "\033[0m"   // reset color
               << " microseconds"
               << std::endl;
     std::cout << "Bytes per second = "
@@ -127,10 +128,23 @@ void run_benchmark(int batch_size)
 int main() {
     static constexpr unsigned int total_size = 1024 * 8192;
 
-    run_benchmark<2048, 512 >(total_size / 2048); // MixedRadix
-    run_benchmark<2048, 256 >(total_size / 2048); // MixedRadix
-    run_benchmark<2048, 128 >(total_size / 2048); // MixedRadix
-    run_benchmark<2048,  64 >(total_size / 2048); // MixedRadix
+    run_benchmark<2048, 1024 >(total_size / 2048); // MixedRadix
+    run_benchmark<2048,  512 >(total_size / 2048); // MixedRadix
+    run_benchmark<2048,  256 >(total_size / 2048); // MixedRadix
+    run_benchmark<2048,  128 >(total_size / 2048); // MixedRadix
+    run_benchmark<2048,   64 >(total_size / 2048); // MixedRadix
+
+    run_benchmark<4096, 1024 >(total_size / 4096); // MixedRadix
+    run_benchmark<4096,  512 >(total_size / 4096); // MixedRadix
+    run_benchmark<4096,  256 >(total_size / 4096); // MixedRadix
+    run_benchmark<4096,  128 >(total_size / 4096); // MixedRadix
+    run_benchmark<4096,   64 >(total_size / 4096); // MixedRadix
+
+    run_benchmark<8192, 1024 >(total_size / 8192); // MixedRadix
+    run_benchmark<8192,  512 >(total_size / 8192); // MixedRadix
+    run_benchmark<8192,  256 >(total_size / 8192); // MixedRadix
+    run_benchmark<8192,  128 >(total_size / 8192); // MixedRadix
+    run_benchmark<8192,   64 >(total_size / 8192); // MixedRadix
 
     return 0;
 }
