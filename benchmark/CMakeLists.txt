@@ -27,3 +27,11 @@ add_executable( benchmark_fft1dCTr2c
 target_include_directories(benchmark_fft1dCTr2c PRIVATE ${PROJECT_SOURCE_DIR}/src)
 set_property(TARGET benchmark_fft1dCTr2c PROPERTY CXX_STANDARD 17)
 set_property(TARGET benchmark_fft1dCTr2c PROPERTY CUDA_SEPARABLE_COMPILATION ON)
+
+# convFFT1dCT
+add_executable( benchmark_convFFT1dCT
+                benchmark_convFFT1dCT.cu
+              )
+target_include_directories(benchmark_convFFT1dCT PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET benchmark_convFFT1dCT PROPERTY CXX_STANDARD 17)
+set_property(TARGET benchmark_convFFT1dCT PROPERTY CUDA_SEPARABLE_COMPILATION ON)
