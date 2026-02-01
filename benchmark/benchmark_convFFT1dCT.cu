@@ -127,10 +127,10 @@ void run_benchmark(int batch_size)
 int main() {
     static constexpr unsigned int total_size = 1024 * 8192;
 
-    // run_benchmark<1024, 256 >(total_size / 1024); // Radix4
+    run_benchmark<2048, 512 >(total_size / 2048); // MixedRadix
     run_benchmark<2048, 256 >(total_size / 2048); // MixedRadix
-    // run_benchmark<4096, 512 >(total_size / 4096); // Radix4
-    // run_benchmark< 512,  64 >(total_size /  512); // Radix8
+    run_benchmark<2048, 128 >(total_size / 2048); // MixedRadix
+    run_benchmark<2048,  64 >(total_size / 2048); // MixedRadix
 
     return 0;
 }
