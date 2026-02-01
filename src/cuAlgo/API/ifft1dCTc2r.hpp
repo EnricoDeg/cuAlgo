@@ -42,9 +42,9 @@ typename T,
 typename HandleType
 >
 CUALGO_GLOBAL
-void ifft1dCTc2rKernelRadix2(T * CUALGO_RESTRICT input_data,
-                             T * CUALGO_RESTRICT output_data,
-                             int batch_size)
+void ifft1dCTc2rKernelRadix2DIT(T * CUALGO_RESTRICT input_data,
+                                T * CUALGO_RESTRICT output_data,
+                                int batch_size)
 {
     constexpr int halfN = FFTSize / 2;
 
@@ -52,8 +52,8 @@ void ifft1dCTc2rKernelRadix2(T * CUALGO_RESTRICT input_data,
 
     int tid = threadIdx.x;
     int batch_id = blockIdx.x;
-    T* idata = input_data  + batch_id * (2 * FFTSize + 2);
-    T* odata = output_data + batch_id * (2 * FFTSize);
+    T* idata = input_data  + batch_id * (FFTSize + 2);
+    T* odata = output_data + batch_id * (FFTSize);
     const int LOGN = __ffs(halfN) - 1;
 
     // ------------------------------------------------
@@ -83,6 +83,127 @@ void ifft1dCTc2rKernelRadix2(T * CUALGO_RESTRICT input_data,
     // 2. radix-2 stages
     // ------------------------------------------------
     radix2_CT<halfN, BlockSize, float2, HandleType>(sdata, tid, LOGN);
+
+    // ------------------------------------------------
+    // 3. Store (natural order)
+    // ------------------------------------------------
+    for (int idx = tid; idx < halfN; idx += BlockSize) {
+        odata[2*idx]     = sdata[idx].x / (FFTSize / 2);  // even samples, scale
+        odata[2*idx + 1] = sdata[idx].y / (FFTSize / 2);  // odd samples
+    }
+}
+
+template<
+unsigned int FFTSize,
+unsigned int BlockSize,
+typename T,
+typename HandleType
+>
+CUALGO_GLOBAL
+void ifft1dCTc2rKernelMixedRadixDIT(T * CUALGO_RESTRICT input_data,
+                                    T * CUALGO_RESTRICT output_data,
+                                    int batch_size)
+{
+    constexpr int halfN = FFTSize / 2;
+
+    CUALGO_SHMEM float2 sdata[halfN];
+
+    int tid = threadIdx.x;
+    int batch_id = blockIdx.x;
+    T* idata = input_data  + batch_id * (FFTSize + 2);
+    T* odata = output_data + batch_id * (FFTSize);
+    constexpr int LOG2N = __builtin_ctz(halfN);
+    constexpr int log4N = LOG2N >> 1;
+    constexpr bool isMixedRadix = (LOG2N & 1) != 0;
+
+    // ------------------------------------------------
+    // 2. Preprocess input and prefer for CT stages
+    // ------------------------------------------------
+    for (int idx = tid; idx < halfN; idx += BlockSize)
+    {
+        float2 Zk;
+        float2 Ck      = make(idata[2 * idx], idata[2 * idx + 1]);
+        float2 Cmir    = conjf2(make(idata[2 * (halfN - idx)], idata[2 * (halfN - idx) + 1]));      // mirror element
+        // Compute E and O
+        float2 E = make(0.5f * (Ck.x + Cmir.x), 0.5f * (Ck.y + Cmir.y));
+        float2 O = make(0.5f * (Ck.x - Cmir.x), 0.5f * (Ck.y - Cmir.y));
+        // Twiddle
+        float ang = 2.0f * M_PI * idx / FFTSize;
+        float2 W  = make(cosf(ang), sinf(ang));
+        float2 W1 = make(-W.y, W.x);
+        Zk = cadd(E,cmul(W1,O));
+        // Store Zk in length-N/2 array
+        unsigned int r = isMixedRadix ?
+                         mixed_radix_reverse(idx, log4N) :
+                         base4_reverse(idx, log4N);
+        sdata[r] = Zk;
+    }
+
+    __syncthreads();
+
+    // ------------------------------------------------
+    // 2. radix-4 stages
+    // ------------------------------------------------
+    for (int stage = 0, m = 4; stage < log4N; ++stage, m <<= 2)
+    {
+
+        int quarter = m >> 2;
+
+        for (int base = tid; base < halfN >> 2; base += BlockSize)
+        {
+            int j = base % quarter;
+            int k = base / quarter;
+            int p = k * m + j;
+
+            int twiddle_idx = (j * halfN) / m;
+            float2 W1 = HandleType::twiddles()[twiddle_idx];
+            float2 W2 = cmul(W1, W1);
+            float2 W3 = cmul(W2, W1);
+
+            float2 x0 = sdata[p + 0 * quarter];
+            float2 x1 = cmul(W1, sdata[p + 1 * quarter]);
+            float2 x2 = cmul(W2, sdata[p + 2 * quarter]);
+            float2 x3 = cmul(W3, sdata[p + 3 * quarter]);
+
+            float2 t0 = cadd(x0, x2);
+            float2 t1 = cadd(x1, x3);
+            float2 t2 = csub(x0, x2);
+            float2 t3 = csub(x1, x3);
+
+            sdata[p + 0 * quarter] = cadd(t0, t1);
+            sdata[p + 2 * quarter] = csub(t0, t1);
+
+            // note: this part is different from the fwd pass
+            sdata[p + 1 * quarter] = make(t2.x - t3.y, t2.y + t3.x);
+            sdata[p + 3 * quarter] = make(t2.x + t3.y, t2.y - t3.x);
+        }
+
+        __syncthreads();
+    }
+
+    // ------------------------------------------------
+    // 2b. final radix-2 stage (only if FFTSize has odd log2)
+    // ------------------------------------------------
+    if constexpr(isMixedRadix) {
+
+        constexpr int half = halfN >> 1;
+
+        for (int k = tid; k < half; k += BlockSize) {
+
+            float2 a = sdata[k];
+            float2 b = sdata[k + half];
+
+            // Twiddle W_N^k
+            float2 w = HandleType::twiddles()[k];
+
+            float2 t = cmul(w, b);
+
+            sdata[k]        = cadd(a, t);
+            sdata[k + half] = csub(a, t);
+        }
+
+        __syncthreads();
+    }
 
     // ------------------------------------------------
     // 3. Store (natural order)
@@ -129,7 +250,7 @@ namespace cuAlgo {
 
         TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
             CUALGO_KERNEL_NAME(
-                ifft1dCTc2rKernelRadix2<FFTSize, BlockSize, T, ifftHandle<FFTSize / 2>>),
+                ifft1dCTc2rKernelMixedRadixDIT<FFTSize, BlockSize, T, ifftHandle<FFTSize / 2>>),
             idata, odata, batch_size);
     }
 }

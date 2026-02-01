@@ -135,8 +135,14 @@ void run_single_test()
     free(solution);
 }
 
-TEST(CT_IFFTc2r, size_128) {
-    // Radix2
+TEST(CT_IFFTc2r, size_256) {
+    // Radix4
     constexpr unsigned int size = 256;
-    run_single_test<size, size/2>();
+    run_single_test<size, 64>();
+}
+
+TEST(CT_IFFTc2r, size_512) {
+    // MixedRadix
+    constexpr unsigned int size = 512;
+    run_single_test<size, 64>();
 }

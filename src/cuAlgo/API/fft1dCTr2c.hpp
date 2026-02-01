@@ -42,9 +42,9 @@ typename T,
 typename HandleType
 >
 CUALGO_GLOBAL
-void fft1dCTr2cKernelRadix2(T * CUALGO_RESTRICT input_data,
-                            T * CUALGO_RESTRICT output_data,
-                            int batch_size)
+void fft1dCTr2cKernelRadix2DIT(T * CUALGO_RESTRICT input_data,
+                               T * CUALGO_RESTRICT output_data,
+                               int batch_size)
 {
     constexpr int halfN = FFTSize / 2;
 
@@ -96,9 +96,9 @@ typename T,
 typename HandleType
 >
 CUALGO_GLOBAL
-void fft1dCTr2cKernelMixedRadix(T * CUALGO_RESTRICT input_data,
-                                T * CUALGO_RESTRICT output_data,
-                                int batch_size)
+void fft1dCTr2cKernelMixedRadixDIT(T * CUALGO_RESTRICT input_data,
+                                   T * CUALGO_RESTRICT output_data,
+                                   int batch_size)
 {
     constexpr int halfN = FFTSize / 2;
 
@@ -243,7 +243,7 @@ namespace cuAlgo {
 
         TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
             CUALGO_KERNEL_NAME(
-                fft1dCTr2cKernelMixedRadix<FFTSize, BlockSize, T, fftHandle<FFTSize / 2>>),
+                fft1dCTr2cKernelMixedRadixDIT<FFTSize, BlockSize, T, fftHandle<FFTSize / 2>>),
             idata, odata, batch_size);
     }
 }
