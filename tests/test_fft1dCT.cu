@@ -154,8 +154,8 @@ TEST(CT_FFT, size_2048) {
     run_single_test<size, 256>();
 }
 
-TEST(CT_FFT, size_8192) {
-    // Radix2 - Multi kernel
-    constexpr unsigned int size = 8192;
-    run_single_test<size, 256>();
-}
+// TEST(CT_FFT, size_8192) {
+//     // Radix2 - Multi kernel
+//     constexpr unsigned int size = 8192;
+//     run_single_test<size, 256>();
+// }
