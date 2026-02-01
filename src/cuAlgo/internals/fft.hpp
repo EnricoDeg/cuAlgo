@@ -76,6 +76,11 @@ CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE float2 conjf2(float2 a) {
     return make_float2(a.x, -a.y);
 }
 
+CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE float2 cmulj(float2 a) {
+    // multiply by j = i (complex unit)
+    return make(-a.y, a.x);
+}
+
 CUALGO_DEVICE CUALGO_FORCE_INLINE
 float2 twiddle(int k, int m) {
     float angle = -2.0f * M_PI * k / m;
