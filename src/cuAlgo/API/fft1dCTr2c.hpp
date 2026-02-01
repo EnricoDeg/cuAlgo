@@ -54,7 +54,7 @@ void fft1dCTr2cKernelRadix2DIT(T * CUALGO_RESTRICT input_data,
     int batch_id = blockIdx.x;
     T* idata = input_data  + batch_id * (FFTSize);
     T* odata = output_data + batch_id * (FFTSize + 2);
-    const int LOGN = __ffs(halfN) - 1;
+    constexpr int LOGN = __builtin_ctz(halfN);
 
     // ------------------------------------------------
     // 1. Load + Base-2 digit-reversed store
@@ -70,7 +70,7 @@ void fft1dCTr2cKernelRadix2DIT(T * CUALGO_RESTRICT input_data,
     // ------------------------------------------------
     // 2. radix-2 stages
     // ------------------------------------------------
-    radix2_CT<halfN, BlockSize, float2, HandleType>(sdata, tid, LOGN);
+    radix2_CT_DIT<halfN, BlockSize, float2, HandleType>(sdata, tid, LOGN);
 
     // ------------------------------------------------
     // 3. Store (natural order)
@@ -128,43 +128,7 @@ void fft1dCTr2cKernelMixedRadixDIT(T * CUALGO_RESTRICT input_data,
     // ------------------------------------------------
     // 2a. radix-4 stages
     // ------------------------------------------------
-    for (int stage = 0, m = 4; stage < log4N; ++stage, m <<= 2)
-    {
-
-        int quarter = m >> 2;
-
-        for (int base = tid; base < halfN >> 2; base += BlockSize)
-        {
-            int j = base % quarter;
-            int k = base / quarter;
-            int p = k * m + j;
-
-            int twiddle_idx = (j * halfN) / m;
-            float2 W1 = HandleType::twiddles()[twiddle_idx];
-            float2 W2 = cmul(W1, W1);
-            float2 W3 = cmul(W2, W1);
-
-            float2 x0 = sdata[p + 0 * quarter];
-            float2 x1 = cmul(W1, sdata[p + 1 * quarter]);
-            float2 x2 = cmul(W2, sdata[p + 2 * quarter]);
-            float2 x3 = cmul(W3, sdata[p + 3 * quarter]);
-
-            float2 t0 = cadd(x0, x2);
-            float2 t1 = cadd(x1, x3);
-            float2 t2 = csub(x0, x2);
-            float2 t3 = csub(x1, x3);
-
-            sdata[p + 0 * quarter] = cadd(t0, t1);
-            sdata[p + 2 * quarter] = csub(t0, t1);
-
-            sdata[p + 1 * quarter] =
-                make(t2.x + t3.y, t2.y - t3.x);
-            sdata[p + 3 * quarter] =
-                make(t2.x - t3.y, t2.y + t3.x);
-        }
-
-        __syncthreads();
-    }
+    radix4_CT_DIT<halfN, BlockSize, float2, HandleType, true>(sdata, tid, log4N);
 
     // ------------------------------------------------
     // 2b. final radix-2 stage (only if FFTSize has odd log2)

@@ -44,12 +44,12 @@ typename HandleTypeFwd,
 typename HandleTypeBwd
 >
 CUALGO_GLOBAL
-void convFFT1dCTKernelRadix2(T * CUALGO_RESTRICT input_data1,
-                             T * CUALGO_RESTRICT input_data2,
-                             T * CUALGO_RESTRICT output_data,
-                             int input1_size,
-                             int input2_size,
-                             int batch_size)
+void convFFT1dCTKernelRadix2DITDIT(T * CUALGO_RESTRICT input_data1,
+                                   T * CUALGO_RESTRICT input_data2,
+                                   T * CUALGO_RESTRICT output_data,
+                                   int input1_size,
+                                   int input2_size,
+                                   int batch_size)
 {
     constexpr int halfN = FFTSize / 2;
 
@@ -66,7 +66,7 @@ void convFFT1dCTKernelRadix2(T * CUALGO_RESTRICT input_data1,
     const int LOGN = __ffs(halfN) - 1;
 
     // ------------------------------------------------
-    // 1. Load + Base-2 digit-reversed store
+    // 1. Load + Base-2 digit-reversed store + Padding
     // ------------------------------------------------
     for (int idx = tid; idx < input1_size / 2; idx += BlockSize)
     {
@@ -99,8 +99,8 @@ void convFFT1dCTKernelRadix2(T * CUALGO_RESTRICT input_data1,
     // ------------------------------------------------
     // 2. radix-2 stages FFT
     // ------------------------------------------------
-    radix2_CT<halfN, BlockSize, float2, HandleTypeFwd>(sdata1, tid, LOGN);
-    radix2_CT<halfN, BlockSize, float2, HandleTypeFwd>(sdata2, tid, LOGN);
+    radix2_CT_DIT<halfN, BlockSize, float2, HandleTypeFwd>(sdata1, tid, LOGN);
+    radix2_CT_DIT<halfN, BlockSize, float2, HandleTypeFwd>(sdata2, tid, LOGN);
 
     // ------------------------------------------------
     // 3. Post-processing FFT + Convolution
@@ -181,14 +181,14 @@ void convFFT1dCTKernelRadix2(T * CUALGO_RESTRICT input_data1,
     // ------------------------------------------------
     // 5. radix-2 stages inverse FFT
     // ------------------------------------------------
-    radix2_CT<halfN, BlockSize, float2, HandleTypeBwd>(sdata, tid, LOGN);
+    radix2_CT_DIT<halfN, BlockSize, float2, HandleTypeBwd>(sdata, tid, LOGN);
 
     // ------------------------------------------------
     // 6. Store (natural order)
     // ------------------------------------------------
     for (int idx = tid; idx < halfN; idx += BlockSize) {
-        odata[2*idx]     = sdata[idx].x / (FFTSize / 2);  // even samples, scale
-        odata[2*idx + 1] = sdata[idx].y / (FFTSize / 2);  // odd samples
+        odata[2*idx]     = sdata[idx].x / (FFTSize / 2);  // even samples
+        odata[2*idx + 1] = sdata[idx].y / (FFTSize / 2);  // odd  samples
     }
 }
 
@@ -231,7 +231,7 @@ namespace cuAlgo {
 
         TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
             CUALGO_KERNEL_NAME(
-                convFFT1dCTKernelRadix2<FFTSize, BlockSize, T,
+                convFFT1dCTKernelRadix2DITDIT<FFTSize, BlockSize, T,
                 fftHandle<FFTSize / 2>, ifftHandle<FFTSize / 2>>),
             idata1, idata2, odata, input1_size, input2_size, batch_size);
     }

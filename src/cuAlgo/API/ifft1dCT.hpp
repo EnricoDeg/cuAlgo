@@ -42,9 +42,9 @@ typename T,
 typename HandleType
 >
 CUALGO_GLOBAL
-void ifft1dCTKernelRadix2(T * CUALGO_RESTRICT input_data,
-                         T * CUALGO_RESTRICT output_data,
-                         int batch_size)
+void ifft1dCTKernelRadix2DIT(T * CUALGO_RESTRICT input_data,
+                             T * CUALGO_RESTRICT output_data,
+                             int batch_size)
 {
     CUALGO_SHMEM T sdata[FFTSize];
 
@@ -52,7 +52,7 @@ void ifft1dCTKernelRadix2(T * CUALGO_RESTRICT input_data,
     int batch_id = blockIdx.x;
     T* idata = input_data + batch_id * FFTSize;
     T* odata = output_data + batch_id * FFTSize;
-    const int LOGN = __ffs(FFTSize) - 1;
+    const int LOGN = __builtin_ctz(FFTSize);
 
     // ------------------------------------------------
     // 1. Load + Base-2 digit-reversed store
@@ -67,7 +67,7 @@ void ifft1dCTKernelRadix2(T * CUALGO_RESTRICT input_data,
     // ------------------------------------------------
     // 2. radix-2 stages
     // ------------------------------------------------
-    radix2_CT<FFTSize, BlockSize, T, HandleType>(sdata, tid, LOGN);
+    radix2_CT_DIT<FFTSize, BlockSize, T, HandleType>(sdata, tid, LOGN);
 
     // ------------------------------------------------
     // 3. Store (natural order)
@@ -116,7 +116,7 @@ namespace cuAlgo {
 
         TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
             CUALGO_KERNEL_NAME(
-                ifft1dCTKernelRadix2<FFTSize, BlockSize, T, ifftHandle<FFTSize>>),
+                ifft1dCTKernelRadix2DIT<FFTSize, BlockSize, T, ifftHandle<FFTSize>>),
             idata, odata, batch_size);
     }
 }

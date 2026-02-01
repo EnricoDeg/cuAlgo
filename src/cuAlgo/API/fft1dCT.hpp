@@ -35,16 +35,6 @@
 #include "cuAlgo/internals/fft.hpp"
 #include "cuAlgo/API/fft1dPlan.hpp"
 
-__device__ __forceinline__ int log8N(int N)
-{
-    int log8 = 0;
-    while (N > 1) {
-        N >>= 3;   // divide by 8
-        log8++;
-    }
-    return log8;
-}
-
 template<
 unsigned int FFTSize,
 unsigned int BlockSize,
@@ -52,9 +42,9 @@ typename T,
 typename HandleType
 >
 CUALGO_GLOBAL
-void fft1dCTKernelRadix8(T * CUALGO_RESTRICT input_data,
-                         T * CUALGO_RESTRICT output_data,
-                         int batch_size)
+void fft1dCTKernelRadix8DIT(T * CUALGO_RESTRICT input_data,
+                            T * CUALGO_RESTRICT output_data,
+                            int batch_size)
 {
     CUALGO_SHMEM T smem[FFTSize];
 
@@ -64,13 +54,13 @@ void fft1dCTKernelRadix8(T * CUALGO_RESTRICT input_data,
     T* idata = input_data  + batch_id * FFTSize;
     T* odata = output_data + batch_id * FFTSize;
 
-    const int log8N_val = log8N(FFTSize);
+    constexpr int log8N = __builtin_ctz(FFTSize) / 3;
 
     // --------------------------------------------------
     // 1) Load global -> shared + Base-8 digit reversal
     // --------------------------------------------------
     for (int i = tid; i < FFTSize; i += BlockSize) {
-        unsigned int r = base8_reverse(i, log8N_val);
+        unsigned int r = base8_reverse(i, log8N);
         smem[r] = idata[i];
     }
     __syncthreads();
@@ -78,24 +68,7 @@ void fft1dCTKernelRadix8(T * CUALGO_RESTRICT input_data,
     // --------------------------------------------------
     // 2) Radix-8 FFT stages
     // --------------------------------------------------
-    for (int span = 8; span <= FFTSize; span *= 8) {
-
-        int stride  = span >> 3;
-        int butterflies = (FFTSize / span) * stride;
-        int tw_step = FFTSize / span;
-        for (int base = tid; base < FFTSize >> 3; base += BlockSize)
-        {
-            if (base < butterflies) {
-                int group = base / stride;
-                int k     = base % stride;
-                int base  = group * span + k;
-                int tw    = k * tw_step;
-
-                radix8_butterfly<HandleType>(&smem[base], stride, tw, FFTSize);
-            }
-        }
-        __syncthreads();
-    }
+    radix8_CT_DIT<FFTSize, BlockSize, T, HandleType>(smem, tid, log8N);
 
     // --------------------------------------------------
     // 3) Store shared -> global
@@ -112,9 +85,9 @@ typename T,
 typename HandleType
 >
 CUALGO_GLOBAL
-void fft1dCTKernelRadix2(T * CUALGO_RESTRICT input_data,
-                         T * CUALGO_RESTRICT output_data,
-                         int batch_size)
+void fft1dCTKernelRadix2DIT(T * CUALGO_RESTRICT input_data,
+                            T * CUALGO_RESTRICT output_data,
+                            int batch_size)
 {
     CUALGO_SHMEM T sdata[FFTSize];
 
@@ -122,7 +95,7 @@ void fft1dCTKernelRadix2(T * CUALGO_RESTRICT input_data,
     int batch_id = blockIdx.x;
     T* idata = input_data + batch_id * FFTSize;
     T* odata = output_data + batch_id * FFTSize;
-    const int LOGN = __ffs(FFTSize) - 1;
+    const int LOGN = __builtin_ctz(FFTSize);
 
     // ------------------------------------------------
     // 1. Load + Base-2 digit-reversed store
@@ -137,26 +110,7 @@ void fft1dCTKernelRadix2(T * CUALGO_RESTRICT input_data,
     // ------------------------------------------------
     // 2. radix-2 stages
     // ------------------------------------------------
-    for (int stage = 0, len = 2; stage < LOGN; ++stage, len <<= 1) {
-
-        int half = len >> 1;
-
-        for (int tidx = tid; tidx < FFTSize / 2; tidx += BlockSize)
-        {
-            int block = tidx / half; //>> (__ffs(len) - 2); // tidx / half;
-            int k = tidx % half; //& (half - 1); //tidx % half;
-            int i = block * len + k;
-
-            int twiddle_idx = (k * FFTSize) / len;
-            T w = HandleType::twiddles()[twiddle_idx];
-            T u = sdata[i];
-            T v = cmul(w, sdata[i + half]);
-
-            sdata[i]       = cadd(u, v);
-            sdata[i + half]= csub(u, v);
-        }
-        __syncthreads();
-    }
+    radix2_CT_DIT<FFTSize, BlockSize, T, HandleType>(sdata, tid, LOGN);
 
     // ------------------------------------------------
     // 3. Store (natural order)
@@ -173,9 +127,9 @@ unsigned int BlockSize,
 typename T,
 typename HandleType>
 CUALGO_GLOBAL
-void fft1dCTKernelMixedRadix(T * CUALGO_RESTRICT input_data,
-                             T * CUALGO_RESTRICT output_data,
-                             int batch_size)
+void fft1dCTKernelMixedRadixDIT(T * CUALGO_RESTRICT input_data,
+                                T * CUALGO_RESTRICT output_data,
+                                int batch_size)
 {
     CUALGO_SHMEM T smem[FFTSize];
 
@@ -204,43 +158,7 @@ void fft1dCTKernelMixedRadix(T * CUALGO_RESTRICT input_data,
     // ------------------------------------------------
     // 2a. radix-4 stages
     // ------------------------------------------------
-    for (int stage = 0, m = 4; stage < log4N; ++stage, m <<= 2)
-    {
-
-        int quarter = m >> 2;
-
-        for (int base = tid; base < FFTSize >> 2; base += BlockSize)
-        {
-            int j = base % quarter;
-            int k = base / quarter;
-            int p = k * m + j;
-
-            int twiddle_idx = (j * FFTSize) / m;
-            T W1 = HandleType::twiddles()[twiddle_idx];
-            T W2 = cmul(W1, W1);
-            T W3 = cmul(W2, W1);
-
-            T x0 = smem[p + 0 * quarter];
-            T x1 = cmul(W1, smem[p + 1 * quarter]);
-            T x2 = cmul(W2, smem[p + 2 * quarter]);
-            T x3 = cmul(W3, smem[p + 3 * quarter]);
-
-            T t0 = cadd(x0, x2);
-            T t1 = cadd(x1, x3);
-            T t2 = csub(x0, x2);
-            T t3 = csub(x1, x3);
-
-            smem[p + 0 * quarter] = cadd(t0, t1);
-            smem[p + 2 * quarter] = csub(t0, t1);
-
-            smem[p + 1 * quarter] =
-                make(t2.x + t3.y, t2.y - t3.x);
-            smem[p + 3 * quarter] =
-                make(t2.x - t3.y, t2.y + t3.x);
-        }
-
-        __syncthreads();
-    }
+    radix4_CT_DIT<FFTSize, BlockSize, T, HandleType, true>(smem, tid, log4N);
 
     // ------------------------------------------------
     // 2b. final radix-2 stage (only if FFTSize has odd log2)
@@ -274,21 +192,6 @@ void fft1dCTKernelMixedRadix(T * CUALGO_RESTRICT input_data,
     }
 }
 
-template<unsigned int FFTSize, typename T>
-__global__ void bit_reverse_global(T* data)
-{
-    unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
-    if (i >= FFTSize) return;
-
-    unsigned int r = base2_reverse(i, __ffs(FFTSize) - 1);
-
-    if (r > i) {
-        T tmp = data[i];
-        data[i] = data[r];
-        data[r] = tmp;
-    }
-}
-
 template<
 unsigned int FFTSize,
 unsigned int BlockSize,
@@ -307,14 +210,13 @@ void fft1dCTKernelRadix2Stage1DIT(T * CUALGO_RESTRICT input_data,
     int batch_id = blockIdx.x;
     T* idata = input_data + batch_id * Tile;
     T* odata = output_data + batch_id * Tile;
-    const int LOGN = __ffs(Tile) - 1;
+    const int LOGN = __builtin_ctz(FFTSize);
 
     // ------------------------------------------------
-    // 1. Load + Base-2 digit-reversed store
+    // 1. Load (Assume data is already bit reversed)
     // ------------------------------------------------
     for (int idx = tid; idx < Tile; idx += BlockSize)
     {
-        // unsigned int r = base2_reverse(idx, LOGN);
         sdata[idx] = idata[idx];
     }
     __syncthreads();
@@ -322,27 +224,7 @@ void fft1dCTKernelRadix2Stage1DIT(T * CUALGO_RESTRICT input_data,
     // ------------------------------------------------
     // 2. radix-2 stages
     // ------------------------------------------------
-    for (int stage = 0, len = 2; stage < LOGN; ++stage, len <<= 1) {
-
-        int half = len >> 1;
-
-        for (int tidx = tid; tidx < Tile / 2; tidx += BlockSize)
-        {
-            int block = tidx / half; //>> (__ffs(len) - 2); // tidx / half;
-            int k = tidx % half; //& (half - 1); //tidx % half;
-            int i = block * len + k;
-
-            int twiddle_idx = (k * FFTSize) / len;
-            T w = HandleType::twiddles()[twiddle_idx];
-
-            T u = sdata[i];
-            T v = cmul(w, sdata[i+half]);
-
-            sdata[i]       = cadd(u,v);
-            sdata[i+half]  = csub(u,v);
-        }
-        __syncthreads();
-    }
+    radix4_CT_DIT<FFTSize, BlockSize, T, HandleType>(sdata, tid, LOGN);
 
     // ------------------------------------------------
     // 3. Store (natural order)
@@ -359,7 +241,8 @@ unsigned int BlockSize,
 typename T,
 typename HandleType>
 CUALGO_GLOBAL
-void fft1dCTMergeKernelDIT(T* data, int stage){
+void fft1dCTMergeKernelDIT(T* data, int stage)
+{
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     int m = 1 << stage;
     int half = m >> 1;
@@ -373,10 +256,10 @@ void fft1dCTMergeKernelDIT(T* data, int stage){
     int i2 = i1 + half;
 
     float angle = -2.0f * M_PI * j / m;
-    float2 w = make(cosf(angle), sinf(angle));
+    T w = make(cosf(angle), sinf(angle));
 
-    float2 u = data[i1];
-    float2 t = cmul(w, data[i2]);
+    T u = data[i1];
+    T t = cmul(w, data[i2]);
 
     data[i1] = cadd(u,t);
     data[i2] = csub(u,t);
@@ -399,10 +282,10 @@ void fft1dCTKernelRadix2DIF(T * CUALGO_RESTRICT input_data,
     int batch_id = blockIdx.x;
     T* idata = input_data + batch_id * FFTSize;
     T* odata = output_data + batch_id * FFTSize;
-    const int LOGN = __ffs(FFTSize) - 1;
+    const int LOGN = __builtin_ctz(FFTSize);
 
     // ------------------------------------------------
-    // 1. Load + Base-2 digit-reversed store
+    // 1. Load (No bit reversal needed)
     // ------------------------------------------------
     for (int idx = tid; idx < FFTSize; idx += BlockSize)
     {
@@ -413,37 +296,10 @@ void fft1dCTKernelRadix2DIF(T * CUALGO_RESTRICT input_data,
     // ------------------------------------------------
     // 2. radix-2 stages
     // ------------------------------------------------
-    for (int len = FFTSize; len > 1; len >>= 1)
-    {
-        int half = len >> 1;
-
-        for (int tidx = tid; tidx < FFTSize / 2; tidx += BlockSize)
-        {
-            // Compute indices for this butterfly
-            int block = tidx / half; //>> (__ffs(len) - 2); // tidx / half;
-            int k = tidx % half; //& (half - 1); //tidx % half;
-            int i = block * len + k;
-
-            int twiddle_idx = (k * FFTSize) / len;
-            T w = HandleType::twiddles()[twiddle_idx];
-
-            float2 a = sdata[i];
-            float2 b = sdata[i + half];
-
-            // DIF butterfly (add/sub first)
-            float2 t0 = cadd(a, b);
-            float2 t1 = csub(a, b);
-
-            t1 = cmul(t1, w);
-
-            sdata[i]        = t0;
-            sdata[i + half] = t1;
-        }
-        __syncthreads();
-    }
+    radix2_CT_DIF<FFTSize, BlockSize, T, HandleType>(sdata, tid);
 
     // ------------------------------------------------
-    // 3. Store (natural order)
+    // 3. Store + bit reversal
     // ------------------------------------------------
     for (int idx = tid; idx < FFTSize; idx += BlockSize)
     {
@@ -459,9 +315,9 @@ typename T,
 typename HandleType
 >
 CUALGO_GLOBAL
-void fft1dCTKernelRadix4DIF(T * CUALGO_RESTRICT input_data,
-                            T * CUALGO_RESTRICT output_data,
-                            int batch_size)
+void fft1dCTKernelMixedRadixDIF(T * CUALGO_RESTRICT input_data,
+                                T * CUALGO_RESTRICT output_data,
+                                int batch_size)
 {
     CUALGO_SHMEM T sdata[FFTSize];
 
@@ -474,7 +330,7 @@ void fft1dCTKernelRadix4DIF(T * CUALGO_RESTRICT input_data,
     constexpr int log4N = LOG2N >> 1;
 
     // ------------------------------------------------
-    // 1. Load + Base-2 digit-reversed store
+    // 1. Load (No bit reversal needed)
     // ------------------------------------------------
     for (int idx = tid; idx < FFTSize; idx += BlockSize)
     {
@@ -485,48 +341,7 @@ void fft1dCTKernelRadix4DIF(T * CUALGO_RESTRICT input_data,
     // ------------------------------------------------
     // 2. radix-4 stages
     // ------------------------------------------------
-    for (int len = FFTSize; len >= 4; len >>= 2)
-    {
-        int quarter = len >> 2;
-
-        for (int tidx = tid; tidx < FFTSize >> 2; tidx += BlockSize)
-        {
-            // Compute indices for this butterfly
-            int block = tidx / quarter;
-            int k = tidx % quarter;
-            int i = block * len + k;
-
-            T a0 = sdata[i + 0 * quarter];
-            T a1 = sdata[i + 1 * quarter];
-            T a2 = sdata[i + 2 * quarter];
-            T a3 = sdata[i + 3 * quarter];
-
-            // Radix-4 DIF butterfly
-            float2 t0 = cadd(cadd(a0, a2), cadd(a1, a3));       // y0
-            float2 t1 = cadd(csub(a0, a2), cmulj(csub(a3, a1))); // y1
-            float2 t2 = csub(cadd(a0, a2), cadd(a1, a3));       // y2
-            float2 t3 = csub(csub(a0, a2), cmulj(csub(a3, a1))); // y3
-
-            float angle1 = -2.0f * M_PI * 1 * k / len;
-            float angle2 = -2.0f * M_PI * 2 * k / len;
-            float angle3 = -2.0f * M_PI * 3 * k / len;
-
-            float s1, c1, s2, c2, s3, c3;
-            __sincosf(angle1, &s1, &c1);
-            __sincosf(angle2, &s2, &c2);
-            __sincosf(angle3, &s3, &c3);
-
-            float2 W1 = make(c1, s1);
-            float2 W2 = make(c2, s2);
-            float2 W3 = make(c3, s3);
-
-            sdata[i + 0 * quarter] = t0;
-            sdata[i + 1 * quarter] = cmul(t1, W1);
-            sdata[i + 2 * quarter] = cmul(t2, W2);
-            sdata[i + 3 * quarter] = cmul(t3, W3);
-        }
-        __syncthreads();
-    }
+    radix4_CT_DIF<FFTSize, BlockSize, T, HandleType, true>(sdata, tid);
 
     // ------------------------------------------------
     // 2b. final radix-2 stage (only if FFTSize has odd log2)
@@ -537,12 +352,12 @@ void fft1dCTKernelRadix4DIF(T * CUALGO_RESTRICT input_data,
         {
             T w = HandleType::twiddles()[0];
 
-            float2 a = sdata[2 * tidx];
-            float2 b = sdata[2 * tidx + 1];
+            T a = sdata[2 * tidx];
+            T b = sdata[2 * tidx + 1];
 
             // DIF butterfly (add/sub first)
-            float2 t0 = cadd(a, b);
-            float2 t1 = csub(a, b);
+            T t0 = cadd(a, b);
+            T t1 = csub(a, b);
 
             t1 = cmul(t1, w);
 
@@ -553,7 +368,7 @@ void fft1dCTKernelRadix4DIF(T * CUALGO_RESTRICT input_data,
     }
 
     // ------------------------------------------------
-    // 3. Store (natural order)
+    // 3. Store + bit reversal
     // ------------------------------------------------
     for (int idx = tid; idx < FFTSize; idx += BlockSize)
     {
@@ -637,14 +452,14 @@ namespace cuAlgo {
             {
                 TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
                     CUALGO_KERNEL_NAME(
-                        fft1dCTKernelRadix8<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
+                        fft1dCTKernelRadix8DIT<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
                     idata, odata, batch_size);
             }
             else
             {
                 TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
                     CUALGO_KERNEL_NAME(
-                        fft1dCTKernelMixedRadix<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
+                        fft1dCTKernelMixedRadixDIT<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
                     idata, odata, batch_size);
             }
         }
