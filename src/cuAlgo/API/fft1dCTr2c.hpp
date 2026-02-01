@@ -52,8 +52,8 @@ void fft1dCTr2cKernelRadix2(T * CUALGO_RESTRICT input_data,
 
     int tid = threadIdx.x;
     int batch_id = blockIdx.x;
-    T* idata = input_data  + batch_id * (2 * FFTSize);
-    T* odata = output_data + batch_id * (2 * FFTSize + 2);
+    T* idata = input_data  + batch_id * (FFTSize);
+    T* odata = output_data + batch_id * (FFTSize + 2);
     const int LOGN = __ffs(halfN) - 1;
 
     // ------------------------------------------------
@@ -106,8 +106,8 @@ void fft1dCTr2cKernelMixedRadix(T * CUALGO_RESTRICT input_data,
 
     int tid = threadIdx.x;
     int batch_id = blockIdx.x;
-    T* idata = input_data  + batch_id * (2 * FFTSize);
-    T* odata = output_data + batch_id * (2 * FFTSize + 2);
+    T* idata = input_data  + batch_id * (FFTSize);
+    T* odata = output_data + batch_id * (FFTSize + 2);
     constexpr int LOG2N = __builtin_ctz(halfN);
     constexpr int log4N = LOG2N >> 1;
     constexpr bool isMixedRadix = (LOG2N & 1) != 0;
