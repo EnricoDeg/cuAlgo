@@ -195,7 +195,11 @@ void fft1dBaileyKernel(T* input_data,
                        int batch_size)
 {
     constexpr unsigned int FFTSize = FFTSize1 * FFTSize2;
-    __shared__ float2 sdata[FFTSize2 + FFTSize2 / BANKS];
+    constexpr unsigned int LDS_Size =
+        FFTSize2 + FFTSize2 / BANKS > BlockSize * FFTSize1
+        ? FFTSize2 + FFTSize2 / BANKS
+        : BlockSize * FFTSize1;
+    __shared__ float2 sdata[LDS_Size];
 
     int tid = threadIdx.x;
     int batch_id = blockIdx.x;
@@ -320,8 +324,24 @@ void fft1dBaileyKernel(T* input_data,
         // Store back to global memory
         for(int i = tid; i < FFTSize2; i += BlockSize)
         {
-            odata[i * FFTSize1 + n2] = sdata[pad(i)];
-            // odata[i + FFTSize2 * n2] = sdata[pad(i)];
+            int offset = i / BlockSize;
+            a[n2 + offset * FFTSize1] = sdata[pad(i)];
+        }
+
+        __syncthreads();
+    }
+
+    for(int n = 0; n < FFTSize2 / BlockSize; ++n)
+    {
+        __syncthreads();
+        for(int n2 = 0; n2 < FFTSize1; n2++)
+        {
+            sdata[n2 + tid * FFTSize1] = a[n2 + n * FFTSize1];
+        }
+        __syncthreads();
+        for(int i = tid; i < FFTSize1 * BlockSize; i += BlockSize)
+        {
+            odata[i + n * FFTSize1 * BlockSize] = sdata[i];
         }
     }
 }
