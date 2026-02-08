@@ -189,7 +189,7 @@ unsigned int FFTSize2,
 unsigned int BlockSize,
 typename T,
 typename HandleType>
-__global__
+__global__ __launch_bounds__(BlockSize)
 void fft1dBaileyKernel(T* input_data,
                        T* output_data,
                        int batch_size)
@@ -211,28 +211,29 @@ void fft1dBaileyKernel(T* input_data,
     static_assert(FFTSize1 == 4 || FFTSize1 == 8 || FFTSize1 == 2);
 
     float2 a[FFTSize1 * (FFTSize2 / BlockSize)];
-    for(int tidx = tid; tidx < FFTSize2; tidx += BlockSize)
+    #pragma unroll
+    for(int n = 0; n < FFTSize2 / BlockSize; ++n)
     {
-        int offset = tidx / BlockSize;
         // --------------------------
         // STEP 1: FFT on columns
         // --------------------------
+        #pragma unroll
         for(int i = 0; i < FFTSize1; ++i)
         {
-            a[i + offset * FFTSize1] = idata[tidx + FFTSize2 * i];
+            a[i + n * FFTSize1] = idata[tid + n * BlockSize + FFTSize2 * i];
         }
 
         if constexpr(FFTSize1 == 4)
         {
-            fft4_reg<FFTSize1>(&a[offset * FFTSize1]);
+            fft4_reg<FFTSize1>(&a[n * FFTSize1]);
         }
         else if constexpr(FFTSize1 == 8)
         {
-            fft8_reg<FFTSize1>(&a[offset * FFTSize1]);
+            fft8_reg<FFTSize1>(&a[n * FFTSize1]);
         }
         else if constexpr(FFTSize1 == 2)
         {
-            fft2_reg<FFTSize1>(&a[offset * FFTSize1]);
+            fft2_reg<FFTSize1>(&a[n * FFTSize1]);
         }
 
         // --------------------------
@@ -240,10 +241,12 @@ void fft1dBaileyKernel(T* input_data,
         // W16^(n1 * n2)
         // Store back in strided layout
         // --------------------------
+        #pragma unroll
         for(int i = 0; i < FFTSize1; ++i)
         {
-            a[i + offset * FFTSize1] =
-                cmul(a[i + offset * FFTSize1], W(FFTSize2 * FFTSize1, tidx * i));
+            a[i + n * FFTSize1] =
+                cmul(a[i + n * FFTSize1],
+                     W(FFTSize2 * FFTSize1, (tid + n * BlockSize) * i));
         }
     }
 
@@ -257,13 +260,13 @@ void fft1dBaileyKernel(T* input_data,
         constexpr int log4N = LOG2N >> 1;
 
         // Load one row into shared memory
-        for(int tidx = tid; tidx < FFTSize2; tidx += BlockSize)
+        #pragma unroll
+        for(int i = 0; i < FFTSize2 / BlockSize; ++i)
         {
-            int offset = tidx / BlockSize;
             unsigned int r = isMixedRadix ?
-                             mixed_radix_reverse(tidx, log4N) :
-                             base4_reverse(tidx, log4N);
-            sdata[pad(r)] = a[n2 + offset * FFTSize1];
+                             mixed_radix_reverse(tid + i * BlockSize, log4N) :
+                             base4_reverse(tid + i * BlockSize, log4N);
+            sdata[pad(r)] = a[n2 + i * FFTSize1];
         }
         __syncthreads();
 
@@ -322,26 +325,29 @@ void fft1dBaileyKernel(T* input_data,
         }
 
         // Store back to global memory
-        for(int i = tid; i < FFTSize2; i += BlockSize)
+        #pragma unroll
+        for(int i = 0; i < FFTSize2 / BlockSize; ++i)
         {
-            int offset = i / BlockSize;
-            a[n2 + offset * FFTSize1] = sdata[pad(i)];
+            a[n2 + i * FFTSize1] = sdata[pad(i * BlockSize + tid)];
         }
 
         __syncthreads();
     }
 
+    #pragma unroll
     for(int n = 0; n < FFTSize2 / BlockSize; ++n)
     {
         __syncthreads();
+        #pragma unroll
         for(int n2 = 0; n2 < FFTSize1; n2++)
         {
             sdata[n2 + tid * FFTSize1] = a[n2 + n * FFTSize1];
         }
         __syncthreads();
-        for(int i = tid; i < FFTSize1 * BlockSize; i += BlockSize)
+        #pragma unroll
+        for(int i = 0; i < FFTSize1; ++i)
         {
-            odata[i + n * FFTSize1 * BlockSize] = sdata[i];
+            odata[tid + i * BlockSize + n * FFTSize1 * BlockSize] = sdata[i * BlockSize + tid];
         }
     }
 }
