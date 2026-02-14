@@ -130,44 +130,81 @@ void fft1dStockhamMixedRadixKernel(T* __restrict__ input_data,
     constexpr int log2N = __builtin_ctz(N);
     constexpr int log4N = log2N >> 1;
     constexpr bool isMixedRadix = (log2N & 1) != 0;
-    int mh = 1;
-    int t = N / 4;
+    constexpr int t = N / 4;
+    constexpr int NIterations = isMixedRadix ? log4N : log4N - 1;
 
-    for (int s = 0; s < log4N; ++s) {
-
+    for (int s = 0, mh = 1; s < NIterations; ++s, mh <<= 2)
+    {
         for (int base = tid; base < N >> 2; base += BlockSize)
         {
             int i = base;
-            int k = i % mh;
+            int k = i & (mh - 1);
 
+            // twiddle
             float2 tw = twiddle(k, 4 * mh);
-            // int twiddle_idx = (k * N) / (4 * mh);
-            // float2 tw = HandleType::twiddles()[twiddle_idx];
+            float wr = tw.x;
+            float wi = tw.y;
 
-            float2 a0 = in[i];
-            float2 a1 = cmul(tw, in[i + t]);
-            float2 a2 = in[i + 2 * t];
-            float2 a3 = cmul(tw, in[i + 3 * t]);
-            tw = cmul(tw, tw);
-            a2 = cmul(tw, a2);
-            a3 = cmul(tw, a3);
+            // load inputs
+            float2 A0 = in[i];
+            float2 A1 = in[i + t];
+            float2 A2 = in[i + 2*t];
+            float2 A3 = in[i + 3*t];
 
-            float2 b0 = cadd(a0, a2);
-            float2 b1 = csub(a0, a2);
-            float2 b2 = cadd(a1, a3);
-            float2 b3 = mul_neg_j(csub(a1, a3));
+            // ---- a1 = tw * A1 ----
+            float a1r = __fmaf_rn(-wi, A1.y, wr * A1.x);
+            float a1i = __fmaf_rn( wr, A1.y, wi * A1.x);
 
-            int o = (i / mh) * mh * 4 + (i % mh);
-            out[o + 0] = cadd(b0, b2);
-            out[o + 1 * mh] = cadd(b1, b3);
-            out[o + 2 * mh] = csub(b0, b2);
-            out[o + 3 * mh] = csub(b1, b3);
+            // ---- a3 = tw * A3 ----
+            float a3r = __fmaf_rn(-wi, A3.y, wr * A3.x);
+            float a3i = __fmaf_rn( wr, A3.y, wi * A3.x);
+
+            // ---- tw = tw * tw  (square once) ----
+            float wr2 = __fmaf_rn(-wi, wi, wr * wr);   // wr^2 - wi^2
+            float wi2 = 2.f * wr * wi;                // 2wrwi
+
+            // ---- a2 = tw^2 * A2 ----
+            float a2r = __fmaf_rn(-wi2, A2.y, wr2 * A2.x);
+            float a2i = __fmaf_rn( wr2, A2.y, wi2 * A2.x);
+
+            // ---- a3 = tw^3 * A3  (we already did tw*A3, now multiply by tw^2) ----
+            float tmp3r = __fmaf_rn(-wi2, a3i, wr2 * a3r);
+            float tmp3i = __fmaf_rn( wr2, a3i, wi2 * a3r);
+            a3r = tmp3r;
+            a3i = tmp3i;
+
+            // -------------------------------------
+            // Radix-4 butterfly (fully fused)
+            // -------------------------------------
+
+            float b0r = A0.x + a2r;
+            float b0i = A0.y + a2i;
+
+            float b1r = A0.x - a2r;
+            float b1i = A0.y - a2i;
+
+            float b2r = a1r + a3r;
+            float b2i = a1i + a3i;
+
+            float d3r = a1r - a3r;
+            float d3i = a1i - a3i;
+
+            // mul_neg_j(x + iy) = ( y , -x )
+            float b3r =  d3i;
+            float b3i = -d3r;
+
+            // output index (avoid division!)
+            int o = (i - k) * 4 + k;
+
+            // final outputs
+            out[o + 0]      = make_float2(b0r + b2r, b0i + b2i);
+            out[o + mh]     = make_float2(b1r + b3r, b1i + b3i);
+            out[o + 2*mh]   = make_float2(b0r - b2r, b0i - b2i);
+            out[o + 3*mh]   = make_float2(b1r - b3r, b1i - b3i);
         }
 
         __syncthreads();
         T* tmp = in; in = out; out = tmp;
-
-        mh *= 4;
     }
 
     if constexpr(isMixedRadix)
@@ -190,11 +227,83 @@ void fft1dStockhamMixedRadixKernel(T* __restrict__ input_data,
 
         __syncthreads();
         T* tmp = in; in = out; out = tmp;
-    }
 
-    // ---- Store R elements per thread ----
-    for (int base = tid; base < N; base += BlockSize) {
-        odata[base] = in[base];
+        // ---- Store R elements per thread ----
+        for (int base = tid; base < N; base += BlockSize) {
+            odata[base] = in[base];
+        }
+    }
+    else
+    {
+        // last stage + direct store
+        int mh = t;
+        for (int base = tid; base < N >> 2; base += BlockSize)
+        {
+            int i = base;
+            int k = i & (mh - 1);
+
+            // twiddle
+            float2 tw = twiddle(k, 4 * mh);
+            float wr = tw.x;
+            float wi = tw.y;
+
+            // load inputs
+            float2 A0 = in[i];
+            float2 A1 = in[i + t];
+            float2 A2 = in[i + 2*t];
+            float2 A3 = in[i + 3*t];
+
+            // ---- a1 = tw * A1 ----
+            float a1r = __fmaf_rn(-wi, A1.y, wr * A1.x);
+            float a1i = __fmaf_rn( wr, A1.y, wi * A1.x);
+
+            // ---- a3 = tw * A3 ----
+            float a3r = __fmaf_rn(-wi, A3.y, wr * A3.x);
+            float a3i = __fmaf_rn( wr, A3.y, wi * A3.x);
+
+            // ---- tw = tw * tw  (square once) ----
+            float wr2 = __fmaf_rn(-wi, wi, wr * wr);   // wr^2 - wi^2
+            float wi2 = 2.f * wr * wi;                // 2wrwi
+
+            // ---- a2 = tw^2 * A2 ----
+            float a2r = __fmaf_rn(-wi2, A2.y, wr2 * A2.x);
+            float a2i = __fmaf_rn( wr2, A2.y, wi2 * A2.x);
+
+            // ---- a3 = tw^3 * A3  (we already did tw*A3, now multiply by tw^2) ----
+            float tmp3r = __fmaf_rn(-wi2, a3i, wr2 * a3r);
+            float tmp3i = __fmaf_rn( wr2, a3i, wi2 * a3r);
+            a3r = tmp3r;
+            a3i = tmp3i;
+
+            // -------------------------------------
+            // Radix-4 butterfly (fully fused)
+            // -------------------------------------
+
+            float b0r = A0.x + a2r;
+            float b0i = A0.y + a2i;
+
+            float b1r = A0.x - a2r;
+            float b1i = A0.y - a2i;
+
+            float b2r = a1r + a3r;
+            float b2i = a1i + a3i;
+
+            float d3r = a1r - a3r;
+            float d3i = a1i - a3i;
+
+            // mul_neg_j(x + iy) = ( y , -x )
+            float b3r =  d3i;
+            float b3i = -d3r;
+
+            // output index (avoid division!)
+            int o = (i - k) * 4 + k;
+
+            // final outputs
+            odata[o + 0]      = make_float2(b0r + b2r, b0i + b2i);
+            odata[o + mh]     = make_float2(b1r + b3r, b1i + b3i);
+            odata[o + 2*mh]   = make_float2(b0r - b2r, b0i - b2i);
+            odata[o + 3*mh]   = make_float2(b1r - b3r, b1i - b3i);
+        }
     }
 }
 

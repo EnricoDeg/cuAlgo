@@ -104,13 +104,8 @@ int main() {
     static constexpr unsigned int total_size = 1024 * 8192;
 
     run_benchmark<4096, 1024>(total_size / 4096); // Radix4
-    // run_benchmark<4096,  512>(total_size / 4096); // Radix4
-    // run_benchmark<4096,  256>(total_size / 4096); // Radix4
-    // run_benchmark<4096,  128>(total_size / 4096); // Radix4
 
     run_benchmark<1024, 256>(total_size / 1024); // Radix4
-    run_benchmark<1024, 128>(total_size / 1024); // Radix4
-    run_benchmark<1024,  64>(total_size / 1024); // Radix4
 
     return 0;
 }
