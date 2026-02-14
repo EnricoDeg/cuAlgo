@@ -189,5 +189,5 @@ TEST(CT_FFT, size_1024) {
     constexpr unsigned int size = 1024;
     constexpr unsigned int size1 = 4;
     constexpr unsigned int size2 = size / size1;
-    run_single_test<size1, size2, 256>();
+    run_single_test<size1, size2, 64>();
 }

@@ -105,6 +105,26 @@ __device__ void fft4_reg(float2 *a)
     }
 }
 
+template<unsigned int FFTSize, unsigned int Stride>
+__device__ void fft4_reg_fast(float2 *a)
+{
+    // Radix4 in register
+    float2 x0 = a[0 * Stride];
+    float2 x1 = a[1 * Stride];
+    float2 x2 = a[2 * Stride];
+    float2 x3 = a[3 * Stride];
+
+    float2 t0 = cadd(x0, x2);
+    float2 t1 = cadd(x1, x3);
+    float2 t2 = csub(x0, x2);
+    float2 t3 = csub(x1, x3);
+
+    a[0 * Stride] = cadd(t0, t1);
+    a[2 * Stride] = csub(t0, t1);
+    a[1 * Stride] = make(t2.x + t3.y, t2.y - t3.x);
+    a[3 * Stride] = make(t2.x - t3.y, t2.y + t3.x);
+}
+
 template<unsigned int FFTSize>
 __device__ void fft8_reg(float2 *a)
 {
@@ -548,6 +568,192 @@ void fft1dBaileyKernel(T* input_data,
     }
 }
 
+template<
+unsigned int FFTSize1,
+unsigned int FFTSize2,
+unsigned int BlockSize,
+typename T,
+typename HandleType>
+__global__ __launch_bounds__(BlockSize)
+void fft1dBaileyKernel1(T* __restrict__ input_data,
+                       T* __restrict__ output_data,
+                       int batch_size)
+{
+    constexpr unsigned int FFTSize = FFTSize1 * FFTSize2;
+    constexpr unsigned int SingleBufferSize = FFTSize2 + FFTSize2 / BANKS;
+    constexpr unsigned int LDS_Size =
+        2 * (FFTSize2 + FFTSize2 / BANKS) > BlockSize * FFTSize1
+        ? 2 * (FFTSize2 + FFTSize2 / BANKS)
+        : BlockSize * FFTSize1;
+    __shared__ float2 sdata[LDS_Size];
+
+    int tid = threadIdx.x;
+    int batch_id = blockIdx.x;
+
+    // Pointer shift to correct batch
+    T* idata = input_data + batch_id * FFTSize;
+    T* odata = output_data + batch_id * FFTSize;
+
+    static_assert(FFTSize1 == 4 || FFTSize1 == 8 || FFTSize1 == 2);
+
+    float2 a[FFTSize1 * (FFTSize2 / BlockSize)];
+
+    for(int n = 0; n < FFTSize2 / BlockSize; ++n)
+    {
+        // --------------------------
+        // STEP 1: FFT on columns
+        // --------------------------
+        for(int i = 0; i < FFTSize1; ++i)
+        {
+            a[i * FFTSize2 / BlockSize + n] = idata[tid + n * BlockSize + FFTSize2 * i];
+        }
+
+        if constexpr(FFTSize1 == 4)
+        {
+            fft4_reg_fast<FFTSize1, FFTSize2 / BlockSize>(&a[n]);
+        }
+        else if constexpr(FFTSize1 == 8)
+        {
+            fft8_reg<FFTSize1>(&a[n]);
+        }
+        else if constexpr(FFTSize1 == 2)
+        {
+            fft2_reg<FFTSize1>(&a[n]);
+        }
+
+        // --------------------------
+        // STEP 2: Multiply twiddle factors
+        // W16^(n1 * n2)
+        // Store back in strided layout
+        // --------------------------
+        float2 alpha = W(FFTSize2 * FFTSize1, (tid + n * BlockSize));
+        float2 w = make(1.f, 0.f);
+
+        for(int i = 0; i < FFTSize1; ++i)
+        {
+            // load current element
+            float2 ai = a[i * FFTSize2 / BlockSize + n];
+
+            // fused complex multiply: ai * w
+            float real = __fmaf_rn(-ai.y, w.y, ai.x * w.x); // ai.x*w.x - ai.y*w.y
+            float imag = __fmaf_rn(ai.x, w.y, ai.y * w.x);  // ai.x*w.y + ai.y*w.x
+
+            // store result
+            a[i * FFTSize2 / BlockSize + n] = make(real, imag);
+
+            // update w = w * alpha using fused multiplies
+            float wx = __fmaf_rn(-w.y, alpha.y, w.x * alpha.x); // w.x*alpha.x - w.y*alpha.y
+            float wy = __fmaf_rn(w.x, alpha.y, w.y * alpha.x);  // w.x*alpha.y + w.y*alpha.x
+            w.x = wx;
+            w.y = wy;
+        }
+    }
+
+    float2* buf0 = sdata;
+    float2* buf1 = sdata + SingleBufferSize;
+
+    // --------------------------
+    // STEP 3: FFT on rows
+    // --------------------------
+    for(int n2 = 0; n2 < FFTSize1; n2++)
+    {
+        constexpr int LOG2N = __builtin_ctz(FFTSize2);
+        constexpr bool isMixedRadix = (LOG2N & 1) != 0;
+        constexpr int log4N = LOG2N >> 1;
+
+        float2* in  = buf0;
+        float2* out = buf1;
+
+        // Load one row into shared memory
+        for(int i = 0; i < FFTSize2 / BlockSize; ++i)
+        {
+            in[pad(tid + i * BlockSize)] = a[n2 * FFTSize2 / BlockSize + i];
+        }
+        __syncthreads();
+
+        int mh = 1;
+        int t = FFTSize2 / 4;
+        for (int s = 0; s < log4N; ++s)
+        {
+            for (int base = tid; base < FFTSize2 >> 2; base += BlockSize)
+            {
+                int i = base;
+                int k = i % mh;
+                float2 tw = twiddle(k, 4 * mh);
+
+                float2 a0 =          in[pad(i + 0 * t)];
+                float2 a1 = cmul(tw, in[pad(i + 1 * t)]);
+                float2 a2 =          in[pad(i + 2 * t)];
+                float2 a3 = cmul(tw, in[pad(i + 3 * t)]);
+                tw = cmul(tw, tw);
+                a2 = cmul(tw, a2);
+                a3 = cmul(tw, a3);
+
+                float2 b0 = cadd(a0, a2);
+                float2 b1 = csub(a0, a2);
+                float2 b2 = cadd(a1, a3);
+                float2 b3 = mul_neg_j(csub(a1, a3));
+
+                int o = (i / mh) * mh * 4 + (i % mh);
+                out[pad(o + 0 * mh)] = cadd(b0, b2);
+                out[pad(o + 1 * mh)] = cadd(b1, b3);
+                out[pad(o + 2 * mh)] = csub(b0, b2);
+                out[pad(o + 3 * mh)] = csub(b1, b3);
+            }
+            __syncthreads();
+            T* tmp = in; in = out; out = tmp;
+
+            mh *= 4;
+        }
+
+        if constexpr(isMixedRadix)
+        {
+            constexpr int half = FFTSize2 >> 1;
+
+            for (int k = tid; k < half; k += BlockSize) {
+
+                T a = in[pad(k       )];
+                T b = in[pad(k + half)];
+
+                // Twiddle W_N^k
+                T w = W(FFTSize2, k);
+
+                T t = cmul(w, b);
+
+                out[pad(k       )] = cadd(a, t);
+                out[pad(k + half)] = csub(a, t);
+            }
+
+            __syncthreads();
+            T* tmp = in; in = out; out = tmp;
+        }
+
+        // Store back to register
+        for(int i = 0; i < FFTSize2 / BlockSize; ++i)
+        {
+            a[n2 * FFTSize2 / BlockSize + i] = in[pad(i * BlockSize + tid)];
+        }
+
+        __syncthreads();
+    }
+
+    // final transpose
+    for(int n = 0; n < FFTSize2 / BlockSize; ++n)
+    {
+        __syncthreads();
+        for(int n2 = 0; n2 < FFTSize1; n2++)
+        {
+            sdata[n2 + tid * FFTSize1] = a[n2 * FFTSize2 / BlockSize + n];
+        }
+        __syncthreads();
+        for(int i = 0; i < FFTSize1; ++i)
+        {
+            odata[tid + i * BlockSize + n * FFTSize1 * BlockSize] =
+                sdata[i * BlockSize + tid];
+        }
+    }
+}
+
 namespace cuAlgo {
 
     /**
@@ -586,7 +792,7 @@ namespace cuAlgo {
 
         TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
             CUALGO_KERNEL_NAME(
-                fft1dBaileyKernel<FFTSize1, FFTSize2, BlockSize, T, fftHandle<FFTSize2>>),
+                fft1dBaileyKernel1<FFTSize1, FFTSize2, BlockSize, T, fftHandle<FFTSize2>>),
             idata, odata, batch_size);
     }
 }
