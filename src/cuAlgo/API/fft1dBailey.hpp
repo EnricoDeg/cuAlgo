@@ -189,6 +189,202 @@ unsigned int FFTSize2,
 unsigned int BlockSize,
 typename T,
 typename HandleType>
+__device__
+void fft1dBailey32x32Impl(T* sdata)
+{
+    constexpr int LOG2N = __builtin_ctz(FFTSize1);
+
+    int tid = threadIdx.x;
+    unsigned int lane = tid & (31);   // lane id in warp
+    int warp_id = tid >> 5; // warp index
+
+    static_assert(FFTSize1 == 32);
+    static_assert(FFTSize2 == 32);
+
+    unsigned mask = 0xffffffff;
+
+    constexpr int NWarps = BlockSize / 32;
+
+    __syncthreads();
+
+    unsigned int row_idx_reversed = base2_reverse(lane, LOG2N);
+
+    float2 twiddles[LOG2N];
+    for(int stage = 0, len = 2; stage < LOG2N; ++stage, len <<= 1)
+    {
+        int half = len >> 1;
+        int k = lane & (half - 1);
+        int twiddle_idx = (k * FFTSize1) / len;
+        twiddles[stage] = HandleType::twiddles()[twiddle_idx];
+    }
+
+    // FFT stages
+    #pragma unroll
+    for(int n = 0; n < FFTSize2 / NWarps; ++n)
+    {
+        // load transpose + bit-reversed
+        float2 x = sdata[row_idx_reversed * (FFTSize2 + 1) + warp_id + n * NWarps];
+
+        #pragma unroll
+        for(int stage = 0, len = 2; stage < LOG2N; ++stage, len <<= 1)
+        {
+            int half = len >> 1;
+
+            float2 w = twiddles[stage];
+
+            float2 y;
+            y.x = __shfl_xor_sync(mask, x.x, half);
+            y.y = __shfl_xor_sync(mask, x.y, half);
+
+            if ((lane & (len - 1)) < half)
+            {
+                float xr = x.x;
+                float xi = x.y;
+                float yr = y.x;
+                float yi = y.y;
+                float wr = w.x;
+                float wi = w.y;
+
+                // x = x + w * y
+                x.x = fmaf(wr, yr, xr) - wi * yi;
+                x.y = fmaf(wr, yi, xi) + wi * yr;
+            }
+            else
+            {
+                float xr = x.x;
+                float xi = x.y;
+                float yr = y.x;
+                float yi = y.y;
+                float wr = w.x;
+                float wi = w.y;
+
+                // x = y - w * x
+                float tr = fmaf(wr, xr, -wi * xi);
+                float ti = fmaf(wr, xi,  wi * xr);
+
+                x.x = yr - tr;
+                x.y = yi - ti;
+            }
+        }
+
+        // __syncwarp();
+
+        x = cmul(x, W(FFTSize2 * FFTSize1, (warp_id + n * NWarps) * lane));
+        sdata[lane * (FFTSize2 + 1) + warp_id + n * NWarps] = x;
+    }
+
+    __syncthreads();
+
+    #pragma unroll
+    for(int n = 0; n < FFTSize1 / NWarps; ++n)
+    {
+        // load transpose + bit-reversed
+        float2 x = sdata[row_idx_reversed + (warp_id + n * NWarps) * (FFTSize2 + 1)];
+
+        #pragma unroll
+        for(int stage = 0, len = 2; stage < LOG2N; ++stage, len <<= 1)
+        {
+            int half = len >> 1;
+
+            float2 w = twiddles[stage];
+
+            float2 y;
+            y.x = __shfl_xor_sync(mask, x.x, half);
+            y.y = __shfl_xor_sync(mask, x.y, half);
+
+            if ((lane & (len - 1)) < half)
+            {
+                // float2 t = cmul(w, y);
+                // x = cadd(x, t);
+                float xr = x.x;
+                float xi = x.y;
+                float yr = y.x;
+                float yi = y.y;
+                float wr = w.x;
+                float wi = w.y;
+
+                // x = x + w * y
+                x.x = fmaf(wr, yr, xr) - wi * yi;
+                x.y = fmaf(wr, yi, xi) + wi * yr;
+            }
+            else
+            {
+                // float2 t = cmul(w, x);
+                // x = csub(y, t);
+                float xr = x.x;
+                float xi = x.y;
+                float yr = y.x;
+                float yi = y.y;
+                float wr = w.x;
+                float wi = w.y;
+
+                // x = y - w * x
+                float tr = fmaf(wr, xr, -wi * xi);
+                float ti = fmaf(wr, xi,  wi * xr);
+
+                x.x = yr - tr;
+                x.y = yi - ti;
+            }
+        }
+
+        // __syncwarp();
+
+        sdata[lane + (warp_id + n * NWarps) * (FFTSize2 + 1)] = x;
+    }
+
+    __syncthreads();
+}
+
+template<
+unsigned int FFTSize1,
+unsigned int FFTSize2,
+unsigned int BlockSize,
+typename T,
+typename HandleType>
+__global__ __launch_bounds__(BlockSize)
+void fft1dBailey32x32Kernel(T* input_data,
+                            T* output_data,
+                            int batch_size)
+{
+    constexpr unsigned int FFTSize = FFTSize1 * FFTSize2;
+    constexpr unsigned int LDS_Size = FFTSize1 * (FFTSize2 + 1);
+    constexpr int LOG2N = __builtin_ctz(FFTSize1);
+    __shared__ float2 sdata[LDS_Size];
+
+    int tid = threadIdx.x;
+    int batch_id = blockIdx.x;
+    unsigned int lane = tid & (31);   // lane id in warp
+    int warp_id = tid >> 5; // warp index
+
+    // Pointer shift to correct batch
+    T* idata = input_data + batch_id * FFTSize;
+    T* odata = output_data + batch_id * FFTSize;
+
+    for(int i = tid; i < FFTSize; i += BlockSize)
+    {
+        int col = i & (FFTSize2 - 1);
+        int row = i / FFTSize2;
+        sdata[col + row * (FFTSize2 + 1)] = idata[col + row * FFTSize2];
+    }
+
+    fft1dBailey32x32Impl<FFTSize1, FFTSize2, BlockSize, T, HandleType>(sdata);
+
+    constexpr int NWarps = BlockSize / 32;
+
+    #pragma unroll
+    for(int n = 0; n < FFTSize2 / NWarps; ++n)
+    {
+        odata[lane + (warp_id + n * NWarps) * FFTSize1] =
+            sdata[lane * (FFTSize2 + 1) + warp_id + n * NWarps];
+    }
+}
+
+template<
+unsigned int FFTSize1,
+unsigned int FFTSize2,
+unsigned int BlockSize,
+typename T,
+typename HandleType>
 __global__ __launch_bounds__(BlockSize)
 void fft1dBaileyKernel(T* input_data,
                        T* output_data,

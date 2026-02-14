@@ -110,9 +110,9 @@ void fft_4step(float2* x, int N, int N1, int N2)
             x[r + c*N1] = tmp[r];
     }
 
-    // -------------------------------------------------
-    // STEP 4: Final reorder (mixed-radix -> linear order)
-    // -------------------------------------------------
+    // // -------------------------------------------------
+    // // STEP 4: Final reorder (mixed-radix -> linear order)
+    // // -------------------------------------------------
     std::vector<float2> B(N);
     for (int r = 0; r < N1; r++)
         for (int c = 0; c < N2; c++)
@@ -165,12 +165,12 @@ void run_single_test()
 
     for (unsigned int i = 0; i < Size; ++i)
     {
-        // std::cout << i << ": " << solution[i].x << " --- " << out[i].x << " --- "
-        //     << std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x)
-        //     << std::endl;
-        // std::cout << i << ": " << solution[i].y << " --- " << out[i].y << " --- "
-        //     << std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y)
-        //     << std::endl;
+        std::cout << i << ": " << solution[i].x << " --- " << out[i].x << " --- "
+            << std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x)
+            << std::endl;
+        std::cout << i << ": " << solution[i].y << " --- " << out[i].y << " --- "
+            << std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y)
+            << std::endl;
         if(solution[i].x > 1e-5 && out[i].x > 1e-5)
             ASSERT_TRUE(std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x) < 2e-3);
         if(solution[i].y > 1e-5 && out[i].y > 1e-5)
@@ -187,7 +187,7 @@ void run_single_test()
 TEST(CT_FFT, size_1024) {
     // Radix4
     constexpr unsigned int size = 1024;
-    constexpr unsigned int size1 = 2;
+    constexpr unsigned int size1 = 4;
     constexpr unsigned int size2 = size / size1;
-    run_single_test<size1, size2, 128>();
+    run_single_test<size1, size2, 256>();
 }

@@ -67,7 +67,7 @@ void run_benchmark(int batch_size)
 
     check_cuda( cudaMemcpy(d_in , in , Size * batch_size * sizeof(float2), cudaMemcpyHostToDevice ) );
 
-    // cuAlgo::fft1dCT_plan<Size>();
+    cuAlgo::fft1dCT_plan<Size2>();
     // warmup
     for (unsigned int i = 0; i < warmup_size; ++i)
         cuAlgo::fft1dBailey<Size1, Size2, BlockSize>(d_in, d_out, batch_size);
@@ -105,13 +105,17 @@ void run_benchmark(int batch_size)
 int main() {
     static constexpr unsigned int total_size = 1024 * 8192;
 
-    run_benchmark<2, 2048 / 2, 256>(total_size / 2048); // Radix2
-    run_benchmark<4, 2048 / 4, 256>(total_size / 2048); // Radix4
-    run_benchmark<4, 2048 / 4, 128>(total_size / 2048); // Radix4
-    run_benchmark<8, 2048 / 8, 128>(total_size / 2048); // Radix8
+    // run_benchmark<32, 32,  64>(total_size / 1024); // WarpFFT
+    // run_benchmark<32, 32, 128>(total_size / 1024); // WarpFFT
+    // run_benchmark<32, 32, 256>(total_size / 1024); // WarpFFT
+    // run_benchmark<32, 32, 512>(total_size / 1024); // WarpFFT
+
+    // run_benchmark<2, 2048 / 2, 256>(total_size / 2048); // Radix2
+    // run_benchmark<4, 2048 / 4, 128>(total_size / 2048); // Radix4
 
     run_benchmark<2, 4096 / 2, 256>(total_size / 4096); // Radix2
     run_benchmark<4, 4096 / 4, 256>(total_size / 4096); // Radix4
+    run_benchmark<8, 4096 / 8, 128>(total_size / 4096); // Radix4
 
     return 0;
 }
