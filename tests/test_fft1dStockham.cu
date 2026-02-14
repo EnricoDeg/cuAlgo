@@ -28,6 +28,9 @@
  */
 
 #include <iostream>
+#include <string>
+#include <sstream>
+#include <iomanip>
 #include <stdlib.h>
 #include <chrono>
 #include <cmath>
@@ -84,7 +87,7 @@ void stockham_fft(float2 * x, unsigned int N)
     }
 }
 
-template<unsigned int Size>
+template<unsigned int Size, unsigned int BlockSize>
 void run_single_test()
 {
     float2 * in  = (float2*)malloc(Size * sizeof(float2));
@@ -120,17 +123,19 @@ void run_single_test()
 
     // GPU
     cuAlgo::fft1dCT_plan<Size>();
-    cuAlgo::fft1dStockham<Size>(d_in, d_out, 1);
+    cuAlgo::fft1dStockham<Size, BlockSize>(d_in, d_out, 1);
 
     check_cuda( cudaMemcpy ( out, d_out, Size * sizeof(float2), cudaMemcpyDeviceToHost ) );
 
     for (unsigned int i = 0; i < Size; ++i)
     {
-        // std::cout << i << ": " << solution[i].x << " --- " << out[i].x << " --- "
-        //     << std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x)
+        // std::cout << std::setw(3) << i  << ": " << std::setw(12) << solution[i].x <<
+        //     " --- " << std::setw(12) << out[i].x << " --- "
+        //     << std::setw(12) << std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x)
         //     << std::endl;
-        // std::cout << i << ": " << solution[i].y << " --- " << out[i].y << " --- "
-        //     << std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y)
+        // std::cout << std::setw(3) << i << ": " << std::setw(12) << solution[i].y <<
+        //     " --- " << std::setw(12) << out[i].y << " --- "
+        //     << std::setw(12) << std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y)
         //     << std::endl;
         if(solution[i].x > 1e-5 && out[i].x > 1e-5)
             ASSERT_TRUE(std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x) < 1e-3);
@@ -148,11 +153,11 @@ void run_single_test()
 TEST(CT_Stockham, size_1024) {
 
     constexpr unsigned int size = 1024;
-    run_single_test<size>();
+    run_single_test<size, 64>();
 }
 
 TEST(CT_Stockham, size_512) {
 
     constexpr unsigned int size = 512;
-    run_single_test<size>();
+    run_single_test<size, 64>();
 }

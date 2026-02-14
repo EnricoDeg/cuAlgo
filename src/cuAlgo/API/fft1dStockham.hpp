@@ -37,12 +37,13 @@
 
 template <
 unsigned int N,
+unsigned int BlockSize,
 typename T,
 typename HandleType>
 __global__
-void fft1dStockhamKernel(T* __restrict__ input_data,
-                         T* __restrict__ output_data,
-                         int batch_size)
+void fft1dStockhamRadix2Kernel(T* __restrict__ input_data,
+                               T* __restrict__ output_data,
+                               int batch_size)
 {
     __shared__ T smem[2 * N];
 
@@ -97,6 +98,106 @@ void fft1dStockhamKernel(T* __restrict__ input_data,
     odata[i + N/2] = in[i + N/2];
 }
 
+template <
+unsigned int N,
+unsigned int BlockSize,
+typename T,
+typename HandleType>
+__global__
+void fft1dStockhamMixedRadixKernel(T* __restrict__ input_data,
+                                   T* __restrict__ output_data,
+                                   int batch_size)
+{
+    __shared__ T smem[2 * N];
+
+    T* idata = input_data  + blockIdx.x * N;
+    T* odata = output_data + blockIdx.x * N;
+
+    T* buf0 = smem;
+    T* buf1 = smem + N;
+
+    int tid = threadIdx.x;
+
+    // ---- Load R elements per thread ----
+    for (int base = tid; base < N; base += BlockSize) {
+        buf0[base] = idata[base];
+    }
+    __syncthreads();
+
+    T* in  = buf0;
+    T* out = buf1;
+
+    constexpr int log2N = __builtin_ctz(N);
+    constexpr int log4N = log2N >> 1;
+    constexpr bool isMixedRadix = (log2N & 1) != 0;
+    int mh = 1;
+    int t = N / 4;
+
+    for (int s = 0; s < log4N; ++s) {
+
+        for (int base = tid; base < N >> 2; base += BlockSize)
+        {
+            int i = base;
+            int k = i % mh;
+
+            float2 tw = twiddle(k, 4 * mh);
+            // int twiddle_idx = (k * N) / (4 * mh);
+            // float2 tw = HandleType::twiddles()[twiddle_idx];
+
+            float2 a0 = in[i];
+            float2 a1 = cmul(tw, in[i + t]);
+            float2 a2 = in[i + 2 * t];
+            float2 a3 = cmul(tw, in[i + 3 * t]);
+            tw = cmul(tw, tw);
+            a2 = cmul(tw, a2);
+            a3 = cmul(tw, a3);
+
+            float2 b0 = cadd(a0, a2);
+            float2 b1 = csub(a0, a2);
+            float2 b2 = cadd(a1, a3);
+            float2 b3 = mul_neg_j(csub(a1, a3));
+
+            int o = (i / mh) * mh * 4 + (i % mh);
+            out[o + 0] = cadd(b0, b2);
+            out[o + 1 * mh] = cadd(b1, b3);
+            out[o + 2 * mh] = csub(b0, b2);
+            out[o + 3 * mh] = csub(b1, b3);
+        }
+
+        __syncthreads();
+        T* tmp = in; in = out; out = tmp;
+
+        mh *= 4;
+    }
+
+    if constexpr(isMixedRadix)
+    {
+        constexpr int half = N >> 1;
+
+        for (int k = tid; k < half; k += BlockSize) {
+
+            T a = in[k];
+            T b = in[k + N / 2];
+
+            // Twiddle W_N^k
+            T w = HandleType::twiddles()[k];
+
+            T t = cmul(w, b);
+
+            out[k]        = cadd(a, t);
+            out[k + half] = csub(a, t);
+        }
+
+        __syncthreads();
+        T* tmp = in; in = out; out = tmp;
+    }
+
+    // ---- Store R elements per thread ----
+    for (int base = tid; base < N; base += BlockSize) {
+        odata[base] = in[base];
+    }
+}
+
 namespace cuAlgo {
 
     /**
@@ -117,6 +218,7 @@ namespace cuAlgo {
     */
     template <
     unsigned int FFTSize,
+    unsigned int BlockSize,
     typename T>
     void fft1dStockham(T *idata ,
                        T *odata ,
@@ -125,11 +227,12 @@ namespace cuAlgo {
                        bool async = false)
     {
         dim3 blocksPerGrid3(batch_size, 1, 1);
-        dim3 threadsPerBlock3(FFTSize / 2, 1, 1);
+        dim3 threadsPerBlock3(BlockSize, 1, 1);
         print_kernel_config(threadsPerBlock3, blocksPerGrid3);
 
         TIME(blocksPerGrid3, threadsPerBlock3, 0, stream, async, 
-             CUALGO_KERNEL_NAME(fft1dStockhamKernel<FFTSize, T, fftHandle<FFTSize>>),
+             CUALGO_KERNEL_NAME(
+                fft1dStockhamMixedRadixKernel<FFTSize, BlockSize, T, fftHandle<FFTSize>>),
              idata, odata, batch_size);
     }
 }
