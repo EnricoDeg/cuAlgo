@@ -165,16 +165,14 @@ void run_single_test()
 
     for (unsigned int i = 0; i < Size; ++i)
     {
-        std::cout << i << ": " << solution[i].x << " --- " << out[i].x << " --- "
-            << std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x)
-            << std::endl;
-        std::cout << i << ": " << solution[i].y << " --- " << out[i].y << " --- "
-            << std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y)
-            << std::endl;
-        if(solution[i].x > 1e-5 && out[i].x > 1e-5)
-            ASSERT_TRUE(std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x) < 2e-3);
-        if(solution[i].y > 1e-5 && out[i].y > 1e-5)
-            ASSERT_TRUE(std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y) < 2e-3);
+        // std::cout << i << ": " << solution[i].x << " --- " << out[i].x << " --- "
+        //     << std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x)
+        //     << std::endl;
+        // std::cout << i << ": " << solution[i].y << " --- " << out[i].y << " --- "
+        //     << std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y)
+        //     << std::endl;
+        ASSERT_TRUE(std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x) < 2e-3);
+        ASSERT_TRUE(std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y) < 2e-3);
     }
 
     check_cuda( cudaFree(d_in) );

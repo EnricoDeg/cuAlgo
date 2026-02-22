@@ -728,19 +728,85 @@ __device__ void stage2(float* CUALGO_RESTRICT buf0,
     float* in  = buf0;
     float* out = buf1;
 
-    static_for<0, N>([&](auto I){
-        in[permute(i + I.value * BlockSize)] = (*ptrs[I.value]).x;
-    });
-
-    static_for<0, N>([&](auto I){
-        in[permute(i + I.value * BlockSize) + Offset] = (*ptrs[I.value]).y;
-    });
-
-    __syncthreads();
-
     constexpr int t = FFTSize2 >> 2;
 
-    static_for<0, log4N>([&](auto s)
+    // first stage, all data that we need are in register already
+    {
+        constexpr int mh = 1;
+        int k = i & (mh - 1);
+
+        float inv =  GET_INV(0); // 1.f / (mh << 2);
+        float ang = - float(k) * inv;
+        float t_imag, t_real;
+        __sincosf(ang, &t_imag, &t_real);
+
+        // twiddle factors
+        float tw1_real = __fmaf_rn(t_real, t_real, -t_imag * t_imag);
+        float tw1_imag = __fmaf_rn(2.f * t_real, t_imag, 0.f);
+
+        float tw2_real = __fmaf_rn(tw1_real, t_real, -tw1_imag * t_imag);
+        float tw2_imag = __fmaf_rn(tw1_real, t_imag, tw1_imag * t_real);
+
+        // load inputs
+        float2 x0, x1, x2, x3;
+        x0.x = (*ptrs[0]).x;
+        x1.x = (*ptrs[1]).x;
+        x2.x = (*ptrs[2]).x;
+        x3.x = (*ptrs[3]).x;
+
+        x0.y = (*ptrs[0]).y;
+        x1.y = (*ptrs[1]).y;
+        x2.y = (*ptrs[2]).y;
+        x3.y = (*ptrs[3]).y;
+
+        // apply twiddle factors using __fmaf_rn
+        float a0_real = x0.x;
+        float a0_imag = x0.y;
+
+        float a1_real = __fmaf_rn(t_real, x1.x, -t_imag * x1.y);
+        float a1_imag = __fmaf_rn(t_real, x1.y, t_imag * x1.x);
+
+        float a2_real = __fmaf_rn(tw1_real, x2.x, -tw1_imag * x2.y);
+        float a2_imag = __fmaf_rn(tw1_real, x2.y, tw1_imag * x2.x);
+
+        float a3_real = __fmaf_rn(tw2_real, x3.x, -tw2_imag * x3.y);
+        float a3_imag = __fmaf_rn(tw2_real, x3.y, tw2_imag * x3.x);
+
+        // butterflies
+        float b0_real = __fmaf_rn(1.f, a0_real, a2_real); // a0_real + a2_real
+        float b0_imag = __fmaf_rn(1.f, a0_imag, a2_imag); // a0_imag + a2_imag
+
+        float b2_real = __fmaf_rn(1.f, a1_real, a3_real); // a1_real + a3_real
+        float b2_imag = __fmaf_rn(1.f, a1_imag, a3_imag); // a1_imag + a3_imag
+
+        // output indices
+        int o = (i - k) * 4 + k;
+
+        // first stage
+        out[permute(o + 0*mh)] = __fmaf_rn( 1.f, b0_real, b2_real);
+        out[permute(o + 0*mh) + Offset] = __fmaf_rn( 1.f, b0_imag, b2_imag);
+        out[permute(o + 2*mh)] = __fmaf_rn(-1.f, b2_real, b0_real);
+        out[permute(o + 2*mh) + Offset] = __fmaf_rn(-1.f, b2_imag, b0_imag);
+
+        // second stage
+        b0_real = __fmaf_rn(1.f, a0_real, -a2_real); // a0_real - a2_real
+        b0_imag = __fmaf_rn(1.f, a0_imag, -a2_imag); // a0_imag - a2_imag
+
+        // mul_neg_j(csub(a1,a3)) -> fused
+        b2_real = __fmaf_rn(1.f, a1_imag, -a3_imag); // a1_imag - a3_imag
+        b2_imag = __fmaf_rn(1.f, a3_real, -a1_real); // a3_real - a1_real
+
+        out[permute(o + 1*mh)] = __fmaf_rn(1.f, b0_real,  b2_real);
+        out[permute(o + 1*mh) + Offset] = __fmaf_rn(1.f, b0_imag,  b2_imag);
+        out[permute(o + 3*mh)] = __fmaf_rn(1.f, b0_real, -b2_real);
+        out[permute(o + 3*mh) + Offset] = __fmaf_rn(1.f, b0_imag, -b2_imag);
+
+        __syncthreads();
+        float* tmp = in; in = out; out = tmp;
+    }
+
+    // steps 1..log4N-1
+    static_for<1, log4N - 1>([&](auto s)
     {
         constexpr int mh = 1 << (2 * s.value);
         int k = i & (mh - 1);
@@ -815,13 +881,74 @@ __device__ void stage2(float* CUALGO_RESTRICT buf0,
         float* tmp = in; in = out; out = tmp;
     });
 
-    static_for<0, N>([&](auto I){
-        (*ptrs[I.value]).x = in[permute(i + I.value * BlockSize)];
-    });
+    // last step, we don't store to shared memory but keep results in register
+    {
+        constexpr int mh = 1 << (2 * (log4N - 1));
+        int k = i & (mh - 1);
 
-    static_for<0, N>([&](auto I){
-        (*ptrs[I.value]).y = in[permute(i + I.value * BlockSize) + Offset];
-    });
+        float inv =  GET_INV(log4N - 1); // 1.f / (mh << 2);
+        float ang = - float(k) * inv;
+        float t_imag, t_real;
+        __sincosf(ang, &t_imag, &t_real);
+
+        // twiddle factors
+        float tw1_real = __fmaf_rn(t_real, t_real, -t_imag * t_imag);
+        float tw1_imag = __fmaf_rn(2.f * t_real, t_imag, 0.f);
+
+        float tw2_real = __fmaf_rn(tw1_real, t_real, -tw1_imag * t_imag);
+        float tw2_imag = __fmaf_rn(tw1_real, t_imag, tw1_imag * t_real);
+
+        // load inputs
+        float2 x0, x1, x2, x3;
+        x0.x = in[permute(i + 0*t)];
+        x1.x = in[permute(i + 1*t)];
+        x2.x = in[permute(i + 2*t)];
+        x3.x = in[permute(i + 3*t)];
+
+        x0.y = in[permute(i + 0*t) + Offset];
+        x1.y = in[permute(i + 1*t) + Offset];
+        x2.y = in[permute(i + 2*t) + Offset];
+        x3.y = in[permute(i + 3*t) + Offset];
+
+        // apply twiddle factors using __fmaf_rn
+        float a0_real = x0.x;
+        float a0_imag = x0.y;
+
+        float a1_real = __fmaf_rn(t_real, x1.x, -t_imag * x1.y);
+        float a1_imag = __fmaf_rn(t_real, x1.y, t_imag * x1.x);
+
+        float a2_real = __fmaf_rn(tw1_real, x2.x, -tw1_imag * x2.y);
+        float a2_imag = __fmaf_rn(tw1_real, x2.y, tw1_imag * x2.x);
+
+        float a3_real = __fmaf_rn(tw2_real, x3.x, -tw2_imag * x3.y);
+        float a3_imag = __fmaf_rn(tw2_real, x3.y, tw2_imag * x3.x);
+
+        // butterflies
+        float b0_real = __fmaf_rn(1.f, a0_real, a2_real); // a0_real + a2_real
+        float b0_imag = __fmaf_rn(1.f, a0_imag, a2_imag); // a0_imag + a2_imag
+
+        float b2_real = __fmaf_rn(1.f, a1_real, a3_real); // a1_real + a3_real
+        float b2_imag = __fmaf_rn(1.f, a1_imag, a3_imag); // a1_imag + a3_imag
+
+        // first stage
+        (*ptrs[0]).x = __fmaf_rn( 1.f, b0_real, b2_real);
+        (*ptrs[0]).y = __fmaf_rn( 1.f, b0_imag, b2_imag);
+        (*ptrs[2]).x = __fmaf_rn(-1.f, b2_real, b0_real);
+        (*ptrs[2]).y = __fmaf_rn(-1.f, b2_imag, b0_imag);
+
+        // second stage
+        b0_real = __fmaf_rn(1.f, a0_real, -a2_real); // a0_real - a2_real
+        b0_imag = __fmaf_rn(1.f, a0_imag, -a2_imag); // a0_imag - a2_imag
+
+        // mul_neg_j(csub(a1,a3)) -> fused
+        b2_real = __fmaf_rn(1.f, a1_imag, -a3_imag); // a1_imag - a3_imag
+        b2_imag = __fmaf_rn(1.f, a3_real, -a1_real); // a3_real - a1_real
+
+        (*ptrs[1]).x = __fmaf_rn(1.f, b0_real,  b2_real);
+        (*ptrs[1]).y = __fmaf_rn(1.f, b0_imag,  b2_imag);
+        (*ptrs[3]).x = __fmaf_rn(1.f, b0_real, -b2_real);
+        (*ptrs[3]).y = __fmaf_rn(1.f, b0_imag, -b2_imag);
+    }
 }
 
 // Get pointers to columns at row Idx
@@ -963,8 +1090,9 @@ void fft1dBaileyKernel(T* CUALGO_RESTRICT input_data,
         sdata[pad_transpose<FFTSize1>(tid,2)] = a[2][j.value];
         sdata[pad_transpose<FFTSize1>(tid,3)] = a[3][j.value];
         __syncthreads();
-        int col = tid % (FFTSize1);
-        int row = tid / (FFTSize1);
+        int col = tid & (FFTSize1 - 1);
+        constexpr int LOG2FFTSize1 = __builtin_ctz(FFTSize1);
+        int row = tid >> LOG2FFTSize1;
 
         static_for<0, FFTSize1>([&](auto i){
             odata[tid + i.value * (BlockSize) + j.value * FFTSize1 * BlockSize] =
