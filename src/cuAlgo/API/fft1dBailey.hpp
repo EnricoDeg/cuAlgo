@@ -565,9 +565,10 @@ void fft1dBailey32x32Kernel(T* input_data,
 CUALGO_DEVICE CUALGO_FORCE_INLINE
 int permute(int idx)
 {
-    int row = idx / 16;
-    int col = idx & (16 - 1);
-    return row * 16 + (col ^ row);
+    // int row = idx / 32;
+    // int col = idx & (32 - 1);
+    // return row * 32 + (col ^ row);
+    return idx + (idx >> 5);   // i / 32
 }
 
 #define PAD_T 1
@@ -1030,7 +1031,7 @@ void fft1dBaileyKernel(T* CUALGO_RESTRICT input_data,
     static_assert(FFTSize2 <= 1048576);
 
     constexpr unsigned int FFTSize = FFTSize1 * FFTSize2;
-    constexpr unsigned int Stage2LDSSize = 2 * (FFTSize2);
+    constexpr unsigned int Stage2LDSSize = 2 * (FFTSize2 + FFTSize2 / BANKS);
     constexpr unsigned int TransposeLDSSize = BlockSize * (FFTSize1 + PAD_T);
     constexpr unsigned int SingleBufferSize = Stage2LDSSize / 2;
     constexpr unsigned int LDS_Size =
@@ -1083,16 +1084,16 @@ void fft1dBaileyKernel(T* CUALGO_RESTRICT input_data,
     // -------------------------------
     // STEP 4: final transpose
     // -------------------------------
+    int col = tid & (FFTSize1 - 1);
+    constexpr int LOG2FFTSize1 = __builtin_ctz(FFTSize1);
+    int row = tid >> LOG2FFTSize1;
+
     static_for<0, FFTSize2 / BlockSize>([&](auto j){
         __syncthreads();
-        sdata[pad_transpose<FFTSize1>(tid,0)] = a[0][j.value];
-        sdata[pad_transpose<FFTSize1>(tid,1)] = a[1][j.value];
-        sdata[pad_transpose<FFTSize1>(tid,2)] = a[2][j.value];
-        sdata[pad_transpose<FFTSize1>(tid,3)] = a[3][j.value];
+        static_for<0, FFTSize1>([&](auto i){
+            sdata[pad_transpose<FFTSize1>(tid,i.value)] = a[i.value][j.value];
+        });
         __syncthreads();
-        int col = tid & (FFTSize1 - 1);
-        constexpr int LOG2FFTSize1 = __builtin_ctz(FFTSize1);
-        int row = tid >> LOG2FFTSize1;
 
         static_for<0, FFTSize1>([&](auto i){
             odata[tid + i.value * (BlockSize) + j.value * FFTSize1 * BlockSize] =

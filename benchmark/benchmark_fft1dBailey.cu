@@ -112,6 +112,7 @@ int main() {
 
     // run_benchmark<2, 2048 / 2, 256>(total_size / 2048); // Radix2
     // run_benchmark<4, 2048 / 4, 128>(total_size / 2048); // Radix4
+    // run_benchmark<4, 1024 / 4, 64>(total_size / 1024); // Radix4
 
     // run_benchmark<2, 4096 / 2, 256>(total_size / 4096); // Radix2
     run_benchmark<4, 4096 / 4, 256>(total_size / 4096); // Radix4
