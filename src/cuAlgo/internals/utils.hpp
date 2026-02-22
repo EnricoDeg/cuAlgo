@@ -39,6 +39,24 @@
 #include "cuAlgo/internals/definitions.hpp"
 #include "cuAlgo/internals/checkError.hpp"
 
+// Expand array into variadic parameter pack
+template<typename Func, int... Is>
+CUALGO_DEVICE CUALGO_FORCE_INLINE
+void expand_array(float2* arr[], Func&& f, std::integer_sequence<int, Is...>)
+{
+    f(arr[Is]...);  // expands into f(arr[0], arr[1], ..., arr[N-1])
+}
+
+template<int Start, int End, typename Func>
+CUALGO_DEVICE CUALGO_FORCE_INLINE
+constexpr void static_for(Func&& f) {
+    if constexpr (Start < End) {
+        f(std::integral_constant<int, Start>{});
+        static_for<Start + 1, End>(f);
+    }
+}
+
+
 CUALGO_HOST_DEVICE int div_ceil(int numerator, int denominator)
 {
     return (numerator % denominator != 0) ?

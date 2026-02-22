@@ -104,7 +104,7 @@ float2 cmulj(float2 a)
 // twiddle computation fwd
 CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE
 float2 twiddle(int k, int m) {
-    float angle = -2.0f * M_PI * k / m;
+    float angle = -2.0f * float(M_PI) * float(k) / float(m);
     return make_float2(cosf(angle), sinf(angle));
 }
 
