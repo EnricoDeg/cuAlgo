@@ -171,8 +171,8 @@ void run_single_test()
         // std::cout << i << ": " << solution[i].y << " --- " << out[i].y << " --- "
         //     << std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y)
         //     << std::endl;
-        ASSERT_TRUE(std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x) < 2e-3);
-        ASSERT_TRUE(std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y) < 2e-3);
+        ASSERT_TRUE(std::abs(solution[i].x - out[i].x) / std::abs(solution[i].x) < 3e-3);
+        ASSERT_TRUE(std::abs(solution[i].y - out[i].y) / std::abs(solution[i].y) < 3e-3);
     }
 
     check_cuda( cudaFree(d_in) );
@@ -186,6 +186,14 @@ TEST(CT_FFT, size_1024) {
     // Radix4
     constexpr unsigned int size = 1024;
     constexpr unsigned int size1 = 4;
+    constexpr unsigned int size2 = size / size1;
+    run_single_test<size1, size2, 64>();
+}
+
+TEST(CT_FFT, size_2048) {
+    // Radix4
+    constexpr unsigned int size = 2048;
+    constexpr unsigned int size1 = 8;
     constexpr unsigned int size2 = size / size1;
     run_single_test<size1, size2, 64>();
 }

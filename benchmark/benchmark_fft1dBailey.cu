@@ -120,5 +120,7 @@ int main() {
     // run_benchmark<4, 4096 / 4,  64>(total_size / 4096); // Radix4
     // run_benchmark<8, 4096 / 8, 128>(total_size / 4096); // Radix4
 
+    run_benchmark<8, 8192 / 8, 256>(total_size / 8192); // Radix4
+
     return 0;
 }

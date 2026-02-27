@@ -625,6 +625,61 @@ void fftN_reg_fast(float2 *a0, float2 *a1, float2 *a2, float2 *a3)
     *a3 = make(t0.x - t1.y, t0.y + t1.x);
 }
 
+// specialized for radix-8 (1 step in register)
+template<unsigned int FFTSize>
+CUALGO_DEVICE CUALGO_FORCE_INLINE
+void fftN_reg_fast(float2 *aa0, float2 *aa1, float2 *aa2, float2 *aa3,
+                   float2 *aa4, float2 *aa5, float2 *aa6, float2 *aa7)
+{
+    // Radix8 in register
+    float2 x0 = *aa0;
+    float2 x1 = *aa1;
+    float2 x2 = *aa2;
+    float2 x3 = *aa3;
+    float2 x4 = *aa4;
+    float2 x5 = *aa5;
+    float2 x6 = *aa6;
+    float2 x7 = *aa7;
+
+    float2 a0 = x0;
+    float2 a1 = x1;
+    float2 a2 = x2;
+    float2 a3 = x3;
+    float2 a4 = x4;
+    float2 a5 = x5;
+    float2 a6 = x6;
+    float2 a7 = x7;
+
+    float2 s0 = cadd(a0, a4);
+    float2 s1 = cadd(a1, a5);
+    float2 s2 = cadd(a2, a6);
+    float2 s3 = cadd(a3, a7);
+
+    float2 d0 = csub(a0, a4);
+    float2 d1 = csub(a1, a5);
+    float2 d2 = csub(a2, a6);
+    float2 d3 = csub(a3, a7);
+
+    float2 t0 = cadd(s0, s2);
+    float2 t1 = cadd(s1, s3);
+    float2 t2 = csub(s0, s2);
+    float2 t3 = mul_neg_j(csub(s1, s3));
+
+    float2 u0 = cadd(d0, mul_neg_j(d2));
+    float2 u1 = cadd(d1, mul_neg_j(d3));
+    float2 u2 = csub(d0, mul_neg_j(d2));
+    float2 u3 = csub(d1, mul_neg_j(d3));
+
+    *aa0 = cadd(t0, t1);
+    *aa1 = cadd(u0, mul_W8_1(u1));
+    *aa2 = cadd(t2, t3);
+    *aa3 = cadd(u2, mul_W8_3(u3));
+    *aa4 = csub(t0, t1);
+    *aa5 = csub(u0, mul_W8_1(u1));
+    *aa6 = csub(t2, t3);
+    *aa7 = csub(u2, mul_W8_3(u3));
+}
+
 template<typename... Columns>
 CUALGO_DEVICE CUALGO_FORCE_INLINE
 void twiddle_stage(float2 alpha, Columns* CUALGO_RESTRICT ... cols)
@@ -1027,7 +1082,7 @@ void fft1dBaileyKernel(T* CUALGO_RESTRICT input_data,
                        int batch_size)
 {
     // add spec function for in register first stage fft
-    static_assert(FFTSize1 == 4);
+    static_assert(FFTSize1 == 4 || FFTSize1 == 8);
     static_assert(FFTSize2 <= 1048576);
 
     constexpr unsigned int FFTSize = FFTSize1 * FFTSize2;
