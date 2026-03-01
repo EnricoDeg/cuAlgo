@@ -306,11 +306,6 @@ void stage3(Columns* ... columns)
 {
     int tid = threadIdx.x;
 
-    // --------------------------
-    // STEP 1: FFT on columns
-    // --------------------------
-    ifftN_reg_fast<FFTSize1>(columns...);
-
     float inv = 1.f / (FFTSize2 * FFTSize1);
     // --------------------------
     // STEP 2: Multiply twiddle factors
@@ -325,6 +320,11 @@ void stage3(Columns* ... columns)
         float2 alpha = make_float2(c, s);
         twiddle_stage(alpha, columns...);
     }
+
+    // --------------------------
+    // STEP 1: FFT on columns
+    // --------------------------
+    ifftN_reg_fast<FFTSize1>(columns...);
 }
 
 template<
@@ -1223,45 +1223,14 @@ void convFFT1dBaileyKernel(T* CUALGO_RESTRICT input_data1,
         >(buf0, buf1, buf2, buf3, a, b);
     });
 
-    int col = tid & (FFTSize1 - 1);
-    constexpr int LOG2FFTSize1 = __builtin_ctz(FFTSize1);
-    int row = tid >> LOG2FFTSize1;
-
-    float2 c[FFTSize1][FFTSize2 / BlockSize];
-
+    // -------------------------------
+    // Convolution
+    // -------------------------------
     static_for<0, FFTSize2 / BlockSize>([&](auto j){
-        __syncthreads();
         static_for<0, FFTSize1>([&](auto i){
-            sdata[pad_transpose<FFTSize1>(tid,i.value)] =
+            a[i.value][j.value] =
                 cmul(a[i.value][j.value], b[i.value][j.value]);
         });
-        __syncthreads();
-
-        static_for<0, FFTSize1>([&](auto i){
-            // odata[tid + i.value * (BlockSize) + j.value * FFTSize1 * BlockSize] =
-            // constexpr int reg_col = i.value * BlockSize / FFTSize2 +
-            //                         j.value * FFTSize1 * BlockSize / FFTSize2;
-            // constexpr int reg_row = i.value % (FFTSize2 / BlockSize);
-            constexpr int reg_col = j.value;
-            constexpr int reg_row = i.value;
-            c[reg_col][reg_row] = 
-                sdata[pad_transpose<FFTSize1>(row, col) +
-                                    i.value * (FFTSize1 + PAD_T) * (BlockSize / FFTSize1)];
-        });
-    });
-
-    // -------------------------------
-    // STEP 1-2: IFFT on cols + Twiddle
-    // -------------------------------
-    static_for<0, FFTSize2 / BlockSize>([&](auto i){
-        stage3_static_columns<
-            i.value,         // stage index
-            FFTSize1,
-            FFTSize2,
-            BlockSize,
-            FFTSize1,        // NumCols = FFTSize1
-            FFTSize2 / BlockSize  // NumRows
-        >(c);          // pass the array directly, NOT &a[0][0]
     });
 
     buf0 = (float*)sdata;
@@ -1281,21 +1250,32 @@ void convFFT1dBaileyKernel(T* CUALGO_RESTRICT input_data1,
             SingleBufferSize,
             FFTSize1,            // NumCols
             FFTSize2 / BlockSize // NumRows
-        >(buf0, buf1, c);
+        >(buf0, buf1, a);
     });
 
-    static_for<0, FFTSize2 / BlockSize>([&](auto j){
-        __syncthreads();
-        static_for<0, FFTSize1>([&](auto i){
-            sdata[pad_transpose<FFTSize1>(tid,i.value)] = make(c[i.value][j.value].x / FFTSize,
-                                                               c[i.value][j.value].y / FFTSize);
-        });
-        __syncthreads();
+    // -------------------------------
+    // STEP 1-2: IFFT on cols + Twiddle
+    // -------------------------------
+    static_for<0, FFTSize2 / BlockSize>([&](auto i){
+        stage3_static_columns<
+            i.value,         // stage index
+            FFTSize1,
+            FFTSize2,
+            BlockSize,
+            FFTSize1,        // NumCols = FFTSize1
+            FFTSize2 / BlockSize  // NumRows
+        >(a);          // pass the array directly, NOT &a[0][0]
+    });
 
-        static_for<0, FFTSize1>([&](auto i){
-            odata[tid + i.value * (BlockSize) + j.value * FFTSize1 * BlockSize] =
-                sdata[pad_transpose<FFTSize1>(row, col) +
-                                    i.value * (FFTSize1 + PAD_T) * (BlockSize / FFTSize1)];
+    // -------------------------------
+    // Store results
+    // -------------------------------
+    static_for<0, FFTSize1>([&](auto i){
+        static_for<0, FFTSize2 / BlockSize>([&](auto j){
+            float2 result = make(a[i.value][j.value].x / FFTSize,
+                                 a[i.value][j.value].y / FFTSize);
+            odata[tid + j.value * (BlockSize) + i.value * FFTSize1 * BlockSize] =
+                result;
         });
     });
 }
