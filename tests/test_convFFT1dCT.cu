@@ -59,7 +59,7 @@ void fft(vector<float2> &a, bool invert) {
     bitReverse(a);
 
     for (int len = 2; len <= n; len <<= 1) {
-        float ang = 2 * M_PI / len * (invert ? -1 : 1);
+        float ang = 2 * M_PI / len * (invert ? 1 : -1);
 
         for (int i = 0; i < n; i += len) {
             for (int j = 0; j < len/2; j++) {
