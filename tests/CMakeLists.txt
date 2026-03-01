@@ -109,6 +109,13 @@ add_executable( test_convFFT1dCT
 target_include_directories(test_convFFT1dCT PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(test_convFFT1dCT GTest::gtest_main)
 
+# Bailey conv FFT
+add_executable( test_convFFT1dBailey
+                test_convFFT1dBailey.cu
+              )
+target_include_directories(test_convFFT1dBailey PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(test_convFFT1dBailey GTest::gtest_main)
+
 # Stockham FFT
 add_executable( test_fft1dStockham
                 test_fft1dStockham.cu

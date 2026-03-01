@@ -35,6 +35,13 @@ add_executable( benchmark_fft1dBailey
 target_include_directories(benchmark_fft1dBailey PRIVATE ${PROJECT_SOURCE_DIR}/src)
 set_property(TARGET benchmark_fft1dBailey PROPERTY CXX_STANDARD 17)
 
+# convFFT1dBailey
+add_executable( benchmark_convFFT1dBailey
+                benchmark_convFFT1dBailey.cu
+              )
+target_include_directories(benchmark_convFFT1dBailey PRIVATE ${PROJECT_SOURCE_DIR}/src)
+set_property(TARGET benchmark_convFFT1dBailey PROPERTY CXX_STANDARD 17)
+
 # fft1dCTr2c
 add_executable( benchmark_fft1dCTr2c
                 benchmark_fft1dCTr2c.cu
