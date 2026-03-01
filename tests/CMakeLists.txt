@@ -74,6 +74,13 @@ add_executable( test_fft1dBailey
 target_include_directories(test_fft1dBailey PRIVATE ${PROJECT_SOURCE_DIR}/src)
 target_link_libraries(test_fft1dBailey GTest::gtest_main)
 
+# Bailey IFFT
+add_executable( test_ifft1dBailey
+                test_ifft1dBailey.cu
+              )
+target_include_directories(test_ifft1dBailey PRIVATE ${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(test_ifft1dBailey GTest::gtest_main)
+
 # CT FFT r2c
 add_executable( test_fft1dCTr2c
                 test_fft1dCTr2c.cu

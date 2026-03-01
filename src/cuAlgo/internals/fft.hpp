@@ -108,6 +108,13 @@ float2 twiddle(int k, int m) {
     return make_float2(cosf(angle), sinf(angle));
 }
 
+// twiddle computation fwd
+CUALGO_HOST_DEVICE CUALGO_FORCE_INLINE
+float2 itwiddle(int k, int m) {
+    float angle = 2.0f * float(M_PI) * float(k) / float(m);
+    return make_float2(cosf(angle), sinf(angle));
+}
+
 // bit reversal
 CUALGO_DEVICE CUALGO_FORCE_INLINE
 unsigned int base2_reverse(unsigned x, int log2N)
